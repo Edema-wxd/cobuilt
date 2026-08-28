@@ -1,0 +1,64 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# A second deploy starting while one is mid-flight would leave the app servers
+# on different builds, so runs are serialised.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    # CI must be green on this commit before it reaches production.
+    needs: []
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Run migrations
+        # Migrations run once, before any app server restarts, so the two
+        # servers never serve traffic against different schema versions.
+        run: |
+          ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'cd /srv/cobuilt && git fetch --all && git reset --hard origin/main && npm ci && npm run db:migrate'
+
+      - name: Build and restart app servers
+        run: |
+          ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'cd /srv/cobuilt && npm run build && pm2 reload cobuilt-web --update-env && pm2 reload cobuilt-worker --update-env'
+
+      - name: Verify the deployment is healthy
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if curl -fsS "https://${{ secrets.DEPLOY_HOST }}/api/health" | grep -q '"status":"healthy"'; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $attempt failed; retrying in 10s"
+            sleep 10
+          done
+          echo "Health check never passed — investigate before the next deploy"
+          exit 1

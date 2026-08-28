@@ -1,0 +1,1502 @@
+openapi: 3.1.0
+
+info:
+  title: CoBuilt Investment Partners API
+  version: 0.1.0
+  description: |
+    Backend API for the CoBuilt corporate website (Var-2026-003, Phase 1).
+
+    ## Authentication
+    Access tokens are JWTs valid for 15 minutes, sent as `Authorization: Bearer
+    <token>`. Refresh tokens are opaque, HTTP-only cookies, rotated on every
+    use. Cookie-authenticated writes also require `X-CSRF-Token` matching the
+    readable CSRF cookie.
+
+    ## Errors
+    Every error shares one shape:
+    ```json
+    { "error": { "code": "not_found", "message": "Project not found",
+                 "details": null, "requestId": "..." } }
+    ```
+    Quote the `requestId` when reporting a problem; it appears in the logs.
+
+    ## Rate limits
+    Limited endpoints return `RateLimit-Limit`, `RateLimit-Remaining` and
+    `RateLimit-Reset`, and `Retry-After` on a 429.
+  contact:
+    name: Varyn Ltd
+  license:
+    name: Proprietary — confidential
+
+servers:
+  - url: https://api.cobuilt.com
+    description: Production
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Projects
+  - name: Project Passport
+  - name: Virtual Tours
+  - name: News
+  - name: Search
+  - name: Forms
+  - name: Authentication
+  - name: Admin
+  - name: Data protection
+  - name: Integrations
+  - name: System
+
+paths:
+  /api/health:
+    get:
+      tags: [System]
+      summary: Service health and dependency status
+      description: |
+        200 `healthy` — all dependencies reachable.
+        200 `degraded` — PostgreSQL is up, something optional is not; keep serving.
+        503 `unhealthy` — PostgreSQL is unreachable; remove the node from the pool.
+      security: []
+      responses:
+        '200':
+          description: Healthy or degraded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '503':
+          description: Unhealthy — PostgreSQL unreachable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+
+  /api/projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      security: []
+      parameters:
+        - { name: status,   in: query, schema: { $ref: '#/components/schemas/ProjectStatus' } }
+        - { name: type,     in: query, schema: { type: string }, description: Project-type slug or UUID }
+        - { name: location, in: query, schema: { type: string }, description: Location slug or UUID }
+        - { name: sector,   in: query, schema: { type: string }, description: Sector slug or UUID }
+        - { name: tag,      in: query, schema: { type: string }, description: Tag slug }
+        - { name: q,        in: query, schema: { type: string, maxLength: 200 }, description: Full-text search }
+        - { name: sort,     in: query, schema: { type: string, enum: [recent, title, oldest], default: recent } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: includeUnpublished
+          in: query
+          description: Include drafts. Ignored unless the caller is an admin or editor.
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: A page of projects
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items: { $ref: '#/components/schemas/Project' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Projects]
+      summary: Create a project
+      description: Requires role `admin` or `editor` and permission `projects:write`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectAdmin' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/projects/{idOrSlug}:
+    parameters:
+      - $ref: '#/components/parameters/IdOrSlug'
+    get:
+      tags: [Projects]
+      summary: Project detail
+      description: |
+        Investor figures are present only when CoBuilt's legal team has approved
+        that project's investor content; otherwise `investor` is `null`.
+      security: []
+      responses:
+        '200':
+          description: The project, with a Passport progress summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Projects]
+      summary: Update a project
+      description: |
+        Requires `admin` or `editor` with `projects:write`. Changing
+        `investorHighlights` revokes any existing legal approval.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectInput' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [Projects]
+      summary: Soft-delete a project
+      description: Requires `admin` with `projects:delete`. The row is retained for audit.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/projects/{idOrSlug}/passport:
+    parameters:
+      - $ref: '#/components/parameters/IdOrSlug'
+    get:
+      tags: [Project Passport]
+      summary: Project Passport™ timeline
+      security: []
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/MilestoneStatus' } }
+        - name: includeInternal
+          in: query
+          description: Include non-public milestones. Ignored unless the caller is staff.
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Milestones with a progress summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PassportTimeline' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Project Passport]
+      summary: Record a milestone
+      description: Requires `admin` or `editor` with `passport:write`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MilestoneInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Milestone' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/projects/{idOrSlug}/passport/{milestoneId}:
+    parameters:
+      - $ref: '#/components/parameters/IdOrSlug'
+      - { name: milestoneId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Project Passport]
+      summary: Milestone detail
+      security: []
+      responses:
+        '200':
+          description: The milestone
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Milestone' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Project Passport]
+      summary: Update a milestone
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Milestone' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Project Passport]
+      summary: Delete a milestone
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/projects/{idOrSlug}/tours:
+    parameters:
+      - $ref: '#/components/parameters/IdOrSlug'
+    get:
+      tags: [Virtual Tours]
+      summary: 3D tours for a project
+      description: Public callers see only tours whose asset has finished processing.
+      security: []
+      responses:
+        '200':
+          description: Tours
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projectId: { type: string, format: uuid }
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/Tour' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/news:
+    get:
+      tags: [News]
+      summary: List news articles
+      security: []
+      parameters:
+        - { name: category, in: query, schema: { type: string } }
+        - { name: tag,      in: query, schema: { type: string } }
+        - { name: q,        in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of articles, newest first, without article bodies
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items: { $ref: '#/components/schemas/NewsSummary' }
+    post:
+      tags: [News]
+      summary: Create an article
+      description: Requires `admin` or `editor` with `news:write`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewsInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/News' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/news/{idOrSlug}:
+    parameters:
+      - $ref: '#/components/parameters/IdOrSlug'
+    get:
+      tags: [News]
+      summary: Article detail with related articles
+      security: []
+      responses:
+        '200':
+          description: The article
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NewsDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [News]
+      summary: Update an article
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/News' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [News]
+      summary: Soft-delete an article
+      description: Requires `admin` with `news:delete`.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/news/by-category/{category}:
+    get:
+      tags: [News]
+      summary: Articles in a category
+      security: []
+      parameters:
+        - { name: category, in: path, required: true, schema: { type: string } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of articles
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      category: { type: string }
+                      results:
+                        type: array
+                        items: { $ref: '#/components/schemas/NewsSummary' }
+
+  /api/search:
+    get:
+      tags: [Search]
+      summary: Site-wide search
+      description: |
+        Searches projects, news and FAQs. `engine` reports which backend
+        answered: `meilisearch`, or `postgres` when the fallback is in use.
+      security: []
+      parameters:
+        - { name: q,        in: query, required: true, schema: { type: string, minLength: 1, maxLength: 200 } }
+        - { name: type,     in: query, schema: { type: string, enum: [project, news, faq] } }
+        - { name: status,   in: query, schema: { type: string } }
+        - { name: sector,   in: query, schema: { type: string } }
+        - { name: location, in: query, schema: { type: string } }
+        - { name: category, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Ranked results
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchResponse' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/search/autocomplete:
+    get:
+      tags: [Search]
+      summary: Search-box suggestions
+      security: []
+      parameters:
+        - { name: q,     in: query, required: true, schema: { type: string, minLength: 2, maxLength: 100 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 20, default: 8 } }
+      responses:
+        '200':
+          description: Suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query: { type: string }
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:    { type: string }
+                        type:  { type: string, enum: [project, news, faq] }
+                        title: { type: string }
+                        url:   { type: string }
+
+  /api/search/facets:
+    get:
+      tags: [Search]
+      summary: Available filters with counts
+      description: Counts cover live content only, so a filter never returns nothing.
+      security: []
+      parameters:
+        - { name: type, in: query, schema: { type: string, enum: [project, news], default: project } }
+      responses:
+        '200':
+          description: Facets
+          content:
+            application/json:
+              schema: { type: object }
+
+  /api/forms/inquiry:
+    post:
+      tags: [Forms]
+      summary: Submit a contact enquiry
+      description: |
+        Rate limited to 5 per hour per IP. Submissions scored as spam receive an
+        identical response to clean ones, and are stored for review without
+        notifying anyone.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InquiryInput' }
+      responses:
+        '201':
+          description: Received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:      { type: boolean }
+                  submissionId: { type: string, format: uuid }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/forms/investment:
+    post:
+      tags: [Forms]
+      summary: Submit an investor enquiry
+      description: |
+        Phase 1 is informational only. This records an expression of interest and
+        routes it to legal for review. It creates no account, makes no offer, and
+        is not a solicitation to buy securities. Rate limited to 10 per hour per IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InvestmentInput' }
+      responses:
+        '201':
+          description: Received and held for legal review
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:      { type: boolean }
+                  submissionId: { type: string, format: uuid }
+                  message:      { type: string }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/forms/newsletter:
+    post:
+      tags: [Forms]
+      summary: Subscribe to the newsletter
+      description: |
+        Double opt-in: a confirmation email is sent and the address is not mailed
+        until confirmed. The response is identical for a new and an existing
+        address, so the endpoint cannot be used to test list membership.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:    { type: string, format: email }
+                fullName: { type: string }
+                source:   { type: string }
+                website:  { $ref: '#/components/schemas/Honeypot' }
+      responses:
+        '200':
+          description: Confirmation email queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/forms/newsletter/confirm:
+    get:
+      tags: [Forms]
+      summary: Confirm a subscription
+      description: Reached from the confirmation email. The token is single-use.
+      security: []
+      parameters:
+        - { name: token, in: query, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Subscription confirmed }
+        '400': { description: Invalid or already-used link }
+
+  /api/forms/newsletter/unsubscribe:
+    get:
+      tags: [Forms]
+      summary: Unsubscribe (one-click from an email footer)
+      security: []
+      parameters:
+        - { name: token, in: query, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Unsubscribed }
+    post:
+      tags: [Forms]
+      summary: Unsubscribe (preference page)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200': { description: Unsubscribed }
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Sign in
+      description: |
+        Returns an access token and sets the refresh and CSRF cookies. Rate
+        limited per email address as well as per IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401': { description: Invalid email or password }
+        '403': { description: Account deactivated }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Exchange the refresh cookie for a new access token
+      description: |
+        The refresh token rotates on every use. Presenting one that was already
+        exchanged is treated as theft and revokes every session for that user.
+      security: []
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401': { description: Refresh token missing, expired or revoked }
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Sign out
+      description: |
+        Revokes this refresh token and clears the cookies. The access token
+        remains valid until it expires — at most 15 minutes.
+      security: []
+      responses:
+        '200': { description: Signed out }
+
+  /api/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Current user and effective permissions
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:        { $ref: '#/components/schemas/User' }
+                  permissions: { type: array, items: { type: string } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Create an admin-surface account
+      description: |
+        Not public sign-up. Requires an authenticated admin unless
+        `ALLOW_PUBLIC_REGISTRATION` is enabled, which exists only to bootstrap
+        the first admin in a fresh environment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, fullName]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string, minLength: 12 }
+                fullName: { type: string }
+                role:     { $ref: '#/components/schemas/Role' }
+      responses:
+        '201': { description: Created }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Authentication]
+      summary: Request a password reset
+      description: |
+        Always responds 200 with the same body, whether or not the address is
+        registered, so it cannot be used to enumerate accounts.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200': { description: A reset link has been sent if the account exists }
+
+  /api/auth/reset-password:
+    post:
+      tags: [Authentication]
+      summary: Set a new password with a reset token
+      description: Revokes every existing session on success.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:    { type: string }
+                password: { type: string, minLength: 12 }
+      responses:
+        '200': { description: Password changed }
+        '400': { description: Invalid or expired link }
+
+  /api/admin/analytics:
+    get:
+      tags: [Admin]
+      summary: Dashboard metrics
+      description: Requires `admin` or `viewer` with `analytics:read`.
+      parameters:
+        - { name: period, in: query, schema: { type: string, enum: ['7', '30', '90'], default: '30' } }
+      responses:
+        '200':
+          description: Traffic, submissions and content counts
+          content:
+            application/json:
+              schema: { type: object }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/audit-log:
+    get:
+      tags: [Admin]
+      summary: System audit trail
+      description: Requires `admin` with `audit:read`.
+      parameters:
+        - { name: action,     in: query, schema: { type: string } }
+        - { name: entityType, in: query, schema: { type: string } }
+        - { name: actorId,    in: query, schema: { type: string, format: uuid } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Audit entries, newest first
+          content:
+            application/json:
+              schema: { type: object }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: List accounts
+      parameters:
+        - { name: role,     in: query, schema: { $ref: '#/components/schemas/Role' } }
+        - { name: isActive, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of accounts
+          content:
+            application/json:
+              schema: { type: object }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/users/{userId}/role:
+    post:
+      tags: [Admin]
+      summary: Change a role or its permission overrides
+      description: |
+        Revokes the user's sessions so the change takes effect within one
+        access-token lifetime. An admin cannot remove their own admin role.
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { $ref: '#/components/schemas/Role' }
+                permissions:
+                  type: object
+                  description: Per-user overrides. Revocation always wins.
+                  properties:
+                    grant:  { type: array, items: { type: string } }
+                    revoke: { type: array, items: { type: string } }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { description: Cannot remove your own admin role }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/forms:
+    get:
+      tags: [Admin]
+      summary: List form submissions
+      description: Contact details are masked here; the detail endpoint reveals them.
+      parameters:
+        - { name: formType,      in: query, schema: { type: string, enum: [inquiry, newsletter, investment] } }
+        - { name: flaggedAsSpam, in: query, schema: { type: boolean } }
+        - { name: processed,     in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: A page of submissions
+          content:
+            application/json:
+              schema: { type: object }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/forms/{submissionId}:
+    get:
+      tags: [Admin]
+      summary: Full submission, contact details included
+      description: Each read is written to the audit log.
+      parameters:
+        - { name: submissionId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: The submission
+          content:
+            application/json:
+              schema: { type: object }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/forms/{submissionId}/flag-spam:
+    post:
+      tags: [Admin]
+      summary: Mark or unmark a submission as spam
+      parameters:
+        - { name: submissionId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                flagged: { type: boolean, default: true }
+      responses:
+        '200': { description: Updated }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/projects/{projectId}/investor-approval:
+    post:
+      tags: [Admin]
+      summary: Approve or revoke investor content
+      description: |
+        The legal sign-off gate. Until approval is granted, the public project
+        endpoint omits investment amount, expected ROI and highlights entirely.
+        Editing that content revokes the approval automatically.
+      parameters:
+        - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [approved]
+              properties:
+                approved: { type: boolean }
+                note:     { type: string, description: Legal reference, recorded in the audit log }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/tours/presign:
+    post:
+      tags: [Virtual Tours]
+      summary: Get a direct-to-storage upload URL
+      description: |
+        The browser PUTs the model to `uploadUrl`, then registers it with
+        `POST /api/admin/tours`. `contentLength` is signed into the URL, so the
+        declared size cannot be understated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId, contentType, contentLength]
+              properties:
+                projectId:     { type: string, format: uuid }
+                contentType:   { type: string, enum: ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'application/zip'] }
+                contentLength: { type: integer }
+      responses:
+        '200':
+          description: Presigned upload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploadUrl:         { type: string }
+                  key:               { type: string }
+                  publicUrl:         { type: string }
+                  expiresInSeconds:  { type: integer }
+                  maxBytes:          { type: integer }
+        '400': { description: Unsupported content type, or file over the size limit }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { description: Object storage is not configured }
+
+  /api/admin/tours:
+    post:
+      tags: [Virtual Tours]
+      summary: Register an uploaded tour
+      description: |
+        A `threejs_model` tour is accepted only once its object is confirmed
+        present in storage, so a presigned URL that was never used cannot leave
+        a tour record pointing at nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourInput' }
+      responses:
+        '201':
+          description: Registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tour' }
+        '400': { description: No uploaded object found for that key }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/tours/{tourId}:
+    delete:
+      tags: [Virtual Tours]
+      summary: Delete a tour and its stored asset
+      parameters:
+        - { name: tourId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/users/{userId}:
+    parameters:
+      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Data protection]
+      summary: Profile (self or admin)
+      responses:
+        '200':
+          description: The profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Data protection]
+      summary: Erasure request (NDPA)
+      description: |
+        Deactivates the account, releases the email address, anonymises every
+        form submission from it and removes the newsletter record. Audited.
+      responses:
+        '200':
+          description: Erased
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:                { type: boolean }
+                  message:                { type: string }
+                  submissionsAnonymised:  { type: integer }
+                  newsletterRemoved:      { type: integer }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/users/{userId}/export:
+    get:
+      tags: [Data protection]
+      summary: Subject access request (NDPA)
+      description: |
+        Returns everything held about the subject — profile, form submissions,
+        page views, sessions and newsletter record — as a JSON attachment. Self
+        or admin; audited.
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: A JSON attachment
+          content:
+            application/json:
+              schema: { type: object }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/analytics/pageview:
+    post:
+      tags: [System]
+      summary: First-party page-view beacon
+      description: |
+        The client IP is truncated (`/24`, or `/48` for IPv6) before storage, so
+        this records traffic shape without building a per-visitor profile.
+        Always answers 204, including on failure.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:      { type: string }
+                referrer:  { type: string }
+                sessionId: { type: string, description: Opaque per-visit id, not linked to a person }
+      responses:
+        '204': { description: Recorded }
+
+  /api/integrations/cms-webhooks:
+    post:
+      tags: [Integrations]
+      summary: CMS publish webhook
+      description: |
+        Authenticated by HMAC over the raw body (`X-CMS-Signature`) or a bearer
+        token. See `docs/cms-sync.md`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event, model]
+              properties:
+                event: { type: string, enum: [entry.create, entry.update, entry.publish, entry.unpublish, entry.delete] }
+                model: { type: string, enum: [project, news-article, faq, leadership] }
+                entry: { type: object }
+      responses:
+        '200': { description: Applied or skipped }
+        '401': { description: Invalid signature }
+        '500': { description: Sync failed — the CMS should retry }
+
+  /api/integrations/whatsapp:
+    get:
+      tags: [Integrations]
+      summary: Meta webhook subscription handshake
+      security: []
+      parameters:
+        - { name: 'hub.mode',         in: query, schema: { type: string } }
+        - { name: 'hub.verify_token', in: query, schema: { type: string } }
+        - { name: 'hub.challenge',    in: query, schema: { type: string } }
+      responses:
+        '200': { description: Echoes the challenge }
+        '403': { description: Verify token mismatch }
+    post:
+      tags: [Integrations]
+      summary: Receive WhatsApp messages and statuses
+      description: |
+        Verified by the app-secret HMAC (`X-Hub-Signature-256`). Acknowledged
+        immediately, then processed, because Meta retries anything not
+        acknowledged quickly. Deliveries are idempotent on the provider message id.
+      security: []
+      responses:
+        '200': { description: Received }
+        '401': { description: Invalid signature }
+
+  /api/integrations/chat:
+    post:
+      tags: [Integrations]
+      summary: Live-chat provider webhook
+      description: Verified by HMAC over the raw body.
+      security: []
+      responses:
+        '200': { description: Received }
+        '401': { description: Invalid signature }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 15-minute access token from `/api/auth/login` or `/api/auth/refresh`.
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 50, default: 12 }
+    IdOrSlug:
+      name: idOrSlug
+      in: path
+      required: true
+      description: The record's slug or its UUID.
+      schema: { type: string }
+
+  responses:
+    Unauthorized:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Authenticated, but the role or permission is insufficient
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No such record
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Conflicts with an existing record, usually a duplicate slug
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationFailed:
+      description: The request failed validation; `details` names each field
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ValidationError' }
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema: { type: integer }
+          description: Seconds until the window resets
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:      { type: string }
+            message:   { type: string }
+            details:   {}
+            requestId: { type: string }
+
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            error:
+              type: object
+              properties:
+                details:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      field:   { type: string }
+                      message: { type: string }
+
+    Paginated:
+      type: object
+      properties:
+        results: { type: array, items: {} }
+        pagination:
+          type: object
+          properties:
+            page:        { type: integer }
+            pageSize:    { type: integer }
+            total:       { type: integer }
+            totalPages:  { type: integer }
+            hasNextPage: { type: boolean }
+
+    Health:
+      type: object
+      properties:
+        status: { type: string, enum: [healthy, degraded, unhealthy] }
+        checks:
+          type: object
+          properties:
+            database: { type: boolean }
+            redis:    { type: boolean }
+            search:   { description: Boolean, or "not_configured" }
+            cms:      { description: Boolean, or "not_configured" }
+        degraded:  { type: array, items: { type: string } }
+        version:   { type: string }
+        timestamp: { type: string, format: date-time }
+
+    Role:
+      type: string
+      enum: [admin, editor, viewer, investor]
+
+    ProjectStatus:
+      type: string
+      enum: [future, ongoing, completed]
+
+    MilestoneType:
+      type: string
+      enum: [commencement, foundation, superstructure, roofing, mep, finishes, practical_completion, handover, custom]
+
+    MilestoneStatus:
+      type: string
+      enum: [pending, in_progress, completed, delayed]
+
+    Honeypot:
+      type: string
+      maxLength: 0
+      description: Hidden field. A non-empty value marks the submission as a bot.
+
+    Project:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        title:            { type: string }
+        slug:             { type: string }
+        description:      { type: string, nullable: true }
+        longDescription:  { type: string, nullable: true }
+        status:           { $ref: '#/components/schemas/ProjectStatus' }
+        projectType:      { type: string, nullable: true }
+        location:         { type: string, nullable: true }
+        sector:           { type: string, nullable: true }
+        featuredImageUrl: { type: string, nullable: true }
+        galleryIds:       { type: array, items: { type: string, format: uuid } }
+        serviceIds:       { type: array, items: { type: string, format: uuid } }
+        tagIds:           { type: array, items: { type: string, format: uuid } }
+        passport:
+          type: object
+          properties:
+            enabled:          { type: boolean }
+            startDate:        { type: string, format: date, nullable: true }
+            completionTarget: { type: string, format: date, nullable: true }
+        investor:
+          nullable: true
+          description: Null until legal approves this project's investor content.
+          type: object
+          properties:
+            investmentAmount: { type: number, nullable: true }
+            expectedRoi:      { type: number, nullable: true }
+            highlights:       { nullable: true }
+        seo:
+          type: object
+          properties:
+            metaTitle:         { type: string, nullable: true }
+            metaDescription:   { type: string, nullable: true }
+            openGraphImageUrl: { type: string, nullable: true }
+            canonicalUrl:      { type: string, nullable: true }
+        publishedAt: { type: string, format: date-time, nullable: true }
+        updatedAt:   { type: string, format: date-time, nullable: true }
+
+    ProjectDetail:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          properties:
+            passportProgress:
+              nullable: true
+              type: object
+              properties:
+                total:           { type: integer }
+                completed:       { type: integer }
+                percentComplete: { type: integer }
+                nextMilestone:
+                  nullable: true
+                  type: object
+                  properties:
+                    title:         { type: string, nullable: true }
+                    type:          { $ref: '#/components/schemas/MilestoneType' }
+                    scheduledDate: { type: string, format: date, nullable: true }
+
+    ProjectAdmin:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          description: Admin view — investor figures are always present, with their approval state.
+          properties:
+            investor:
+              type: object
+              properties:
+                investmentAmount: { type: number, nullable: true }
+                expectedRoi:      { type: number, nullable: true }
+                highlights:       { nullable: true }
+                approved:         { type: boolean }
+            isPublished: { type: boolean }
+            createdAt:   { type: string, format: date-time }
+            deletedAt:   { type: string, format: date-time, nullable: true }
+
+    ProjectInput:
+      type: object
+      required: [title, status]
+      properties:
+        title:                    { type: string, minLength: 3, maxLength: 255 }
+        slug:                     { type: string, description: Derived from the title when omitted }
+        description:              { type: string, nullable: true }
+        longDescription:          { type: string, nullable: true }
+        projectTypeId:            { type: string, format: uuid, nullable: true }
+        locationId:               { type: string, format: uuid, nullable: true }
+        sectorId:                 { type: string, format: uuid, nullable: true }
+        status:                   { $ref: '#/components/schemas/ProjectStatus' }
+        featuredImageUrl:         { type: string, nullable: true }
+        galleryIds:               { type: array, items: { type: string, format: uuid } }
+        serviceIds:               { type: array, items: { type: string, format: uuid } }
+        tagIds:                   { type: array, items: { type: string, format: uuid } }
+        passportEnabled:          { type: boolean }
+        passportStartDate:        { type: string, format: date, nullable: true }
+        passportCompletionTarget: { type: string, format: date, nullable: true }
+        investmentAmount:         { type: number, nullable: true }
+        expectedRoi:              { type: number, nullable: true }
+        investorHighlights:       { type: object, nullable: true, description: Editing this revokes legal approval }
+        metaTitle:                { type: string, nullable: true }
+        metaDescription:          { type: string, maxLength: 160, nullable: true }
+        publishedAt:              { type: string, format: date-time, nullable: true, description: Null is a draft }
+
+    Milestone:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        projectId:      { type: string, format: uuid }
+        type:           { $ref: '#/components/schemas/MilestoneType' }
+        title:          { type: string, nullable: true }
+        description:    { type: string, nullable: true }
+        scheduledDate:  { type: string, format: date, nullable: true }
+        actualDate:     { type: string, format: date, nullable: true }
+        status:         { $ref: '#/components/schemas/MilestoneStatus' }
+        sortOrder:      { type: integer }
+        photoUrls:      { type: array, items: { type: string } }
+        documentUrls:   { type: array, items: { type: string } }
+        videoUrl:       { type: string, nullable: true }
+        triggeredAt:    { type: string, format: date-time }
+
+    MilestoneInput:
+      type: object
+      required: [milestoneType]
+      properties:
+        milestoneType: { $ref: '#/components/schemas/MilestoneType' }
+        title:         { type: string, nullable: true }
+        description:   { type: string, nullable: true }
+        scheduledDate: { type: string, format: date, nullable: true }
+        actualDate:    { type: string, format: date, nullable: true, description: Required when status is completed }
+        status:        { $ref: '#/components/schemas/MilestoneStatus' }
+        sortOrder:     { type: integer, description: Appended to the end of the timeline when omitted }
+        photoUrls:     { type: array, items: { type: string } }
+        documentUrls:  { type: array, items: { type: string } }
+        videoUrl:      { type: string, nullable: true }
+        isPublic:      { type: boolean, default: true }
+
+    PassportTimeline:
+      type: object
+      properties:
+        project:
+          type: object
+          properties:
+            id:    { type: string, format: uuid }
+            title: { type: string }
+            slug:  { type: string }
+        passportEnabled: { type: boolean }
+        progress:
+          type: object
+          properties:
+            total:           { type: integer }
+            completed:       { type: integer }
+            percentComplete: { type: integer }
+        milestones:
+          type: array
+          items: { $ref: '#/components/schemas/Milestone' }
+
+    Tour:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        projectId:        { type: string, format: uuid }
+        name:             { type: string }
+        type:             { type: string, enum: [threejs_model, matterport_embed, custom_viewer] }
+        description:      { type: string, nullable: true }
+        thumbnailUrl:     { type: string, nullable: true }
+        tourUrl:          { type: string, nullable: true }
+        embedCode:        { type: string, nullable: true }
+        fileSizeBytes:    { type: integer, nullable: true }
+        featured:         { type: boolean }
+        viewCount:        { type: integer }
+        processingStatus: { type: string, enum: [pending, processing, ready, failed] }
+        uploadedAt:       { type: string, format: date-time }
+
+    TourInput:
+      type: object
+      required: [projectId, tourName, tourType]
+      properties:
+        projectId:    { type: string, format: uuid }
+        tourName:     { type: string }
+        tourType:     { type: string, enum: [threejs_model, matterport_embed, custom_viewer] }
+        modelKey:     { type: string, description: Required for threejs_model — the key from /presign }
+        tourUrl:      { type: string, description: Required for custom_viewer }
+        embedCode:    { type: string, description: Required for matterport_embed unless tourUrl is given }
+        thumbnailUrl: { type: string }
+        description:  { type: string }
+        featured:     { type: boolean, default: false }
+        published:    { type: boolean, default: true }
+
+    NewsSummary:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        title:            { type: string }
+        slug:             { type: string }
+        excerpt:          { type: string, nullable: true }
+        category:         { type: string, nullable: true }
+        tags:             { type: array, items: { type: string } }
+        author:           { type: string, nullable: true }
+        featuredImageUrl: { type: string, nullable: true }
+        publishedAt:      { type: string, format: date-time, nullable: true }
+
+    News:
+      allOf:
+        - $ref: '#/components/schemas/NewsSummary'
+        - type: object
+          properties:
+            content: { type: string }
+
+    NewsDetail:
+      allOf:
+        - $ref: '#/components/schemas/News'
+        - type: object
+          properties:
+            related:
+              type: array
+              description: Ranked by shared tags, then by category.
+              items: { $ref: '#/components/schemas/NewsSummary' }
+
+    NewsInput:
+      type: object
+      required: [title, content]
+      properties:
+        title:            { type: string, minLength: 3 }
+        slug:             { type: string }
+        content:          { type: string }
+        excerpt:          { type: string, maxLength: 300, nullable: true }
+        category:         { type: string, nullable: true }
+        featuredImageUrl: { type: string, nullable: true }
+        tags:             { type: array, items: { type: string } }
+        metaTitle:        { type: string, nullable: true }
+        metaDescription:  { type: string, maxLength: 160, nullable: true }
+        publishedAt:      { type: string, format: date-time, nullable: true }
+
+    SearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id:          { type: string }
+              type:        { type: string, enum: [project, news, faq] }
+              title:       { type: string }
+              slug:        { type: string }
+              excerpt:     { type: string, nullable: true }
+              url:         { type: string }
+              publishedAt: { type: string, format: date-time, nullable: true }
+              score:       { type: number }
+        total:    { type: integer }
+        page:     { type: integer }
+        pageSize: { type: integer }
+        engine:
+          type: string
+          enum: [meilisearch, postgres]
+          description: Which backend answered. `postgres` means the fallback is in use.
+
+    InquiryInput:
+      type: object
+      required: [name, email, message, consent]
+      properties:
+        name:      { type: string, minLength: 2 }
+        email:     { type: string, format: email }
+        phone:     { type: string }
+        subject:   { type: string }
+        message:   { type: string, minLength: 10, maxLength: 5000 }
+        projectId: { type: string, format: uuid }
+        consent:   { type: boolean, enum: [true], description: NDPA consent, required }
+        website:   { $ref: '#/components/schemas/Honeypot' }
+
+    InvestmentInput:
+      type: object
+      required: [name, email, message, consent]
+      properties:
+        name:            { type: string, minLength: 2 }
+        email:           { type: string, format: email }
+        phone:           { type: string }
+        companyName:     { type: string }
+        investmentRange: { type: string, enum: [under_50m, 50m_250m, 250m_1b, above_1b, undisclosed] }
+        projectId:       { type: string, format: uuid }
+        message:         { type: string, minLength: 10, maxLength: 5000 }
+        consent:         { type: boolean, enum: [true] }
+        website:         { $ref: '#/components/schemas/Honeypot' }
+
+    User:
+      type: object
+      properties:
+        id:                { type: string, format: uuid }
+        email:             { type: string, format: email }
+        fullName:          { type: string, nullable: true }
+        role:              { $ref: '#/components/schemas/Role' }
+        isActive:          { type: boolean }
+        emailVerified:     { type: boolean }
+        twoFactorEnabled:  { type: boolean }
+        createdAt:         { type: string, format: date-time }
+        lastLogin:         { type: string, format: date-time, nullable: true }
+
+    AuthSession:
+      type: object
+      properties:
+        accessToken: { type: string }
+        expiresIn:   { type: integer, description: Seconds — 900 }
+        tokenType:   { type: string, enum: [Bearer] }
+        csrfToken:   { type: string, description: Echo this in X-CSRF-Token on cookie-authenticated writes }
+        user:        { $ref: '#/components/schemas/User' }
+        permissions: { type: array, items: { type: string } }
+
+security:
+  - bearerAuth: []
