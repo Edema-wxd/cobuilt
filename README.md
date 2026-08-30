@@ -45,7 +45,9 @@ Verify the install: `curl localhost:3000/api/health`.
 
 ```
 db/migrations/       Numbered SQL migrations, applied once and checksummed
+pages/index.tsx      Public landing page — static, renders without a database
 pages/api/           Route handlers — thin; policy and I/O live in src/lib
+styles/              Global tokens and the landing page's CSS module
 src/lib/
   http/route.ts      The request pipeline every endpoint runs through
   auth/              JWT, refresh-token rotation, RBAC, password hashing

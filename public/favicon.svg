@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CoBuilt">
+  <rect width="64" height="64" fill="#06170f"/>
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#c9a227" stroke-width="2.5"/>
+  <circle cx="32" cy="32" r="18" fill="none" stroke="#c9a227" stroke-width="1" opacity="0.55"/>
+  <text x="32" y="41" text-anchor="middle" font-family="Archivo, Helvetica, Arial, sans-serif"
+        font-size="22" font-weight="700" fill="#f2efe6">CB</text>
+</svg>

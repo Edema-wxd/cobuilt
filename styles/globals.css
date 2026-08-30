@@ -1,0 +1,97 @@
+/**
+ * Global tokens and base styles for the public site.
+ *
+ * The palette is the Project Passport itself: a deep passport green ground,
+ * brass foil, and paper reserved for surfaces that represent a record.
+ */
+
+:root {
+  --ink-deep: #06170f;
+  --ink: #0c2a1d;
+  --ink-line: #1c4634;
+  --brass: #c9a227;
+  --brass-soft: #e2c98c;
+  --paper: #f2efe6;
+  --paper-line: #d9d3c3;
+  --paper-ink: #1a231e;
+  --sage: #8aa396;
+  --stamp: #5b4a7e;
+
+  --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --measure: 1120px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--ink-deep);
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--brass);
+  color: var(--ink-deep);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    /* Beats the staggered inline delays on the passport entries. */
+    animation-delay: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

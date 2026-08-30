@@ -1,0 +1,769 @@
+/* Landing page. Paper surfaces are reserved for records: the passport and the
+   subscription form. Everything else sits on the passport-green ground. */
+
+.page {
+  overflow-x: hidden;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+/* --- Navigation ---------------------------------------------------------- */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(6, 23, 15, 0.86);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.navInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 4.25rem;
+}
+
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.wordmarkName {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.wordmarkSub {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--sage);
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.navLink {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage);
+  transition: color 160ms ease;
+}
+
+.navLink:hover {
+  color: var(--paper);
+}
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.btnPrimary,
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.2rem;
+  border: 1px solid var(--brass);
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.btnPrimary {
+  background: var(--brass);
+  color: var(--ink-deep);
+  font-weight: 500;
+}
+
+.btnPrimary:hover {
+  background: var(--brass-soft);
+  border-color: var(--brass-soft);
+}
+
+.btnGhost {
+  background: transparent;
+  color: var(--brass-soft);
+  border-color: var(--ink-line);
+}
+
+.btnGhost:hover {
+  border-color: var(--brass);
+  color: var(--paper);
+}
+
+/* --- Hero ---------------------------------------------------------------- */
+
+.hero {
+  position: relative;
+  padding-block: clamp(3.5rem, 9vw, 7rem) clamp(4rem, 10vw, 8rem);
+  background: var(--ink);
+  border-bottom: 1px solid var(--ink-line);
+}
+
+/* Security-paper hairlines, the way a passport page is guarded. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+      58deg,
+      rgba(201, 162, 39, 0.05) 0 1px,
+      transparent 1px 7px
+    ),
+    repeating-linear-gradient(-58deg, rgba(201, 162, 39, 0.04) 0 1px, transparent 1px 9px);
+  pointer-events: none;
+}
+
+.heroInner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+  gap: clamp(2.5rem, 6vw, 4.5rem);
+  align-items: center;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 1.5rem;
+}
+
+.heroTitle {
+  font-size: clamp(2.6rem, 6.4vw, 4.6rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.97;
+}
+
+.heroTitle em {
+  font-style: normal;
+  color: var(--brass);
+}
+
+.heroLead {
+  margin-top: 1.75rem;
+  max-width: 34rem;
+  color: rgba(242, 239, 230, 0.78);
+  font-size: 1.1rem;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2.25rem;
+}
+
+.heroFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.25rem;
+  margin-top: 3rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--ink-line);
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.factValue {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.factLabel {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sage);
+}
+
+/* --- The passport card: the signature element ---------------------------- */
+
+.passport {
+  position: relative;
+  background: var(--paper);
+  color: var(--paper-ink);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  animation: rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.passportHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--ink-deep);
+  color: var(--brass-soft);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.passportBody {
+  padding: 1.75rem 1.5rem 1.25rem;
+}
+
+.passportProject {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.passportPlace {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5f6b63;
+  margin-top: 0.4rem;
+}
+
+.milestones {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--paper-line);
+}
+
+.milestone {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px dotted var(--paper-line);
+  animation: rise 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.msIndex {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #6f7a73;
+}
+
+.msName {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.msDate {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #5f6b63;
+  white-space: nowrap;
+}
+
+.chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  margin-left: 0.6rem;
+  border: 1px solid currentColor;
+  vertical-align: 0.1em;
+}
+
+.chipDone {
+  color: #2f6b4f;
+}
+
+.chipActive {
+  color: #96701a;
+}
+
+.chipPending {
+  color: #6f7a73;
+}
+
+/* The entry stamp: violet ink, struck once on load. */
+.seal {
+  position: absolute;
+  right: -2.5rem;
+  bottom: -2.25rem;
+  width: 6.75rem;
+  height: 6.75rem;
+  border: 2px solid var(--stamp);
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: var(--stamp);
+  background: rgba(242, 239, 230, 0.92);
+  transform: rotate(-13deg);
+  animation: stamp 620ms cubic-bezier(0.2, 1.4, 0.4, 1) 900ms both;
+}
+
+.seal::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--stamp);
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+.sealTop,
+.sealBottom {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.sealYear {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+/* Machine-readable zone, as printed on the passport's last page. */
+.mrz {
+  padding: 0.85rem 1.5rem 1.1rem;
+  border-top: 2px solid var(--paper-line);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  color: #46504a;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* --- Sections ------------------------------------------------------------ */
+
+.section {
+  padding-block: clamp(3.5rem, 8vw, 6.5rem);
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.sectionHead {
+  max-width: 42rem;
+  margin-bottom: clamp(2.25rem, 5vw, 3.5rem);
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 1rem;
+}
+
+.sectionTitle {
+  font-size: clamp(1.9rem, 3.6vw, 2.75rem);
+}
+
+.sectionLead {
+  margin-top: 1.1rem;
+  color: rgba(242, 239, 230, 0.72);
+}
+
+/* --- Stage register ------------------------------------------------------ */
+
+.register {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(2rem, 6vw, 5rem);
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.stageIndex {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--brass);
+}
+
+.stageName {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.stageEvidence {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sage);
+  text-align: right;
+}
+
+/* --- Projects ------------------------------------------------------------ */
+
+.projects {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.projectCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.75rem 1.5rem;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+
+.projectCard:hover {
+  border-color: var(--brass);
+  transform: translateY(-3px);
+}
+
+.projectStatus {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.projectTitle {
+  font-size: 1.35rem;
+}
+
+.projectDesc {
+  color: rgba(242, 239, 230, 0.7);
+  font-size: 0.98rem;
+}
+
+.projectMeta {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ink-line);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sage);
+}
+
+/* --- Investors ----------------------------------------------------------- */
+
+.investorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(2rem, 6vw, 4rem);
+  align-items: start;
+}
+
+.investorPoints {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.point {
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 1.25rem;
+  border-left: 2px solid var(--brass);
+}
+
+.pointTitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.pointBody {
+  color: rgba(242, 239, 230, 0.7);
+  font-size: 0.98rem;
+}
+
+.notice {
+  padding: 1.5rem;
+  border: 1px solid var(--ink-line);
+  background: rgba(12, 42, 29, 0.6);
+}
+
+.noticeLabel {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 0.85rem;
+}
+
+.noticeBody {
+  font-size: 0.95rem;
+  color: rgba(242, 239, 230, 0.74);
+}
+
+/* --- Subscribe ----------------------------------------------------------- */
+
+.subscribeGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 4rem);
+  align-items: center;
+}
+
+.formCard {
+  background: var(--paper);
+  color: var(--paper-ink);
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+
+.formRow {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #5f6b63;
+}
+
+.input {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.7rem 0.75rem;
+  color: var(--paper-ink);
+  background: #fbfaf5;
+  border: 1px solid var(--paper-line);
+}
+
+.input:focus-visible {
+  border-color: var(--stamp);
+  outline-offset: 0;
+}
+
+.honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.submit {
+  display: block;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.8rem 1.2rem;
+  color: var(--paper);
+  background: var(--ink-deep);
+  border: 1px solid var(--ink-deep);
+  transition: background 160ms ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--ink);
+}
+
+.submit:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.formNote {
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  color: #5f6b63;
+}
+
+.formMsg {
+  margin-top: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  padding: 0.6rem 0.75rem;
+  border-left: 2px solid currentColor;
+}
+
+.msgOk {
+  color: #2f6b4f;
+  background: rgba(47, 107, 79, 0.08);
+}
+
+.msgBad {
+  color: #8c3a2b;
+  background: rgba(140, 58, 43, 0.08);
+}
+
+/* --- Footer -------------------------------------------------------------- */
+
+.footer {
+  padding-block: clamp(3rem, 6vw, 4.5rem) 2rem;
+}
+
+.footerGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  gap: 2.5rem;
+}
+
+.footerHead {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 1rem;
+}
+
+.footerList {
+  display: grid;
+  gap: 0.55rem;
+  font-size: 0.92rem;
+  color: rgba(242, 239, 230, 0.7);
+}
+
+.footerList a:hover {
+  color: var(--brass-soft);
+}
+
+.footerBlurb {
+  margin-top: 1rem;
+  max-width: 24rem;
+  font-size: 0.92rem;
+  color: rgba(242, 239, 230, 0.6);
+}
+
+.footerBottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ink-line);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sage);
+}
+
+/* --- Motion -------------------------------------------------------------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-13deg) scale(1.75);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-13deg) scale(1);
+  }
+}
+
+/* --- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 960px) {
+  .heroInner,
+  .investorGrid,
+  .subscribeGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .projects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .register {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .footerGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .seal {
+    right: -1.5rem;
+    bottom: -2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .navLinks {
+    display: none;
+  }
+
+  .projects,
+  .footerGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .seal {
+    width: 5.5rem;
+    height: 5.5rem;
+    right: -0.75rem;
+    bottom: -1.5rem;
+  }
+
+  .heroFacts {
+    gap: 1.5rem;
+  }
+}
