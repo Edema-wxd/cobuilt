@@ -41,6 +41,37 @@ Verify the install: `curl localhost:3000/api/health`.
 | `npm run db:seed` | Seed development data |
 | `npm run search:reindex` | Rebuild every Meilisearch index from PostgreSQL |
 
+## Testing
+
+`npm test` runs everything. The unit and request-pipeline suites need nothing;
+the three integration suites talk to a real PostgreSQL database and skip
+themselves when `TEST_DATABASE_URL` is unset, so a fresh checkout passes with no
+services running.
+
+Point them at a database to run them. The suites drop and rebuild `public` from
+`db/migrations/` on start, so give them their own database — never a database
+holding anything you want to keep:
+
+```sh
+createdb cobuilt_test
+export TEST_DATABASE_URL="postgresql://$USER@localhost:5432/cobuilt_test"
+npm test
+```
+
+CI (`.github/workflows/ci.yml`) sets the same variable against a `postgres:16`
+service, so a suite that passes locally passes there.
+
+Writing a new suite:
+
+- Unit tests go in `__tests__/unit/` and import from `@/lib/...` directly.
+- Route tests go in `__tests__/api/`. `callRoute()` in `__tests__/setup/helpers.ts`
+  drives a handler through `node-mocks-http`; `as: 'admin'` signs and attaches a
+  bearer token for that role.
+- Database tests go in `__tests__/integration/` and open with
+  `describeWithDatabase` from `__tests__/setup/database.ts` so they skip cleanly
+  without a database. Call `truncateAll()` between tests; `maxWorkers: 1` in
+  `jest.config.mjs` keeps the shared database from being raced.
+
 ## Layout
 
 ```
