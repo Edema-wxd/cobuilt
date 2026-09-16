@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/jsonwebtoken": "^9.0.10",
@@ -49,6 +50,7 @@
     "jest": "^30.5.0",
     "js-yaml": "^5.4.1",
     "node-mocks-http": "^1.18.1",
+    "tailwindcss": "^4.3.3",
     "ts-jest": "^29.4.12",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",

@@ -1,7 +1,7 @@
 import ProsePage from '../components/ProsePage';
 import { EMAIL } from '../components/site';
 import { openPreferences } from '../components/cookieConsent';
-import styles from '../styles/Prose.module.css';
+import * as prose from '../components/prose';
 
 /**
  * Cookie Policy.
@@ -42,19 +42,19 @@ export default function Cookies() {
       updated="16 September 2026"
       description="The cookies CoBuilt Investment Partners sets, what each category does, how long it lasts, and how to change your preferences."
     >
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Our approach</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Our approach</h2>
+        <p className={prose.p}>
           Only essential cookies are enabled by default. Nothing in the analytics, functional or
           marketing categories is loaded until you allow it, and you can withdraw that permission
           at any time without losing access to anything on the site.
         </p>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Categories</h2>
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Categories</h2>
+        <div className={prose.tableWrap}>
+          <table className={prose.table}>
             <thead>
               <tr>
                 <th scope="col">Category</th>
@@ -75,30 +75,30 @@ export default function Cookies() {
         </div>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Changing your choice</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Changing your choice</h2>
+        <p className={prose.p}>
           Open the preferences panel and set each category individually. Your choice is stored on
           your device, so you will be asked again on a different browser, or if you clear your
           site data.
         </p>
-        <button className={styles.action} type="button" onClick={openPreferences}>
+        <button className={prose.action} type="button" onClick={openPreferences}>
           Change cookie preferences
         </button>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Browser controls</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Browser controls</h2>
+        <p className={prose.p}>
           Your browser can also block or delete cookies for this site, independently of the choice
           you make here. Blocking essential cookies may stop parts of the site working. Browser
           help pages explain the controls for each.
         </p>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>More information</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>More information</h2>
+        <p className={prose.p}>
           How we handle the data behind these cookies is set out in our{' '}
           <a href="/privacy">Privacy Policy</a>. Questions go to{' '}
           <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.

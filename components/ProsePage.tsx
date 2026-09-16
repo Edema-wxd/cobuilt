@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import SiteLayout from './SiteLayout';
-import styles from '../styles/Prose.module.css';
+import * as prose from './prose';
+import { eyebrowOnDark } from './ui';
 
 interface Props {
   eyebrow: string;
@@ -30,17 +31,17 @@ export default function ProsePage({
       {...(current ? { current } : {})}
     >
       <main>
-        <div className={styles.head}>
-          <div className={styles.headInner}>
-            <p className={styles.eyebrow}>{eyebrow}</p>
-            <h1 className={styles.title}>{title}</h1>
-            <p className={styles.standfirst}>{standfirst}</p>
-            {updated ? <p className={styles.updated}>Last updated {updated}</p> : null}
+        <div className={prose.head}>
+          <div className={prose.headInner}>
+            <p className={eyebrowOnDark}>{eyebrow}</p>
+            <h1 className={prose.title}>{title}</h1>
+            <p className={prose.standfirst}>{standfirst}</p>
+            {updated ? <p className={prose.updated}>Last updated {updated}</p> : null}
           </div>
         </div>
 
-        <div className={styles.body}>
-          <div className={styles.prose}>{children}</div>
+        <div className={prose.body}>
+          <div className={prose.prose}>{children}</div>
         </div>
       </main>
     </SiteLayout>

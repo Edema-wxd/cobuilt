@@ -1,7 +1,16 @@
 import { Fragment, useState } from 'react';
 import SiteLayout from '../components/SiteLayout';
 import { PHONE, PHONE_HREF } from '../components/site';
-import styles from '../styles/Landing.module.css';
+import {
+  btnOrange,
+  btnOutline,
+  btnOutlineOnDark,
+  btnWhite,
+  container,
+  eyebrow,
+  eyebrowOnDark,
+  media,
+} from '../components/ui';
 
 /**
  * Public landing page — Direction 3c, the Corporate Digital Standards build.
@@ -18,6 +27,33 @@ import styles from '../styles/Landing.module.css';
  * rather than in the footer.
  */
 
+/*
+ * Layout values come from the handoff mockup, drawn once at 1160px. Everything
+ * below that is mobile-first: base classes are the phone layout, and `sm`,
+ * `md` and `lg` add the tablet and desktop layouts back. The page degrades by
+ * stacking and by dropping ornament (the hero rail, the marquee), never by
+ * dropping content.
+ */
+const section = 'py-13 sm:py-16 md:py-22';
+const sectionLight = `${section} bg-white`;
+const sectionMuted = `${section} border-t border-line bg-zinc-100`;
+const sectionHead = 'flex flex-col gap-3.5';
+
+const titleLg = 'text-[length:clamp(1.875rem,3.4vw,2.75rem)]';
+const titleMd = 'text-[length:clamp(1.75rem,3vw,2.5rem)]';
+const titleSm = 'text-[length:clamp(1.5rem,2.4vw,2.125rem)]';
+
+const glyph = 'text-[1.25rem] leading-none';
+const cardTitle = 'text-[0.781rem] font-semibold uppercase text-ink';
+const cardBody = 'text-[0.906rem] leading-[1.7] text-zinc-600';
+const uppercaseLink = 'font-semibold uppercase tracking-[0.14em] text-rust hover:text-rust-hover';
+
+const field = 'flex flex-col gap-1.75';
+const fieldLabel = 'text-[0.688rem] font-semibold uppercase tracking-[0.14em] text-zinc-700';
+/** 16px on a phone: below that, iOS Safari zooms the page when a field takes focus. */
+const input =
+  'min-h-12 w-full rounded-none border border-zinc-400 bg-white px-3.5 text-base text-ink sm:min-h-11.5 sm:text-[0.875rem]';
+
 const IMAGES = {
   hero: '/images/hero-aerial-estate.webp',
   villa: '/images/villa-and-pool.webp',
@@ -32,7 +68,11 @@ const STATS: Array<{ value: string; plus?: boolean; label: string }> = [
   { value: '5', plus: true, label: 'Locations' },
 ];
 
-const SERVICES: Array<{ title: string; body: string; informational?: boolean }> = [
+const SERVICES: Array<{
+  title: string;
+  body: string;
+  informational?: boolean;
+}> = [
   {
     title: 'Real Estate Development',
     body: 'High-quality residential, commercial, mixed-use and strategic developments.',
@@ -112,10 +152,13 @@ const PROJECTS: Project[] = [
   },
 ];
 
+const badge =
+  'whitespace-nowrap px-2.5 py-1.25 text-[0.625rem] font-bold uppercase tracking-[0.14em]';
+
 const STATUS_CLASS: Record<ProjectStatus, string> = {
-  ongoing: styles.statusOngoing!,
-  completed: styles.statusCompleted!,
-  future: styles.statusFuture!,
+  ongoing: `${badge} bg-orange text-ink`,
+  completed: `${badge} bg-ink text-white`,
+  future: `${badge} bg-line text-ink`,
 };
 
 type Filter = 'all' | ProjectStatus;
@@ -137,9 +180,19 @@ interface Milestone {
 const MILESTONES: Milestone[] = [
   { index: '01', name: 'Land acquired', date: '15 Jan 2026', done: true },
   { index: '02', name: 'Design approved', date: '15 Feb 2026', done: true },
-  { index: '03', name: 'Construction started', date: '05 Mar 2026', done: true },
+  {
+    index: '03',
+    name: 'Construction started',
+    date: '05 Mar 2026',
+    done: true,
+  },
   { index: '04', name: 'Roofing', date: 'Nov 2026', done: false },
-  { index: '05', name: 'Building services installation', date: 'Feb 2027', done: false },
+  {
+    index: '05',
+    name: 'Building services installation',
+    date: 'Feb 2027',
+    done: false,
+  },
 ];
 
 const VALUES: Array<[string, string]> = [
@@ -216,7 +269,10 @@ type FormState = 'idle' | 'sending' | 'done' | 'error';
 
 interface ApiResponse {
   message?: string;
-  error?: { message?: string; details?: Array<{ field?: string; message?: string }> };
+  error?: {
+    message?: string;
+    details?: Array<{ field?: string; message?: string }>;
+  };
 }
 
 /**
@@ -289,97 +345,126 @@ export default function Home() {
       preloadImage={IMAGES.hero}
     >
       <main id="top">
-        <section className={styles.hero}>
+        <section className="relative isolate flex items-center bg-line sm:min-h-135">
           <div
-            className={styles.heroPhoto}
+            className={`${media} absolute inset-0 -z-2`}
             style={{ backgroundImage: `url('${IMAGES.hero}')` }}
             role="img"
             aria-label="Aerial view of a CoBuilt residential estate"
           />
-          <div className={styles.heroScrim} aria-hidden="true" />
+          {/* Even on a phone, where the text runs the full width; fading to the right from sm up. */}
+          <div
+            className="pointer-events-none absolute inset-0 -z-1 bg-[linear-gradient(180deg,rgb(20_20_20/82%)_0%,rgb(20_20_20/90%)_100%)] sm:bg-[linear-gradient(92deg,rgb(20_20_20/93%)_0%,rgb(20_20_20/76%)_46%,rgb(20_20_20/30%)_100%)]"
+            aria-hidden="true"
+          />
 
-          <div className={`${styles.container} ${styles.heroInner}`}>
-            <div className={styles.heroRail} aria-hidden="true">
-              <span className={styles.heroRailLine} />
-              <span className={styles.heroRailText}>Follow us</span>
-              <span className={styles.heroRailLine} />
+          <div
+            className={`${container} grid grid-cols-1 items-center gap-7 pt-11 pb-9 sm:gap-8 sm:py-16 lg:grid-cols-[52px_1fr_280px] lg:gap-10`}
+          >
+            <div className="hidden flex-col items-center gap-4.5 lg:flex" aria-hidden="true">
+              <span className="block h-12 w-px bg-white/30" />
+              <span className="text-[0.625rem] uppercase tracking-[0.24em] text-zinc-200 [writing-mode:vertical-rl]">
+                Follow us
+              </span>
+              <span className="block h-12 w-px bg-white/30" />
             </div>
 
-            <div className={styles.heroBody}>
-              <p className={styles.eyebrowOnDark}>Building Trust Through Every Brick</p>
-              <h1 className={styles.heroTitle}>
+            <div className="flex flex-col gap-4.5 sm:gap-6">
+              <p className={eyebrowOnDark}>Building Trust Through Every Brick</p>
+              <h1 className="text-[length:clamp(2rem,9.5vw,2.5rem)] leading-[1.05] text-white sm:text-[length:clamp(2.25rem,5vw,3.75rem)] sm:leading-[1.02] [&_em]:text-orange-on-dark">
                 Creating sustainable developments. Delivering <em>lasting value</em>.
               </h1>
-              <p className={styles.heroLead}>
+              <p className="max-w-135 text-base leading-[1.65] text-zinc-100 sm:text-[1.0625rem] sm:leading-[1.7]">
                 CoBuilt Investment Partners delivers high-quality residential, commercial, mixed-use
                 and strategic developments that create lasting value for investors, businesses and
                 communities.
               </p>
-              <div className={styles.heroActions}>
-                <a className={styles.btnOrange} href="#register">
+              {/* Stacked full width on a phone, so the primary action is never stranded on its own row. */}
+              <div className="flex flex-col gap-2.5 pt-1.5 sm:flex-row sm:flex-wrap sm:gap-3 sm:pt-1">
+                <a className={btnOrange} href="#register">
                   Discuss your project
                 </a>
-                <a className={styles.btnWhite} href="#projects">
+                <a className={btnWhite} href="#projects">
                   Explore our projects
                 </a>
-                <a className={styles.btnOutlineOnDark} href="#register">
+                <a className={btnOutlineOnDark} href="#register">
                   Contact us
                 </a>
               </div>
-              <div className={styles.heroDots} aria-hidden="true">
-                <span className={styles.heroDotActive} />
-                <span className={styles.heroDot} />
-                <span className={styles.heroDot} />
+              {/* Carousel indicators with no carousel behind them; on a phone they only cost height. */}
+              <div className="hidden gap-2 pt-2 sm:flex" aria-hidden="true">
+                <span className="block h-[3px] w-7 bg-orange" />
+                <span className="block h-[3px] w-7 bg-white/50" />
+                <span className="block h-[3px] w-7 bg-white/50" />
               </div>
             </div>
 
-            <div className={styles.heroCall}>
-              <span className={styles.heroCallLabel}>Call us</span>
-              <a className={styles.heroCallNumber} href={PHONE_HREF}>
+            {/*
+              Below lg this moves under the actions rather than hiding: tap-to-call matters most
+              on a phone. From lg it sits on the light right-hand side of the photo, where the
+              scrim is thinnest, so it carries its own dark tile to keep the text above 4.5:1.
+            */}
+            <div className="flex flex-col items-start gap-1 border-t border-line-on-dark pt-6 text-left lg:items-end lg:gap-2.25 lg:border-t-0 lg:bg-ink-deep/80 lg:p-5 lg:text-right">
+              <span className="text-[0.656rem] uppercase tracking-[0.24em] text-orange-on-dark">
+                Call us
+              </span>
+              <a
+                className="inline-flex min-h-target items-center text-[1.1875rem] text-white lg:min-h-0"
+                href={PHONE_HREF}
+              >
                 {PHONE}
               </a>
-              <span className={styles.heroCallHours}>Mon–Fri, 08:00–17:00 WAT</span>
+              <span className="text-[0.781rem] text-zinc-200">Mon–Fri, 08:00–17:00 WAT</span>
             </div>
           </div>
         </section>
 
-        <section className={styles.stats} aria-label="CoBuilt at a glance">
-          <div className={`${styles.container} ${styles.statsInner}`}>
+        <section className="bg-orange" aria-label="CoBuilt at a glance">
+          <div
+            className={`${container} grid grid-cols-2 gap-x-4 gap-y-6 py-8 sm:gap-7 sm:py-10.5 md:grid-cols-4 md:gap-8`}
+          >
             {STATS.map((stat) => (
-              <div key={stat.label} className={styles.stat}>
-                <p className={styles.statValue}>
+              <div key={stat.label} className="flex flex-col gap-1.5">
+                <p className="text-[2.25rem] leading-none font-light tracking-[-0.03em] text-ink sm:text-[2.625rem]">
                   {stat.value}
-                  {stat.plus ? <span>+</span> : null}
+                  {stat.plus ? <span className="text-[1.5rem]">+</span> : null}
                 </p>
-                <p className={styles.statLabel}>{stat.label}</p>
+                <p className="text-[0.688rem] leading-[1.4] tracking-[0.12em] text-ink uppercase sm:leading-[1.6] sm:tracking-[0.18em]">
+                  {stat.label}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className={styles.sectionLight} id="about">
-          <div className={`${styles.container} ${styles.aboutGrid}`}>
-            <div className={styles.aboutCopy}>
-              <p className={styles.eyebrow}>About CoBuilt</p>
-              <h2 className={styles.sectionTitleLg}>
+        <section className={sectionLight} id="about">
+          <div
+            className={`${container} grid grid-cols-1 items-center gap-7 sm:gap-9 md:grid-cols-2 md:gap-16`}
+          >
+            <div className="flex flex-col gap-5 [&_h2_em]:text-rust">
+              <p className={eyebrow}>About CoBuilt</p>
+              <h2 className={titleLg}>
                 A development company built on <em>documented</em> delivery.
               </h2>
-              <p className={styles.aboutLead}>
+              <p className="text-base leading-[1.8] text-zinc-700">
                 CoBuilt Investment Partners plans, manages and delivers residential, commercial,
                 mixed-use and strategic developments. Our integrated model spans land acquisition,
                 feasibility, planning, financing, development management, construction oversight,
                 sales and asset management.
               </p>
-              <p className={styles.aboutBody}>
+              <p className="text-base leading-[1.8] text-zinc-600">
                 That record is Project Passport™ — a permanent, public account of each development,
                 from commencement through to handover.
               </p>
-              <a className={styles.textLink} href="#passport">
+              <a
+                className="mt-2 inline-flex min-h-target items-center self-start border-b border-orange text-[0.719rem] font-semibold tracking-[0.16em] text-rust uppercase hover:text-rust-hover sm:block sm:min-h-0 sm:pb-2"
+                href="#passport"
+              >
                 Read our story
               </a>
             </div>
             <div
-              className={styles.aboutPhoto}
+              className={`${media} aspect-[4/3] sm:aspect-auto sm:h-80 md:h-115`}
               style={{ backgroundImage: `url('${IMAGES.villa}')` }}
               role="img"
               aria-label="A completed CoBuilt villa and pool"
@@ -387,36 +472,41 @@ export default function Home() {
           </div>
         </section>
 
-        <section className={styles.sectionMuted} id="services">
-          <div className={styles.container}>
-            <div className={styles.servicesHead}>
-              <p className={styles.eyebrow}>Our services</p>
-              <h2 className={styles.sectionTitleLg}>What we do</h2>
-              <p className={styles.servicesLead}>
+        <section className={sectionMuted} id="services">
+          <div className={container}>
+            <div className={`${sectionHead} mb-8 max-w-165 sm:mb-11`}>
+              <p className={eyebrow}>Our services</p>
+              <h2 className={titleLg}>What we do</h2>
+              <p className="text-base leading-[1.75] text-zinc-700">
                 Six disciplines delivered under one governance framework — from feasibility through
                 to practical completion and handover.
               </p>
             </div>
 
-            <div className={styles.serviceGrid}>
+            {/* The 1px gap over a grey ground draws the rules between cards. */}
+            <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
               {SERVICES.map((service) => (
                 <article
                   key={service.title}
-                  className={service.informational ? styles.serviceCardMuted : styles.serviceCard}
+                  className={`flex flex-col gap-3 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
                 >
                   <span
-                    className={styles.glyph}
-                    style={service.informational ? { color: 'var(--zinc-500)' } : undefined}
+                    className={`${glyph} ${service.informational ? 'text-zinc-500' : 'text-orange'}`}
                     aria-hidden="true"
                   >
                     ◈
                   </span>
-                  <h3 className={styles.serviceTitle}>{service.title}</h3>
-                  <p className={styles.serviceBody}>{service.body}</p>
+                  <h3 className={`${cardTitle} tracking-[0.16em]`}>{service.title}</h3>
+                  <p className={cardBody}>{service.body}</p>
                   {service.informational ? (
-                    <p className={styles.serviceBadge}>Informational</p>
+                    <p className="mt-1.5 self-start border border-zinc-400 px-2.5 py-1.5 text-[0.656rem] font-bold tracking-[0.16em] text-zinc-700 uppercase">
+                      Informational
+                    </p>
                   ) : (
-                    <a className={styles.serviceMore} href="#register">
+                    <a
+                      className={`${uppercaseLink} -mt-1.75 -mb-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:mt-1.5 sm:mb-0 sm:block sm:min-h-0 sm:self-auto`}
+                      href="#register"
+                    >
                       Learn more →
                     </a>
                   )}
@@ -426,21 +516,28 @@ export default function Home() {
           </div>
         </section>
 
-        <section className={styles.sectionLight} id="projects">
-          <div className={styles.container}>
-            <div className={styles.projectsHead}>
-              <div className={styles.projectsHeadCopy}>
-                <p className={styles.eyebrow}>Featured projects</p>
-                <h2 className={styles.sectionTitleLg}>
-                  Delivered, under construction, and planned
-                </h2>
+        <section className={sectionLight} id="projects">
+          <div className={container}>
+            <div className="mb-7 flex flex-wrap items-end justify-between gap-5 sm:mb-10 sm:gap-8">
+              <div className={`${sectionHead} max-w-150`}>
+                <p className={eyebrow}>Featured projects</p>
+                <h2 className={titleLg}>Delivered, under construction, and planned</h2>
               </div>
-              <div className={styles.filters} role="group" aria-label="Filter projects by stage">
+              {/* One scrolling row on a phone, bled to the screen edge, rather than two wrapped rows. */}
+              <div
+                className="-mx-gutter flex w-[calc(100%+2*var(--spacing-gutter))] flex-none gap-2 overflow-x-auto px-gutter py-1 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:p-0 [&::-webkit-scrollbar]:hidden"
+                role="group"
+                aria-label="Filter projects by stage"
+              >
                 {FILTERS.map((option) => (
                   <button
                     key={option.value}
                     type="button"
-                    className={filter === option.value ? styles.filterActive : styles.filter}
+                    className={`inline-flex min-h-target flex-none cursor-pointer items-center border px-4.5 text-[0.688rem] font-semibold tracking-[0.14em] uppercase ${
+                      filter === option.value
+                        ? 'border-ink bg-ink text-white'
+                        : 'border-zinc-300 bg-white text-ink hover:border-ink'
+                    }`}
                     aria-pressed={filter === option.value}
                     onClick={() => setFilter(option.value)}
                   >
@@ -450,39 +547,45 @@ export default function Home() {
               </div>
             </div>
 
-            <div className={styles.projectGrid}>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
               {visibleProjects.map((project) => (
-                <article key={project.id} className={styles.projectCard}>
+                <article key={project.id} className="flex flex-col border border-line bg-white">
                   <div
-                    className={styles.projectPhoto}
+                    className={`${media} aspect-[16/10] sm:aspect-auto sm:h-57.5`}
                     style={{ backgroundImage: `url('${project.image}')` }}
                     role="img"
                     aria-label={`${project.title}, ${project.place}`}
                   />
-                  <div className={styles.projectBody}>
-                    <div className={styles.projectMetaRow}>
-                      <span className={styles.projectId}>{project.id}</span>
+                  <div className="flex flex-1 flex-col gap-3.25 p-5.5 sm:p-6.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-mono text-[0.656rem] tracking-[0.16em] text-zinc-600 uppercase">
+                        {project.id}
+                      </span>
                       <span className={STATUS_CLASS[project.status]}>{project.statusLabel}</span>
                     </div>
-                    <h3 className={styles.projectTitle}>{project.title}</h3>
-                    <p className={styles.projectTagline}>{project.tagline}</p>
+                    <h3 className="text-[1.5rem] font-normal tracking-[-0.02em] text-ink">
+                      {project.title}
+                    </h3>
+                    <p className="text-[0.906rem] leading-[1.55] text-zinc-600 italic">
+                      {project.tagline}
+                    </p>
 
-                    <div className={styles.projectSpecs}>
+                    <div className="flex flex-col gap-2 border-t border-line pt-2">
                       {project.specs.map((spec) => (
-                        <p key={spec} className={styles.projectSpec}>
+                        <p key={spec} className="text-[0.844rem] text-zinc-700">
                           {spec}
                         </p>
                       ))}
                     </div>
 
                     {project.progress ? (
-                      <div className={styles.progress}>
-                        <p className={styles.progressRow}>
+                      <div className="flex flex-col gap-1.75 pt-1.5">
+                        <p className="flex justify-between text-[0.75rem] text-ink-mid">
                           <span>{project.progress.stage}</span>
-                          <b>{project.progress.percent}%</b>
+                          <b className="font-semibold">{project.progress.percent}%</b>
                         </p>
                         <div
-                          className={styles.progressTrack}
+                          className="h-1.25 overflow-hidden bg-line"
                           role="progressbar"
                           aria-label={`${project.title} ${project.progress.stage} progress`}
                           aria-valuenow={project.progress.percent}
@@ -490,16 +593,21 @@ export default function Home() {
                           aria-valuemax={100}
                         >
                           <div
-                            className={styles.progressFill}
+                            className="h-full bg-rust"
                             style={{ width: `${project.progress.percent}%` }}
                           />
                         </div>
                       </div>
                     ) : null}
 
-                    <div className={styles.projectFoot}>
-                      <span className={styles.projectPlace}>{project.place}</span>
-                      <a className={styles.projectLink} href="#passport">
+                    <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+                      <span className="text-[0.656rem] tracking-[0.18em] text-zinc-500 uppercase">
+                        {project.place}
+                      </span>
+                      <a
+                        className={`${uppercaseLink} -my-3.25 inline-flex min-h-target items-center text-[0.688rem] whitespace-nowrap sm:my-0 sm:inline sm:min-h-0`}
+                        href="#passport"
+                      >
                         {project.linkLabel}
                       </a>
                     </div>
@@ -508,47 +616,57 @@ export default function Home() {
               ))}
             </div>
 
-            <div className={styles.projectsFoot}>
-              <a className={styles.btnOutline} href="#register">
+            <div className="mt-7 flex justify-center sm:mt-10">
+              <a className={`${btnOutline} w-full sm:w-auto`} href="#register">
                 Explore all projects
               </a>
             </div>
           </div>
         </section>
 
-        <section className={styles.passport} id="passport">
+        <section
+          className="grid grid-cols-1 bg-ink lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"
+          id="passport"
+        >
           <div
-            className={styles.passportPhoto}
+            className={`${media} aspect-[16/10] sm:aspect-auto sm:min-h-80 lg:min-h-130`}
             style={{ backgroundImage: `url('${IMAGES.site}')` }}
             role="img"
             aria-label="Anthony Gardens under construction"
           />
-          <div className={styles.passportBody}>
-            <p className={styles.eyebrowOnDark}>Project Passport™ · CB-2024-014</p>
-            <h2 className={styles.sectionTitleMd}>
+          <div className="flex flex-col gap-5 px-gutter py-11 text-white sm:gap-6 sm:py-14 lg:max-w-180 lg:py-20 [&_h2_em]:text-orange-on-dark">
+            <p className={eyebrowOnDark}>Project Passport™ · CB-2024-014</p>
+            <h2 className={titleMd}>
               A permanent, public record for every <em>development</em>.
             </h2>
-            <p className={styles.passportLead}>
+            <p className="max-w-115 text-[0.969rem] leading-[1.75] text-zinc-200">
               Each project carries a unique Project ID and a passport updated at every mandatory
               milestone, with site photography, progress reports, project team and sustainability
               features attached.
             </p>
 
-            <ol className={styles.milestones}>
+            <ol className="flex flex-col">
               {MILESTONES.map((milestone) => (
                 <li
                   key={milestone.index}
-                  className={
-                    milestone.done
-                      ? styles.milestone
-                      : `${styles.milestone} ${styles.milestonePending}`
-                  }
+                  className="flex flex-wrap items-center gap-x-4 gap-y-0.5 border-t border-line-on-dark py-3 last:border-b sm:flex-nowrap sm:py-3.5"
                 >
-                  <span className={styles.milestoneIndex}>{milestone.index}</span>
-                  <span className={styles.milestoneName}>{milestone.name}</span>
-                  <span className={styles.milestoneDate}>
+                  <span
+                    className={`w-6 flex-none font-mono text-[0.688rem] tracking-[0.14em] ${milestone.done ? 'text-orange-on-dark' : 'text-zinc-400'}`}
+                  >
+                    {milestone.index}
+                  </span>
+                  <span
+                    className={`flex-1 text-[0.875rem] ${milestone.done ? 'text-white' : 'text-zinc-300'}`}
+                  >
+                    {milestone.name}
+                  </span>
+                  {/* On a phone the date drops under the name, so long names keep the full line. */}
+                  <span
+                    className={`basis-full pl-10 text-[0.781rem] sm:basis-auto sm:pl-0 ${milestone.done ? 'text-zinc-200' : 'text-zinc-400'}`}
+                  >
                     {milestone.date}
-                    <span className={styles.srOnly}>
+                    <span className="sr-only">
                       {milestone.done ? ' — recorded' : ' — scheduled'}
                     </span>
                   </span>
@@ -556,172 +674,213 @@ export default function Home() {
               ))}
             </ol>
 
-            <a className={styles.btnOrange} href="#register" style={{ alignSelf: 'flex-start' }}>
+            <a className={`${btnOrange} self-stretch sm:self-start`} href="#register">
               View Project Passport™
             </a>
           </div>
         </section>
 
-        <section className={styles.sectionLight} aria-labelledby="values-title">
-          <div className={styles.container}>
-            <div className={styles.valuesHead}>
-              <p className={styles.eyebrow}>Our values</p>
-              <h2 className={styles.sectionTitleMd} id="values-title">
+        <section className={sectionLight} aria-labelledby="values-title">
+          <div className={container}>
+            <div className="mb-8 flex flex-col items-start gap-3 text-left sm:mb-12 sm:items-center sm:text-center">
+              <p className={eyebrow}>Our values</p>
+              <h2 className={titleMd} id="values-title">
                 Where standards meet trusted professionals
               </h2>
             </div>
-            <div className={styles.valueGrid}>
+            {/* Vertical rules only read correctly on a single row, so the two-column layout drops every second one. */}
+            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
               {VALUES.map(([title, body]) => (
-                <div key={title} className={styles.value}>
-                  <span className={styles.glyph} aria-hidden="true">
+                <div
+                  key={title}
+                  className="flex flex-col items-start gap-3.25 text-left sm:items-center sm:border-r sm:border-line sm:px-7 sm:text-center sm:max-md:even:border-r-0 md:last:border-r-0"
+                >
+                  <span className={`${glyph} text-orange`} aria-hidden="true">
                     ◈
                   </span>
-                  <h3 className={styles.valueTitle}>{title}</h3>
-                  <p className={styles.valueBody}>{body}</p>
+                  <h3 className={`${cardTitle} tracking-[0.18em]`}>{title}</h3>
+                  <p className={cardBody}>{body}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className={styles.sectionMuted} id="leadership">
-          <div className={`${styles.container} ${styles.mediaGrid}`}>
-            <div className={styles.mediaCol}>
-              <p className={styles.eyebrow}>Video library</p>
-              <h2 className={styles.sectionTitleSm}>Watch the work</h2>
-              <figure className={styles.videoFrame} style={{ margin: 0 }}>
+        <section className={sectionMuted} id="leadership">
+          <div
+            className={`${container} grid grid-cols-1 items-start gap-9 lg:grid-cols-[1.35fr_1fr] lg:gap-11`}
+          >
+            <div className="flex flex-col gap-5">
+              <p className={eyebrow}>Video library</p>
+              <h2 className={titleSm}>Watch the work</h2>
+              {/* A still preview, not a player: the embed is wired up when the video ID
+                  exists, so nothing here advertises a control that does not work yet. */}
+              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-82.5">
                 <div
-                  className={styles.videoPhoto}
+                  className={`${media} absolute inset-0`}
                   style={{ backgroundImage: `url('${IMAGES.site}')` }}
                 />
-                <span className={styles.videoPlay} aria-hidden="true">
-                  <span className={styles.videoPlayDot}>▶</span>
+                <span
+                  className="absolute inset-0 flex items-center justify-center"
+                  aria-hidden="true"
+                >
+                  <span className="flex size-16 items-center justify-center rounded-full border-[1.5px] border-white bg-[rgb(20_20_20/86%)] text-[1.125rem] text-white">
+                    ▶
+                  </span>
                 </span>
-                <figcaption className={styles.videoCaption}>
-                  <span className={styles.videoKicker}>Project documentary · 6:42</span>
-                  <span className={styles.videoTitle}>Anthony Gardens: one year on site</span>
+                {/* Solid for the lower half so the kicker never lands on bright sky. */}
+                <figcaption className="absolute inset-x-0 bottom-0 flex flex-col bg-[linear-gradient(0deg,rgb(20_20_20/92%)_55%,rgb(20_20_20/0%))] px-4 pt-12 pb-4 text-white sm:px-5.5 sm:pt-14 sm:pb-5.5">
+                  <span className="text-[0.656rem] tracking-[0.18em] text-orange-on-dark uppercase">
+                    Project documentary · 6:42
+                  </span>
+                  <span className="mt-1.5 text-[1.0625rem] font-normal sm:text-[1.25rem]">
+                    Anthony Gardens: one year on site
+                  </span>
                 </figcaption>
               </figure>
-              <p className={styles.videoNote}>
+              <p className="text-[0.781rem] text-zinc-600">
                 Embedded from the official CoBuilt YouTube channel. Captions available.
               </p>
             </div>
 
-            <div className={styles.mediaCol}>
-              <p className={styles.eyebrow}>Leadership</p>
-              <article className={styles.leaderCard}>
-                <div className={styles.leaderPortrait}>Managing Director — approved portrait</div>
-                <div className={styles.leaderBody}>
+            <div className="flex flex-col gap-5">
+              <p className={eyebrow}>Leadership</p>
+              <article className="border border-line bg-white">
+                <div className="flex h-45 items-start bg-line p-3.5 text-[0.719rem] text-zinc-600 sm:h-52.5">
+                  Managing Director — approved portrait
+                </div>
+                <div className="flex flex-col gap-3.25 p-5.5 sm:p-6.5">
                   <div>
-                    <p className={styles.leaderName}>Managing Director</p>
-                    <p className={styles.leaderRole}>CoBuilt Investment Partners</p>
+                    <p className="text-[1.25rem] font-normal text-ink">Managing Director</p>
+                    <p className="mt-1.25 text-[0.719rem] tracking-[0.14em] text-zinc-500 uppercase">
+                      CoBuilt Investment Partners
+                    </p>
                   </div>
-                  <p className={styles.leaderQuote}>
+                  <p className="text-[0.938rem] leading-[1.7] text-zinc-700 italic">
                     “Transparency is not a marketing exercise. It is a delivery discipline — and it
                     is how we intend to be measured.”
                   </p>
-                  <a className={styles.leaderLink} href="#about">
+                  <a
+                    className={`${uppercaseLink} -my-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:my-0 sm:block sm:min-h-0 sm:self-auto`}
+                    href="#about"
+                  >
                     Leadership philosophy →
                   </a>
                 </div>
               </article>
 
-              <figure className={styles.quoteCard} style={{ margin: 0 }}>
-                <span className={styles.glyph} aria-hidden="true">
+              <figure className="flex flex-col gap-3.5 border border-line bg-white p-5.5 sm:p-6.5">
+                <span className={`${glyph} text-orange`} aria-hidden="true">
                   ◈
                 </span>
-                <blockquote className={styles.quoteText} style={{ margin: 0 }}>
+                <blockquote className="text-[0.938rem] leading-[1.7] text-zinc-700">
                   “Every query we raised was answered with a document, not an assurance.”
                 </blockquote>
-                <figcaption className={styles.quoteFoot}>
-                  <p className={styles.quoteName}>Estate Surveyor</p>
-                  <p className={styles.quoteMeta}>Ridge Terraces</p>
+                <figcaption className="border-t border-line pt-2">
+                  <p className="text-[0.906rem] text-ink">Estate Surveyor</p>
+                  <p className="mt-1 text-[0.719rem] tracking-[0.14em] text-zinc-500 uppercase">
+                    Ridge Terraces
+                  </p>
                 </figcaption>
               </figure>
             </div>
           </div>
         </section>
 
-        <section className={styles.sectionLight} aria-labelledby="how-title">
-          <div className={styles.container}>
-            <div className={styles.sectionHead}>
-              <p className={styles.eyebrow}>How it works</p>
-              <h2 className={styles.sectionTitleMd} id="how-title">
+        <section className={sectionLight} aria-labelledby="how-title">
+          <div className={container}>
+            <div className={sectionHead}>
+              <p className={eyebrow}>How it works</p>
+              <h2 className={titleMd} id="how-title">
                 Working with CoBuilt
               </h2>
             </div>
-            <ol className={styles.stepGrid}>
+            <ol className="mt-8 grid grid-cols-1 gap-7 sm:mt-11 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
               {STEPS.map(([number, title, body]) => (
-                <li key={number} className={styles.step}>
-                  <span className={styles.stepNumber}>{number}</span>
-                  <h3 className={styles.stepTitle}>{title}</h3>
-                  <p className={styles.stepBody}>{body}</p>
+                <li
+                  key={number}
+                  className="flex flex-col gap-3.25 sm:border-r sm:border-line sm:px-7 sm:first:pl-0 sm:last:border-r-0 sm:last:pr-0 sm:max-md:odd:pl-0 sm:max-md:even:border-r-0"
+                >
+                  <span className="font-mono text-[2rem] leading-none font-light text-rust">
+                    {number}
+                  </span>
+                  <h3 className={`${cardTitle} tracking-[0.16em]`}>{title}</h3>
+                  <p className={cardBody}>{body}</p>
                 </li>
               ))}
             </ol>
           </div>
         </section>
 
-        <div className={styles.marquee} aria-hidden="true">
-          <div className={styles.marqueeTrack}>
+        {/* A 28px wordmark scrolling past on a phone is noise, not texture, so it starts at sm. */}
+        <div
+          className="hidden overflow-hidden border-y border-line bg-white py-6 sm:block"
+          aria-hidden="true"
+        >
+          <div className="flex w-max animate-marquee items-center gap-14">
             {/* Rendered twice: the -50% translation relies on an exact duplicate. */}
             {[0, 1].map((copy) =>
               MARQUEE_PHRASES.map((phrase) => (
                 <Fragment key={`${copy}-${phrase}`}>
-                  <span className={styles.marqueeWord}>{phrase}</span>
-                  <span className={styles.marqueeGlyph}>◈</span>
+                  <span className="text-[1.75rem] font-light tracking-[0.14em] whitespace-nowrap text-line uppercase">
+                    {phrase}
+                  </span>
+                  <span className="text-[1.75rem] text-orange">◈</span>
                 </Fragment>
               )),
             )}
           </div>
         </div>
 
-        <section className={styles.sectionLight} id="media">
-          <div className={styles.container}>
-            <div className={styles.newsHead}>
-              <div className={styles.sectionHead} style={{ maxWidth: 600 }}>
-                <p className={styles.eyebrow}>Media centre</p>
-                <h2 className={styles.sectionTitleMd}>
-                  Keep up with company updates in one place
-                </h2>
+        <section className={sectionLight} id="media">
+          <div className={container}>
+            <div className="mb-7 flex flex-wrap items-end justify-between gap-5 sm:mb-9 sm:gap-8">
+              <div className={`${sectionHead} max-w-150`}>
+                <p className={eyebrow}>Media centre</p>
+                <h2 className={titleMd}>Keep up with company updates in one place</h2>
               </div>
-              <a className={styles.btnOutline} href="#register">
+              <a className={btnOutline} href="#register">
                 More news
               </a>
             </div>
 
-            <div className={styles.newsGrid}>
+            <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
               {NEWS.map((item) => (
-                <article key={item.title} className={styles.newsItem}>
+                <article key={item.title} className="flex flex-col gap-3.5">
                   <div
-                    className={styles.newsPhoto}
+                    className={`${media} aspect-[16/10] sm:aspect-auto sm:h-50`}
                     style={{ backgroundImage: `url('${item.image}')` }}
                     role="img"
                     aria-label={item.title}
                   />
-                  <p className={styles.newsMeta}>
-                    <span className={styles.newsCategory}>{item.category}</span>
+                  <p className="flex gap-3 text-[0.688rem] tracking-[0.16em] text-zinc-500 uppercase">
+                    <span className="text-rust">{item.category}</span>
                     <span>{item.date}</span>
                   </p>
-                  <h3 className={styles.newsTitle}>{item.title}</h3>
-                  <p className={styles.newsExcerpt}>{item.excerpt}</p>
+                  <h3 className="text-[1.1875rem] leading-[1.35] font-normal tracking-normal text-ink">
+                    {item.title}
+                  </h3>
+                  <p className="text-[0.875rem] leading-[1.65] text-zinc-600">{item.excerpt}</p>
                 </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section className={styles.register} id="register">
-          <div className={`${styles.container} ${styles.registerGrid}`}>
-            <div className={styles.registerCopy}>
-              <p className={styles.eyebrow}>Register your interest</p>
-              <h2 className={styles.sectionTitleSm}>
+        <section className="bg-line py-13 sm:py-19" id="register">
+          <div
+            className={`${container} grid grid-cols-1 items-center gap-7 sm:gap-9 lg:grid-cols-2 lg:gap-13`}
+          >
+            <div className="flex flex-col gap-4 [&_h2_em]:text-rust">
+              <p className={eyebrow}>Register your interest</p>
+              <h2 className={titleSm}>
                 Follow our developments as they <em>progress</em>.
               </h2>
-              <p className={styles.registerLead}>
+              <p className="text-[0.969rem] leading-[1.75] text-zinc-700">
                 Receive project updates, company news and Project Passport™ notifications.
               </p>
-              <p className={styles.registerNotice}>
+              {/* The regulatory position, which the brief requires on every investor path. */}
+              <p className="border-l-3 border-orange pl-4 text-[0.844rem] leading-[1.7] text-zinc-700">
                 This is an information request only. CoBuilt Investment Partners does not currently
                 offer or solicit investment. An Investor Portal will be introduced once all required
                 regulatory approvals and licences are in place.
@@ -729,19 +888,19 @@ export default function Home() {
             </div>
 
             <form
-              className={styles.form}
+              className="flex flex-col gap-4 border border-zinc-300 bg-white p-5 sm:p-8"
               onSubmit={(event) => {
                 void register(event);
               }}
             >
-              <div className={styles.formRow}>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="name">
+              <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                <div className={field}>
+                  <label className={fieldLabel} htmlFor="name">
                     Full name
                   </label>
                   <input
                     id="name"
-                    className={styles.input}
+                    className={`${input} placeholder:text-zinc-500`}
                     type="text"
                     name="name"
                     autoComplete="name"
@@ -751,13 +910,13 @@ export default function Home() {
                     onChange={(event) => setName(event.target.value)}
                   />
                 </div>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="email">
+                <div className={field}>
+                  <label className={fieldLabel} htmlFor="email">
                     Email address
                   </label>
                   <input
                     id="email"
-                    className={styles.input}
+                    className={`${input} placeholder:text-zinc-500`}
                     type="email"
                     name="email"
                     autoComplete="email"
@@ -769,13 +928,13 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="enquirerType">
+              <div className={field}>
+                <label className={fieldLabel} htmlFor="enquirerType">
                   I am enquiring as
                 </label>
                 <select
                   id="enquirerType"
-                  className={styles.select}
+                  className={`${input} select-chevron cursor-pointer pr-10`}
                   name="enquirerType"
                   value={enquirerType}
                   onChange={(event) => setEnquirerType(event.target.value)}
@@ -789,7 +948,7 @@ export default function Home() {
               </div>
 
               {/* Honeypot: scored server-side, never shown to a reader. */}
-              <div className={styles.honeypot} aria-hidden="true">
+              <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
                 <label htmlFor="website">Website</label>
                 <input
                   id="website"
@@ -802,26 +961,39 @@ export default function Home() {
                 />
               </div>
 
-              <div className={styles.consent}>
-                <input className={styles.checkbox} id="consent" type="checkbox" required />
-                <label className={styles.consentText} htmlFor="consent">
+              <div className="flex items-start gap-2.75 pt-0.5">
+                <input
+                  className="mt-px size-5 flex-none cursor-pointer accent-orange sm:mt-0.5 sm:size-[17px]"
+                  id="consent"
+                  type="checkbox"
+                  required
+                />
+                <label
+                  className="text-[0.781rem] leading-[1.6] text-zinc-700 [&_a]:text-rust [&_a]:underline"
+                  htmlFor="consent"
+                >
                   I consent to CoBuilt processing my details in line with the Privacy Policy (NDPA).
                 </label>
               </div>
 
-              <button className={styles.submit} type="submit" disabled={state === 'sending'}>
+              {/* Charcoal, not white: white on #FF6600 is 2.94:1. */}
+              <button
+                className="inline-flex min-h-12.5 w-full cursor-pointer items-center justify-center border border-transparent bg-orange px-7 text-center text-[0.719rem] font-semibold tracking-[0.16em] text-ink uppercase transition-colors duration-150 enabled:hover:bg-orange-lift disabled:cursor-not-allowed disabled:opacity-60"
+                type="submit"
+                disabled={state === 'sending'}
+              >
                 {state === 'sending' ? 'Sending…' : 'Register your interest'}
               </button>
 
               {message ? (
                 <p
-                  className={`${styles.formMsg} ${state === 'error' ? styles.msgBad : styles.msgOk}`}
+                  className={`text-center text-[0.719rem] font-medium ${state === 'error' ? 'text-msg-bad' : 'text-msg-ok'}`}
                   role="status"
                 >
                   {message}
                 </p>
               ) : (
-                <p className={styles.formNote}>
+                <p className="text-center text-[0.719rem] text-zinc-600">
                   Protected against automated submissions. You will receive a confirmation email.
                 </p>
               )}
@@ -829,7 +1001,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-
     </SiteLayout>
   );
 }

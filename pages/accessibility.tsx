@@ -1,6 +1,6 @@
 import ProsePage from '../components/ProsePage';
 import { EMAIL, PHONE, PHONE_HREF } from '../components/site';
-import styles from '../styles/Prose.module.css';
+import * as prose from '../components/prose';
 
 /**
  * Accessibility Statement.
@@ -18,16 +18,16 @@ export default function Accessibility() {
       updated="16 September 2026"
       description="CoBuilt Investment Partners' accessibility statement: target conformance with WCAG 2.2 AA, what has been verified, and the known exceptions."
     >
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Our commitment</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Our commitment</h2>
+        <p className={prose.p}>
           CoBuilt Investment Partners aims to meet the Web Content Accessibility Guidelines
           (WCAG) 2.2 at Level AA across this website. Accessibility is treated as part of
           delivery rather than a retrofit, and this statement is updated as work lands.
         </p>
-        <div className={styles.note}>
-          <p className={styles.noteTitle}>Conformance status</p>
-          <p className={styles.noteBody}>
+        <div className={prose.note}>
+          <p className={prose.noteTitle}>Conformance status</p>
+          <p className={prose.noteBody}>
             <strong>Partially conformant</strong> with WCAG 2.2 Level AA. Most of the standard is
             met; the exceptions listed below are known and are being worked through. The site has
             not yet been through an independent audit or a full assistive-technology test.
@@ -35,9 +35,9 @@ export default function Accessibility() {
         </div>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>What has been verified</h2>
-        <ul className={styles.list}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>What has been verified</h2>
+        <ul className={prose.list}>
           <li>
             <strong>Colour contrast.</strong> Every text and interface colour pairing the site
             renders has been measured against the WCAG formula and meets 4.5:1 for body text, 3:1
@@ -72,10 +72,10 @@ export default function Accessibility() {
         </ul>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Known exceptions</h2>
-        <p className={styles.p}>We are aware of the following, and intend to resolve them:</p>
-        <ul className={styles.list}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Known exceptions</h2>
+        <p className={prose.p}>We are aware of the following, and intend to resolve them:</p>
+        <ul className={prose.list}>
           <li>
             <strong>Video captions and transcripts.</strong> The video library is not yet live.
             When it is, each film will carry captions and a transcript; until then the section
@@ -99,23 +99,23 @@ export default function Accessibility() {
         </ul>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Telling us about a problem</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Telling us about a problem</h2>
+        <p className={prose.p}>
           If something on this site blocks you, we want to know — it is the fastest way for us to
           fix it. Email <a href={`mailto:${EMAIL}`}>{EMAIL}</a> or call{' '}
           <a href={PHONE_HREF}>{PHONE}</a>, Monday to Friday, 08:00–17:00 WAT. Tell us the page and
           what happened, and we will respond within five working days.
         </p>
-        <p className={styles.p}>
+        <p className={prose.p}>
           If you need information from this site in another format — large print, plain text, or
           read aloud over the phone — ask and we will provide it.
         </p>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>How this was assessed</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>How this was assessed</h2>
+        <p className={prose.p}>
           Self-assessment, carried out by the team building the site, combining automated checks
           run as part of the build with manual keyboard and zoom testing. This statement was
           prepared on 16 September 2026 and is reviewed whenever the site changes materially.

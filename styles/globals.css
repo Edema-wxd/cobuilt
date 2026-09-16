@@ -1,12 +1,19 @@
 /**
- * Global tokens and base styles for the public site.
+ * Global tokens, Tailwind theme and base styles for the public site.
  *
  * The palette and type are the handoff design system (shadcn/ui "new-york"
  * tokens, Geist) with CoBuilt's orange laid over the neutral scale. Direction
  * 3c — the Corporate Digital Standards build — is the one implemented, so the
  * rules here hold to that brief: WCAG 2.2 AA contrast and a 44px minimum
  * target on every interactive control.
+ *
+ * Every component is styled with Tailwind utilities; this file is the only
+ * stylesheet. The raw colour values stay in `:root` because
+ * __tests__/unit/contrast.test.ts reads them from there, and the theme below
+ * maps them onto utility names (`bg-orange`, `text-rust`, …).
  */
+
+@import 'tailwindcss';
 
 :root {
   /* Brand */
@@ -36,117 +43,164 @@
   /* Hairlines on a dark ground, where a solid neutral reads too heavy. */
   --line-on-dark: rgb(255 255 255 / 18%);
 
+  /* Form feedback. */
+  --msg-ok: #1a6b3c;
+  --msg-bad: #a3231a;
+}
+
+/*
+ * Colour pairing rules, verified by __tests__/unit/contrast.test.ts:
+ *   - Orange is a BACKGROUND. White on #FF6600 is 2.94:1 and fails AA at every
+ *     size, so labels on an orange fill are charcoal (5.80:1), not white.
+ *   - Orange as TEXT or as a meaningful fill on a light ground fails too, so
+ *     rust carries those (5.50:1 on white).
+ *   - orange-on-dark (#FF9955) is the accent on dark grounds only.
+ * Tailwind's default palette is switched off so an off-brand orange-500 cannot
+ * slip in unchecked.
+ */
+@theme inline {
+  --color-*: initial;
+  --color-orange: var(--orange);
+  --color-orange-lift: var(--orange-lift);
+  --color-orange-on-dark: var(--orange-on-dark);
+  --color-rust: var(--rust);
+  --color-rust-hover: var(--rust-hover);
+  --color-ink: var(--ink);
+  --color-ink-deep: var(--ink-deep);
+  --color-ink-mid: var(--ink-mid);
+  --color-zinc-700: var(--zinc-700);
+  --color-zinc-600: var(--zinc-600);
+  --color-zinc-500: var(--zinc-500);
+  --color-zinc-400: var(--zinc-400);
+  --color-zinc-300: var(--zinc-300);
+  --color-zinc-200: var(--zinc-200);
+  --color-zinc-100: var(--zinc-100);
+  --color-zinc-50: var(--zinc-50);
+  --color-line: var(--line);
+  --color-line-on-dark: var(--line-on-dark);
+  --color-white: var(--white);
+  --color-msg-ok: var(--msg-ok);
+  --color-msg-bad: var(--msg-bad);
+}
+
+@theme {
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /*
+   * Mobile-first, set one pixel above the widths the layout was designed to
+   * break at: `sm` is past a phone (641px), `md` past a portrait tablet
+   * (901px), `lg` is where the nav fits inline (1081px), `xl` where it fits at
+   * full size (1181px).
+   */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 40.0625rem;
+  --breakpoint-md: 56.3125rem;
+  --breakpoint-lg: 67.5625rem;
+  --breakpoint-xl: 73.8125rem;
+
   /* The mockup is drawn at 1160px wide with a 44px gutter. */
-  --measure: 1160px;
-  --gutter: clamp(1.25rem, 4vw, 2.75rem);
+  --container-measure: 1160px;
+  --spacing-gutter: clamp(1.25rem, 4vw, 2.75rem);
 
   /* Every interactive control meets this, per the brief. */
-  --target: 44px;
+  --spacing-target: 44px;
+
+  /* The track holds the phrase set twice, so -50% lands exactly where it began. */
+  --animate-marquee: marquee 26s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
-* {
-  box-sizing: border-box;
+/** The native select arrow is removed; this is its replacement. */
+@utility select-chevron {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
 }
 
-html {
-  scroll-behavior: smooth;
-  /* The sticky header must not cover the heading of an anchored section. */
-  scroll-padding-top: 96px;
-}
-
-body {
-  margin: 0;
-  /* Guards the marquee and any full-bleed section from widening the page. */
-  overflow-x: clip;
-  background: var(--white);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-/**
- * Headings run light (300) and tight, with an italic accent phrase carried by
- * <em>. The weight is deliberate: at 40px+ a 300 reads as editorial rather
- * than promotional, which is the whole register of this direction.
- */
-h1,
-h2,
-h3 {
-  margin: 0;
-  font-weight: 300;
-  letter-spacing: -0.035em;
-  line-height: 1.08;
-  text-wrap: balance;
-}
-
-h1 em,
-h2 em,
-h3 em {
-  font-style: italic;
-  font-weight: 400;
-}
-
-p {
-  margin: 0;
-  text-wrap: pretty;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-ul,
-ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-img {
-  max-width: 100%;
-}
-
-button,
-input,
-select {
-  font: inherit;
-  color: inherit;
-}
-
-/**
- * Dual ring. A single orange ring fails 1.4.11 against white (2.94:1), and a
- * single dark ring would vanish on the charcoal sections. The inner white ring
- * carries the dark grounds, the outer ink ring carries the light ones, so the
- * indicator clears 3:1 wherever it lands.
- */
-:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px var(--white);
-}
-
-::selection {
-  background: var(--orange);
-  color: var(--ink);
-}
-
-@media (prefers-reduced-motion: reduce) {
+@layer base {
   html {
-    scroll-behavior: auto;
+    scroll-behavior: smooth;
+    /* The sticky header must not cover the heading of an anchored section. */
+    scroll-padding-top: 96px;
   }
 
-  *,
-  *::before,
-  *::after {
-    /* Stops the wordmark marquee outright rather than merely shortening it. */
-    animation: none !important;
-    transition-duration: 0.001ms !important;
+  body {
+    /* Guards the marquee and any full-bleed section from widening the page. */
+    overflow-x: clip;
+    background: var(--white);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /**
+   * Headings run light (300) and tight, with an italic accent phrase carried by
+   * <em>. The weight is deliberate: at 40px+ a 300 reads as editorial rather
+   * than promotional, which is the whole register of this direction.
+   */
+  h1,
+  h2,
+  h3 {
+    font-weight: 300;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+
+  h1 em,
+  h2 em,
+  h3 em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /**
+   * Dual ring. A single orange ring fails 1.4.11 against white (2.94:1), and a
+   * single dark ring would vanish on the charcoal sections. The inner white ring
+   * carries the dark grounds, the outer ink ring carries the light ones, so the
+   * indicator clears 3:1 wherever it lands.
+   */
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--white);
+  }
+
+  ::selection {
+    background: var(--orange);
+    color: var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      /* Stops the wordmark marquee outright rather than merely shortening it. */
+      animation: none !important;
+      transition-duration: 0.001ms !important;
+    }
   }
 }

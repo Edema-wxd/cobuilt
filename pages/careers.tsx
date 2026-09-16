@@ -1,6 +1,6 @@
 import ProsePage from '../components/ProsePage';
 import { EMAIL } from '../components/site';
-import styles from '../styles/Prose.module.css';
+import * as prose from '../components/prose';
 
 /**
  * Careers.
@@ -19,11 +19,11 @@ export default function Careers() {
       description="Careers at CoBuilt Investment Partners — how we work, the disciplines we hire into, and how to send a speculative application."
       current="/careers"
     >
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Current vacancies</h2>
-        <div className={styles.note}>
-          <p className={styles.noteTitle}>No open roles at present</p>
-          <p className={styles.noteBody}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Current vacancies</h2>
+        <div className={prose.note}>
+          <p className={prose.noteTitle}>No open roles at present</p>
+          <p className={prose.noteBody}>
             We are not advertising a vacancy right now. Open roles will be listed on this page when
             they arise, with the scope, location and closing date for each. Speculative
             applications are welcome in the meantime.
@@ -31,22 +31,22 @@ export default function Careers() {
         </div>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>How we work</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>How we work</h2>
+        <p className={prose.p}>
           Every CoBuilt development carries a Project Passport™: a dated, public record of each
           milestone, with the site photography, progress reports and certificates attached. That
           commitment shapes the job. Work is documented as it happens, programmes are published
           before they are met, and a slipped date is reported rather than quietly revised.
         </p>
-        <p className={styles.p}>
+        <p className={prose.p}>
           It suits people who would rather answer a question with a document than an assurance.
         </p>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Disciplines we hire into</h2>
-        <ul className={styles.list}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Disciplines we hire into</h2>
+        <ul className={prose.list}>
           <li>Development and project management</li>
           <li>Construction management and site supervision</li>
           <li>Quantity surveying and cost control</li>
@@ -57,23 +57,23 @@ export default function Careers() {
         </ul>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Sending a speculative application</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Sending a speculative application</h2>
+        <p className={prose.p}>
           Email <a href={`mailto:${EMAIL}`}>{EMAIL}</a> with &ldquo;Careers&rdquo; in the subject
           line. Include your CV, the discipline you work in, and a short note on a project you
           delivered and what you would do differently next time. We read every application and
           reply either way.
         </p>
-        <p className={styles.p}>
+        <p className={prose.p}>
           We hold application data for six months and then delete it, unless you ask us to keep it
           longer. Our <a href="/privacy">Privacy Policy</a> explains your rights over that data.
         </p>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Equal opportunity</h2>
-        <p className={styles.p}>
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Equal opportunity</h2>
+        <p className={prose.p}>
           CoBuilt Investment Partners recruits on merit. We do not discriminate on the basis of
           gender, ethnicity, religion, age, disability or state of origin, and we will make
           reasonable adjustments at any stage of the process — tell us what you need.
