@@ -1,769 +1,1777 @@
-/* Landing page. Paper surfaces are reserved for records: the passport and the
-   subscription form. Everything else sits on the passport-green ground. */
+/**
+ * Landing page — Direction 3c, "Building Trust Through Every Brick".
+ *
+ * Values are taken from the handoff mockup, which is drawn once at 1160px with
+ * a 44px gutter. The mockup specifies no smaller layout, so every breakpoint
+ * below `--measure` is added here: the rule throughout is that the page
+ * degrades by stacking and by dropping ornament (the hero side rails, the
+ * marquee), never by dropping content.
+ *
+ * Two colour rules from the brief are load-bearing and easy to undo by
+ * accident: #FF6600 is used as a *background* or on a dark ground, never as
+ * text on white (2.9:1); --rust carries the accent on light grounds instead.
+ */
 
 .page {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .container {
-  width: 100%;
   max-width: var(--measure);
   margin: 0 auto;
   padding-inline: var(--gutter);
 }
 
-/* --- Navigation ---------------------------------------------------------- */
-
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: rgba(6, 23, 15, 0.86);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--ink-line);
-}
-
-.navInner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  min-height: 4.25rem;
-}
-
-.wordmark {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.wordmarkName {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.15rem;
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-
-.wordmarkSub {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--sage);
-}
-
-.navLinks {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.navLink {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--sage);
-  transition: color 160ms ease;
-}
-
-.navLink:hover {
-  color: var(--paper);
-}
-
-/* --- Buttons ------------------------------------------------------------- */
-
-.btnPrimary,
-.btnGhost {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding: 0.7rem 1.2rem;
-  border: 1px solid var(--brass);
-  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
-}
-
-.btnPrimary {
-  background: var(--brass);
-  color: var(--ink-deep);
-  font-weight: 500;
-}
-
-.btnPrimary:hover {
-  background: var(--brass-soft);
-  border-color: var(--brass-soft);
-}
-
-.btnGhost {
-  background: transparent;
-  color: var(--brass-soft);
-  border-color: var(--ink-line);
-}
-
-.btnGhost:hover {
-  border-color: var(--brass);
-  color: var(--paper);
-}
-
-/* --- Hero ---------------------------------------------------------------- */
-
-.hero {
-  position: relative;
-  padding-block: clamp(3.5rem, 9vw, 7rem) clamp(4rem, 10vw, 8rem);
-  background: var(--ink);
-  border-bottom: 1px solid var(--ink-line);
-}
-
-/* Security-paper hairlines, the way a passport page is guarded. */
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-      58deg,
-      rgba(201, 162, 39, 0.05) 0 1px,
-      transparent 1px 7px
-    ),
-    repeating-linear-gradient(-58deg, rgba(201, 162, 39, 0.04) 0 1px, transparent 1px 9px);
-  pointer-events: none;
-}
-
-.heroInner {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
-  gap: clamp(2.5rem, 6vw, 4.5rem);
-  align-items: center;
-}
-
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--brass);
-  margin-bottom: 1.5rem;
-}
-
-.heroTitle {
-  font-size: clamp(2.6rem, 6.4vw, 4.6rem);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 0.97;
-}
-
-.heroTitle em {
-  font-style: normal;
-  color: var(--brass);
-}
-
-.heroLead {
-  margin-top: 1.75rem;
-  max-width: 34rem;
-  color: rgba(242, 239, 230, 0.78);
-  font-size: 1.1rem;
-}
-
-.heroActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.85rem;
-  margin-top: 2.25rem;
-}
-
-.heroFacts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2.25rem;
-  margin-top: 3rem;
-  padding-top: 1.75rem;
-  border-top: 1px solid var(--ink-line);
-}
-
-.fact {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.factValue {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.factLabel {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--sage);
-}
-
-/* --- The passport card: the signature element ---------------------------- */
-
-.passport {
-  position: relative;
-  background: var(--paper);
-  color: var(--paper-ink);
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
-  animation: rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.passportHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 1.5rem;
-  background: var(--ink-deep);
-  color: var(--brass-soft);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
-.passportBody {
-  padding: 1.75rem 1.5rem 1.25rem;
-}
-
-.passportProject {
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.passportPlace {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #5f6b63;
-  margin-top: 0.4rem;
-}
-
-.milestones {
-  margin-top: 1.5rem;
-  border-top: 1px solid var(--paper-line);
-}
-
-.milestone {
-  display: grid;
-  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 0;
-  border-bottom: 1px dotted var(--paper-line);
-  animation: rise 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.msIndex {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: #6f7a73;
-}
-
-.msName {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-}
-
-.msDate {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  color: #5f6b63;
-  white-space: nowrap;
-}
-
-.chip {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.45rem;
-  margin-left: 0.6rem;
-  border: 1px solid currentColor;
-  vertical-align: 0.1em;
-}
-
-.chipDone {
-  color: #2f6b4f;
-}
-
-.chipActive {
-  color: #96701a;
-}
-
-.chipPending {
-  color: #6f7a73;
-}
-
-/* The entry stamp: violet ink, struck once on load. */
-.seal {
-  position: absolute;
-  right: -2.5rem;
-  bottom: -2.25rem;
-  width: 6.75rem;
-  height: 6.75rem;
-  border: 2px solid var(--stamp);
-  border-radius: 50%;
-  display: grid;
-  place-content: center;
-  text-align: center;
-  color: var(--stamp);
-  background: rgba(242, 239, 230, 0.92);
-  transform: rotate(-13deg);
-  animation: stamp 620ms cubic-bezier(0.2, 1.4, 0.4, 1) 900ms both;
-}
-
-.seal::before {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border: 1px solid var(--stamp);
-  border-radius: 50%;
-  opacity: 0.55;
-}
-
-.sealTop,
-.sealBottom {
-  font-family: var(--font-mono);
-  font-size: 0.5rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.sealYear {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-/* Machine-readable zone, as printed on the passport's last page. */
-.mrz {
-  padding: 0.85rem 1.5rem 1.1rem;
-  border-top: 2px solid var(--paper-line);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.12em;
-  color: #46504a;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-/* --- Sections ------------------------------------------------------------ */
-
-.section {
-  padding-block: clamp(3.5rem, 8vw, 6.5rem);
-  border-bottom: 1px solid var(--ink-line);
-}
-
-.sectionHead {
-  max-width: 42rem;
-  margin-bottom: clamp(2.25rem, 5vw, 3.5rem);
-}
-
-.kicker {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--brass);
-  margin-bottom: 1rem;
-}
-
-.sectionTitle {
-  font-size: clamp(1.9rem, 3.6vw, 2.75rem);
-}
-
-.sectionLead {
-  margin-top: 1.1rem;
-  color: rgba(242, 239, 230, 0.72);
-}
-
-/* --- Stage register ------------------------------------------------------ */
-
-.register {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: clamp(2rem, 6vw, 5rem);
-}
-
-.stage {
-  display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 1rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid var(--ink-line);
-}
-
-.stageIndex {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--brass);
-}
-
-.stageName {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-.stageEvidence {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--sage);
-  text-align: right;
-}
-
-/* --- Projects ------------------------------------------------------------ */
-
-.projects {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
-}
-
-.projectCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  padding: 1.75rem 1.5rem;
-  background: var(--ink);
-  border: 1px solid var(--ink-line);
-  transition: border-color 200ms ease, transform 200ms ease;
-}
-
-.projectCard:hover {
-  border-color: var(--brass);
-  transform: translateY(-3px);
-}
-
-.projectStatus {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--brass);
-}
-
-.projectTitle {
-  font-size: 1.35rem;
-}
-
-.projectDesc {
-  color: rgba(242, 239, 230, 0.7);
-  font-size: 0.98rem;
-}
-
-.projectMeta {
-  margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid var(--ink-line);
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--sage);
-}
-
-/* --- Investors ----------------------------------------------------------- */
-
-.investorGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-  gap: clamp(2rem, 6vw, 4rem);
-  align-items: start;
-}
-
-.investorPoints {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.point {
-  display: grid;
-  gap: 0.4rem;
-  padding-left: 1.25rem;
-  border-left: 2px solid var(--brass);
-}
-
-.pointTitle {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-.pointBody {
-  color: rgba(242, 239, 230, 0.7);
-  font-size: 0.98rem;
-}
-
-.notice {
-  padding: 1.5rem;
-  border: 1px solid var(--ink-line);
-  background: rgba(12, 42, 29, 0.6);
-}
-
-.noticeLabel {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--brass);
-  margin-bottom: 0.85rem;
-}
-
-.noticeBody {
-  font-size: 0.95rem;
-  color: rgba(242, 239, 230, 0.74);
-}
-
-/* --- Subscribe ----------------------------------------------------------- */
-
-.subscribeGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(2rem, 6vw, 4rem);
-  align-items: center;
-}
-
-.formCard {
-  background: var(--paper);
-  color: var(--paper-ink);
-  padding: 1.75rem 1.5rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
-}
-
-.formRow {
-  display: grid;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
-}
-
-.label {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #5f6b63;
-}
-
-.input {
-  font-family: var(--font-body);
-  font-size: 1rem;
-  padding: 0.7rem 0.75rem;
-  color: var(--paper-ink);
-  background: #fbfaf5;
-  border: 1px solid var(--paper-line);
-}
-
-.input:focus-visible {
-  border-color: var(--stamp);
-  outline-offset: 0;
-}
-
-.honeypot {
+.srOnly {
   position: absolute;
   width: 1px;
   height: 1px;
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip-path: inset(50%);
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
 }
 
-.submit {
-  display: block;
-  width: 100%;
-  text-align: center;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
+/* ---------------------------------------------------------------- Primitives */
+
+.eyebrow {
+  font-size: 0.719rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--rust);
+  font-weight: 500;
+}
+
+.eyebrowOnDark {
+  composes: eyebrow;
+  color: var(--orange-on-dark);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 28px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  font-size: 0.719rem;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  padding: 0.8rem 1.2rem;
-  color: var(--paper);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  text-align: center;
+}
+
+.btnOrange {
+  composes: btn;
+  background: var(--orange);
+  color: var(--white);
+}
+
+.btnOrange:hover {
+  background: var(--orange-lift);
+}
+
+.btnWhite {
+  composes: btn;
+  background: var(--white);
+  color: var(--ink);
+}
+
+.btnWhite:hover {
+  background: var(--zinc-200);
+}
+
+.btnOutlineOnDark {
+  composes: btn;
+  border-color: var(--white);
+  color: var(--white);
+}
+
+.btnOutlineOnDark:hover {
+  background: var(--white);
+  color: var(--ink);
+}
+
+.btnOutline {
+  composes: btn;
+  border-color: var(--zinc-300);
+  color: var(--ink);
+  background: var(--white);
+}
+
+.btnOutline:hover {
+  border-color: var(--ink);
+}
+
+.btnDark {
+  composes: btn;
+  background: var(--ink);
+  color: var(--white);
+}
+
+.btnDark:hover {
   background: var(--ink-deep);
-  border: 1px solid var(--ink-deep);
-  transition: background 160ms ease;
+}
+
+/** Underlined text link that sits under a block of prose. */
+.textLink {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--orange);
+  color: var(--rust);
+  font-size: 0.719rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.textLink:hover {
+  color: var(--rust-hover);
+}
+
+.glyph {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--orange);
+}
+
+/** Shared by every photographic block; the URL is set inline per instance. */
+.media {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--line);
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ------------------------------------------------------------- Utility strip */
+
+.utility {
+  background: var(--ink);
+  color: var(--zinc-200);
+  font-size: 0.719rem;
+}
+
+.utilityInner {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-block: 6px;
+}
+
+.utilityContact {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  letter-spacing: 0.04em;
+}
+
+.utilityContact a:hover {
+  color: var(--orange-on-dark);
+}
+
+.utilitySocial {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  font-size: 0.656rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.utilitySocial a:hover {
+  color: var(--orange-on-dark);
+}
+
+.utilitySearch {
+  color: var(--orange-on-dark);
+}
+
+/* --------------------------------------------------------------------- Header */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+}
+
+.headerInner {
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.logo {
+  display: block;
+  height: 38px;
+  width: auto;
+  flex: none;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 0.688rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  font-weight: 600;
+}
+
+.navLink {
+  padding-block: 4px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  color: var(--rust);
+}
+
+.navLinkActive {
+  composes: navLink;
+  color: var(--rust);
+  border-bottom-color: var(--orange);
+}
+
+.navCta {
+  composes: btn;
+  min-height: var(--target);
+  padding: 0 20px;
+  background: var(--orange);
+  color: var(--white);
+  letter-spacing: 0.13em;
+  font-size: 0.688rem;
+}
+
+.navCta:hover {
+  background: var(--orange-lift);
+}
+
+/** Shown only once the nav no longer fits on one line. */
+.navToggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--target);
+  height: var(--target);
+  background: transparent;
+  border: 1px solid var(--zinc-300);
+  cursor: pointer;
+}
+
+.navToggleBars,
+.navToggleBars::before,
+.navToggleBars::after {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--ink);
+  content: '';
+}
+
+.navToggleBars::before {
+  transform: translateY(-6px);
+}
+
+.navToggleBars::after {
+  transform: translateY(4px);
+}
+
+/* ----------------------------------------------------------------------- Hero */
+
+.hero {
+  position: relative;
+  min-height: 540px;
+  display: flex;
+  align-items: center;
+  background-color: var(--line);
+  isolation: isolate;
+}
+
+.heroPhoto {
+  composes: media;
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+
+.heroScrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    92deg,
+    rgb(20 20 20 / 93%) 0%,
+    rgb(20 20 20 / 76%) 46%,
+    rgb(20 20 20 / 30%) 100%
+  );
+}
+
+.heroInner {
+  display: grid;
+  grid-template-columns: 52px 1fr 280px;
+  gap: 40px;
+  align-items: center;
+  padding-block: 64px;
+  width: 100%;
+}
+
+.heroRail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.heroRailLine {
+  display: block;
+  width: 1px;
+  height: 48px;
+  background: rgb(255 255 255 / 30%);
+}
+
+.heroRailText {
+  writing-mode: vertical-rl;
+  font-size: 0.625rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--zinc-200);
+}
+
+.heroBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.heroTitle {
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  line-height: 1.02;
+  color: var(--white);
+}
+
+.heroTitle em {
+  color: var(--orange-on-dark);
+}
+
+.heroLead {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--zinc-100);
+  max-width: 540px;
+}
+
+.heroActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.heroDots {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.heroDot {
+  display: block;
+  width: 28px;
+  height: 3px;
+  background: rgb(255 255 255 / 50%);
+}
+
+.heroDotActive {
+  composes: heroDot;
+  background: var(--orange);
+}
+
+.heroCall {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.heroCallLabel {
+  font-size: 0.656rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--orange-on-dark);
+}
+
+.heroCallNumber {
+  font-size: 1.1875rem;
+  color: var(--white);
+}
+
+.heroCallHours {
+  font-size: 0.781rem;
+  color: var(--zinc-200);
+}
+
+/* ----------------------------------------------------------------- Stat band */
+
+.stats {
+  background: var(--orange);
+}
+
+.statsInner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  padding-block: 42px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statValue {
+  font-size: 2.625rem;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  color: var(--white);
+  line-height: 1;
+}
+
+.statValue span {
+  font-size: 1.5rem;
+}
+
+.statLabel {
+  font-size: 0.688rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+/* -------------------------------------------------------------------- Section */
+
+.section {
+  padding-block: 88px;
+}
+
+.sectionLight {
+  composes: section;
+  background: var(--white);
+}
+
+.sectionMuted {
+  composes: section;
+  background: var(--zinc-100);
+  border-top: 1px solid var(--line);
+}
+
+.sectionTitleLg {
+  font-size: clamp(1.875rem, 3.4vw, 2.75rem);
+}
+
+.sectionTitleMd {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.sectionTitleSm {
+  font-size: clamp(1.5rem, 2.4vw, 2.125rem);
+}
+
+/* ---------------------------------------------------------------------- About */
+
+.aboutGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 64px;
+  align-items: center;
+}
+
+.aboutCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.aboutCopy h2 em {
+  color: var(--rust);
+}
+
+.aboutLead {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--zinc-700);
+}
+
+.aboutBody {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--zinc-600);
+}
+
+.aboutPhoto {
+  composes: media;
+  height: 460px;
+}
+
+/* ------------------------------------------------------------------- Services */
+
+.servicesHead {
+  composes: sectionHead;
+  max-width: 660px;
+  margin-bottom: 44px;
+}
+
+.servicesLead {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--zinc-700);
+}
+
+/**
+ * The 1px gap over a grey ground draws the hairline rules between cards, so the
+ * grid needs no per-card borders.
+ */
+.serviceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--zinc-300);
+  border: 1px solid var(--zinc-300);
+}
+
+.serviceCard {
+  background: var(--white);
+  padding: 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.serviceCardMuted {
+  composes: serviceCard;
+  background: var(--zinc-50);
+}
+
+.serviceTitle {
+  font-size: 0.781rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.serviceBody {
+  font-size: 0.906rem;
+  line-height: 1.7;
+  color: var(--zinc-600);
+}
+
+.serviceMore {
+  margin-top: 6px;
+  font-size: 0.719rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+.serviceMore:hover {
+  color: var(--rust-hover);
+}
+
+.serviceBadge {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--zinc-400);
+  font-size: 0.656rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--zinc-700);
+}
+
+/* ------------------------------------------------------------------- Projects */
+
+.projectsHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.projectsHeadCopy {
+  composes: sectionHead;
+  max-width: 600px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  flex: none;
+  flex-wrap: wrap;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+  padding: 0 18px;
+  border: 1px solid var(--zinc-300);
+  background: var(--white);
+  color: var(--ink);
+  font-size: 0.688rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.filter:hover {
+  border-color: var(--ink);
+}
+
+.filterActive {
+  composes: filter;
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--white);
+}
+
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.projectCard {
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+}
+
+.projectPhoto {
+  composes: media;
+  height: 230px;
+}
+
+.projectBody {
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  flex: 1;
+}
+
+.projectMetaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.projectId {
+  font-size: 0.656rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--zinc-600);
+  font-family: var(--font-mono);
+}
+
+.statusBadge {
+  padding: 5px 10px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.statusOngoing {
+  composes: statusBadge;
+  background: var(--orange);
+  color: var(--white);
+}
+
+.statusCompleted {
+  composes: statusBadge;
+  background: var(--ink);
+  color: var(--white);
+}
+
+.statusFuture {
+  composes: statusBadge;
+  background: var(--line);
+  color: var(--ink);
+}
+
+.projectTitle {
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.projectTagline {
+  font-size: 0.906rem;
+  font-style: italic;
+  color: var(--zinc-600);
+  line-height: 1.55;
+}
+
+.projectSpecs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.projectSpec {
+  font-size: 0.844rem;
+  color: var(--zinc-700);
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 6px;
+}
+
+.progressRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--ink-mid);
+}
+
+.progressRow b {
+  font-weight: 600;
+}
+
+.progressTrack {
+  height: 5px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--orange);
+}
+
+.projectFoot {
+  margin-top: auto;
+  padding-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.projectPlace {
+  font-size: 0.656rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--zinc-500);
+}
+
+.projectLink {
+  font-size: 0.688rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rust);
+  white-space: nowrap;
+}
+
+.projectLink:hover {
+  color: var(--rust-hover);
+}
+
+.projectsFoot {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+/* ------------------------------------------------------------------- Passport */
+
+.passport {
+  background: var(--ink);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+}
+
+.passportPhoto {
+  composes: media;
+  min-height: 520px;
+}
+
+.passportBody {
+  padding: 80px var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--white);
+  max-width: 720px;
+}
+
+.passportBody h2 em {
+  color: var(--orange-on-dark);
+}
+
+.passportLead {
+  font-size: 0.969rem;
+  line-height: 1.75;
+  color: var(--zinc-200);
+  max-width: 460px;
+}
+
+.milestones {
+  display: flex;
+  flex-direction: column;
+}
+
+.milestone {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-block: 14px;
+  border-top: 1px solid var(--line-on-dark);
+}
+
+.milestone:last-child {
+  border-bottom: 1px solid var(--line-on-dark);
+}
+
+.milestoneIndex {
+  width: 24px;
+  flex: none;
+  font-size: 0.688rem;
+  letter-spacing: 0.14em;
+  color: var(--orange-on-dark);
+  font-family: var(--font-mono);
+}
+
+.milestoneName {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--white);
+}
+
+.milestoneDate {
+  font-size: 0.781rem;
+  color: var(--zinc-200);
+}
+
+.milestonePending .milestoneIndex,
+.milestonePending .milestoneDate {
+  color: var(--zinc-400);
+}
+
+.milestonePending .milestoneName {
+  color: var(--zinc-300);
+}
+
+/* --------------------------------------------------------------------- Values */
+
+.valuesHead {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.valueGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.value {
+  padding: 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  align-items: center;
+  text-align: center;
+  border-right: 1px solid var(--line);
+}
+
+.value:last-child {
+  border-right: 0;
+}
+
+.valueTitle {
+  font-size: 0.781rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.valueBody {
+  font-size: 0.906rem;
+  line-height: 1.7;
+  color: var(--zinc-600);
+}
+
+/* ------------------------------------------------------- Video and leadership */
+
+.mediaGrid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 44px;
+  align-items: start;
+}
+
+.mediaCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* A still preview, not a player: the embed is wired up when the video ID
+   exists, so nothing here advertises a control that does not work yet. */
+.videoFrame {
+  position: relative;
+  height: 330px;
+  background: var(--ink);
+  overflow: hidden;
+  width: 100%;
+  display: block;
+}
+
+.videoPhoto {
+  composes: media;
+  position: absolute;
+  inset: 0;
+}
+
+.videoPlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.videoPlayDot {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgb(20 20 20 / 86%);
+  border: 1.5px solid var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 1.125rem;
+}
+
+.videoCaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 22px;
+  background: linear-gradient(0deg, rgb(20 20 20 / 92%), rgb(20 20 20 / 0%));
+  color: var(--white);
+}
+
+.videoKicker {
+  font-size: 0.656rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--orange-on-dark);
+}
+
+.videoTitle {
+  font-size: 1.25rem;
+  font-weight: 400;
+  margin-top: 6px;
+}
+
+.videoNote {
+  font-size: 0.781rem;
+  color: var(--zinc-600);
+}
+
+.leaderCard {
+  background: var(--white);
+  border: 1px solid var(--line);
+}
+
+.leaderPortrait {
+  height: 210px;
+  background: var(--line);
+  display: flex;
+  align-items: flex-start;
+  padding: 14px;
+  font-size: 0.719rem;
+  color: var(--zinc-600);
+}
+
+.leaderBody {
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.leaderName {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.leaderRole {
+  font-size: 0.719rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zinc-500);
+  margin-top: 5px;
+}
+
+.leaderQuote {
+  font-size: 0.938rem;
+  line-height: 1.7;
+  color: var(--zinc-700);
+  font-style: italic;
+}
+
+.leaderLink {
+  font-size: 0.719rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+.leaderLink:hover {
+  color: var(--rust-hover);
+}
+
+.quoteCard {
+  background: var(--white);
+  border: 1px solid var(--line);
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.quoteText {
+  font-size: 0.938rem;
+  line-height: 1.7;
+  color: var(--zinc-700);
+}
+
+.quoteFoot {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.quoteName {
+  font-size: 0.906rem;
+  color: var(--ink);
+}
+
+.quoteMeta {
+  font-size: 0.719rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zinc-500);
+  margin-top: 4px;
+}
+
+/* ----------------------------------------------------------------- How it works */
+
+.stepGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 44px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 0 28px;
+  border-right: 1px solid var(--line);
+}
+
+.step:first-child {
+  padding-left: 0;
+}
+
+.step:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+
+.stepNumber {
+  font-size: 2rem;
+  font-weight: 300;
+  color: var(--orange);
+  line-height: 1;
+  font-family: var(--font-mono);
+}
+
+.stepTitle {
+  font-size: 0.781rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.stepBody {
+  font-size: 0.906rem;
+  line-height: 1.7;
+  color: var(--zinc-600);
+}
+
+/* -------------------------------------------------------------------- Marquee */
+
+.marquee {
+  background: var(--white);
+  overflow: hidden;
+  padding-block: 24px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+/**
+ * The track holds the phrase set twice; translating it by -50% therefore lands
+ * exactly where it started, which is what makes the loop seamless.
+ */
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  gap: 56px;
+  align-items: center;
+  animation: marquee 26s linear infinite;
+}
+
+.marqueeWord {
+  font-size: 1.75rem;
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--line);
+  white-space: nowrap;
+}
+
+.marqueeGlyph {
+  font-size: 1.75rem;
+  color: var(--orange);
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------------------------------------------------------------- Media centre */
+
+.newsHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+
+.newsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.newsItem {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.newsPhoto {
+  composes: media;
+  height: 200px;
+}
+
+.newsMeta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.688rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--zinc-500);
+}
+
+.newsCategory {
+  color: var(--rust);
+}
+
+.newsTitle {
+  font-size: 1.1875rem;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+.newsExcerpt {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--zinc-600);
+}
+
+/* ----------------------------------------------------------- Register interest */
+
+.register {
+  background: var(--line);
+  padding-block: 76px;
+}
+
+.registerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 52px;
+  align-items: center;
+}
+
+.registerCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.registerCopy h2 em {
+  color: var(--rust);
+}
+
+.registerLead {
+  font-size: 0.969rem;
+  line-height: 1.75;
+  color: var(--zinc-700);
+}
+
+/** The regulatory position, which the brief requires on every investor path. */
+.registerNotice {
+  font-size: 0.844rem;
+  line-height: 1.7;
+  color: var(--zinc-700);
+  border-left: 3px solid var(--orange);
+  padding-left: 16px;
+}
+
+.form {
+  background: var(--white);
+  border: 1px solid var(--zinc-300);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.label {
+  font-size: 0.688rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zinc-700);
+}
+
+.input,
+.select {
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--zinc-400);
+  border-radius: 0;
+  background: var(--white);
+  font-size: 0.875rem;
+  color: var(--ink);
+  width: 100%;
+}
+
+.input::placeholder {
+  color: var(--zinc-500);
+}
+
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.consent {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.checkbox {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  margin: 2px 0 0;
+  accent-color: var(--orange);
+  cursor: pointer;
+}
+
+.consentText {
+  font-size: 0.781rem;
+  line-height: 1.6;
+  color: var(--zinc-700);
+}
+
+.consentText a {
+  color: var(--rust);
+  text-decoration: underline;
+}
+
+.submit {
+  composes: btn;
+  min-height: 50px;
+  background: var(--orange);
+  color: var(--white);
+  width: 100%;
 }
 
 .submit:hover:not(:disabled) {
-  background: var(--ink);
+  background: var(--orange-lift);
 }
 
 .submit:disabled {
-  opacity: 0.55;
-  cursor: progress;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .formNote {
-  margin-top: 0.9rem;
-  font-size: 0.82rem;
-  color: #5f6b63;
+  font-size: 0.719rem;
+  color: var(--zinc-600);
+  text-align: center;
 }
 
 .formMsg {
-  margin-top: 0.9rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  padding: 0.6rem 0.75rem;
-  border-left: 2px solid currentColor;
+  composes: formNote;
+  font-weight: 500;
 }
 
 .msgOk {
-  color: #2f6b4f;
-  background: rgba(47, 107, 79, 0.08);
+  color: #1a6b3c;
 }
 
 .msgBad {
-  color: #8c3a2b;
-  background: rgba(140, 58, 43, 0.08);
+  color: #a3231a;
 }
 
-/* --- Footer -------------------------------------------------------------- */
+/** Scored server-side; never shown, and hidden from assistive tech. */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------- Footer */
 
 .footer {
-  padding-block: clamp(3rem, 6vw, 4.5rem) 2rem;
+  background: var(--ink);
+  padding-block: 72px 40px;
 }
 
 .footerGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
-  gap: 2.5rem;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1.1fr;
+  gap: 34px;
+}
+
+.footerBrand {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.footerLogo {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+.footerAddress {
+  font-size: 0.844rem;
+  line-height: 1.8;
+  color: var(--zinc-200);
+}
+
+.footerWhatsapp {
+  font-size: 0.719rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--orange-on-dark);
+  font-weight: 600;
+}
+
+.footerCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .footerHead {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.656rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--brass);
-  margin-bottom: 1rem;
+  color: var(--orange-on-dark);
+  font-weight: 600;
 }
 
-.footerList {
-  display: grid;
-  gap: 0.55rem;
-  font-size: 0.92rem;
-  color: rgba(242, 239, 230, 0.7);
+.footerLink {
+  font-size: 0.844rem;
+  color: var(--zinc-200);
 }
 
-.footerList a:hover {
-  color: var(--brass-soft);
+.footerLink:hover {
+  color: var(--white);
+  text-decoration: underline;
 }
 
-.footerBlurb {
-  margin-top: 1rem;
-  max-width: 24rem;
-  font-size: 0.92rem;
-  color: rgba(242, 239, 230, 0.6);
+.legalBar {
+  background: var(--ink-deep);
 }
 
-.footerBottom {
+.legalInner {
+  padding-block: 18px;
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 1rem;
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--ink-line);
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.719rem;
+  color: var(--zinc-400);
+}
+
+.legalBadge {
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--sage);
 }
 
-/* --- Motion -------------------------------------------------------------- */
+/* -------------------------------------------------------------- Cookie banner */
 
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+.cookie {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--white);
+  border-top: 2px solid var(--orange);
+  box-shadow: 0 -8px 24px rgb(0 0 0 / 10%);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.cookieInner {
+  padding-block: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.cookieText {
+  font-size: 0.813rem;
+  line-height: 1.65;
+  color: var(--zinc-700);
+  max-width: 620px;
+}
+
+.cookieText strong {
+  color: var(--ink);
+}
+
+.cookieActions {
+  display: flex;
+  gap: 10px;
+  flex: none;
+  flex-wrap: wrap;
+}
+
+.cookieBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+  padding: 0 18px;
+  font-size: 0.688rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.cookieManage {
+  composes: cookieBtn;
+  border-color: var(--zinc-400);
+  background: var(--white);
+  color: var(--ink);
+}
+
+.cookieEssential {
+  composes: cookieBtn;
+  background: var(--ink);
+  color: var(--white);
+}
+
+.cookieAccept {
+  composes: cookieBtn;
+  background: var(--orange);
+  color: var(--white);
+}
+
+/* --------------------------------------------------------------- Breakpoints */
+
+@media (max-width: 1180px) {
+  .nav {
+    gap: 14px;
+    font-size: 0.625rem;
   }
 }
 
-@keyframes stamp {
-  from {
-    opacity: 0;
-    transform: rotate(-13deg) scale(1.75);
+@media (max-width: 1080px) {
+  /* The nav no longer fits beside the logo; it moves behind a disclosure. */
+  .navToggle {
+    display: inline-flex;
   }
-  to {
-    opacity: 1;
-    transform: rotate(-13deg) scale(1);
+
+  .nav {
+    display: none;
+  }
+
+  .navOpen {
+    display: flex;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 8px var(--gutter) 20px;
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
+    font-size: 0.75rem;
+  }
+
+  .navOpen .navLink,
+  .navOpen .navLinkActive {
+    display: flex;
+    align-items: center;
+    min-height: var(--target);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .navOpen .navCta {
+    margin-top: 12px;
+  }
+
+  .header {
+    position: relative;
+  }
+
+  .heroInner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .heroRail,
+  .heroCall {
+    display: none;
+  }
+
+  .mediaGrid,
+  .registerGrid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .passport {
+    grid-template-columns: 1fr;
+  }
+
+  .passportPhoto {
+    min-height: 320px;
+  }
+
+  .passportBody {
+    padding-block: 56px;
+    max-width: none;
   }
 }
 
-/* --- Responsive ---------------------------------------------------------- */
-
-@media (max-width: 960px) {
-  .heroInner,
-  .investorGrid,
-  .subscribeGrid {
-    grid-template-columns: minmax(0, 1fr);
+@media (max-width: 900px) {
+  .section,
+  .sectionLight,
+  .sectionMuted {
+    padding-block: 64px;
   }
 
-  .projects {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .aboutGrid {
+    grid-template-columns: 1fr;
+    gap: 36px;
   }
 
-  .register {
-    grid-template-columns: minmax(0, 1fr);
+  .aboutPhoto {
+    height: 320px;
   }
 
-  .footerGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .serviceGrid,
+  .projectGrid,
+  .newsGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .seal {
-    right: -1.5rem;
-    bottom: -2rem;
+  .statsInner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+  }
+
+  /* Vertical rules only read correctly on a single row, so they come off. */
+  .valueGrid,
+  .stepGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 36px 0;
+  }
+
+  .value:nth-child(2n),
+  .step:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .step:nth-child(odd) {
+    padding-left: 0;
   }
 }
 
 @media (max-width: 640px) {
-  .navLinks {
+  .serviceGrid,
+  .projectGrid,
+  .newsGrid,
+  .statsInner,
+  .valueGrid,
+  .stepGrid,
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .value,
+  .step {
+    border-right: 0;
+    padding-inline: 0;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .valuesHead {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .utilityContact {
+    gap: 14px;
+  }
+
+  .utilitySocial {
     display: none;
   }
 
-  .projects,
+  .hero {
+    min-height: 480px;
+  }
+
+  .form {
+    padding: 24px;
+  }
+
   .footerGrid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
   }
 
-  .seal {
-    width: 5.5rem;
-    height: 5.5rem;
-    right: -0.75rem;
-    bottom: -1.5rem;
+  .footerBrand {
+    grid-column: 1 / -1;
   }
 
-  .heroFacts {
-    gap: 1.5rem;
+  .cookieInner {
+    gap: 16px;
+  }
+
+  .cookieActions {
+    width: 100%;
+  }
+
+  .cookieBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* A 28px wordmark scrolling past on a phone is noise, not texture. */
+  .marquee {
+    display: none;
   }
 }

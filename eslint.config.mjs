@@ -11,7 +11,16 @@ import globals from 'globals';
  */
 export default tseslint.config(
   {
-    ignores: ['node_modules/**', '.next/**', 'coverage/**', 'next-env.d.ts'],
+    ignores: [
+      'node_modules/**',
+      '.next/**',
+      'coverage/**',
+      'next-env.d.ts',
+      // Claude Design handoff bundle: HTML/JS prototypes kept for reference,
+      // not project source. They sit outside tsconfig, so type-aware rules
+      // cannot parse them anyway.
+      'co-built-website-directions-ledger-and-site-lines/**',
+    ],
   },
 
   js.configs.recommended,

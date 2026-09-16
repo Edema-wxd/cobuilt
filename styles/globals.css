@@ -1,28 +1,50 @@
 /**
  * Global tokens and base styles for the public site.
  *
- * The palette is the Project Passport itself: a deep passport green ground,
- * brass foil, and paper reserved for surfaces that represent a record.
+ * The palette and type are the handoff design system (shadcn/ui "new-york"
+ * tokens, Geist) with CoBuilt's orange laid over the neutral scale. Direction
+ * 3c — the Corporate Digital Standards build — is the one implemented, so the
+ * rules here hold to that brief: WCAG 2.2 AA contrast and a 44px minimum
+ * target on every interactive control.
  */
 
 :root {
-  --ink-deep: #06170f;
-  --ink: #0c2a1d;
-  --ink-line: #1c4634;
-  --brass: #c9a227;
-  --brass-soft: #e2c98c;
-  --paper: #f2efe6;
-  --paper-line: #d9d3c3;
-  --paper-ink: #1a231e;
-  --sage: #8aa396;
-  --stamp: #5b4a7e;
+  /* Brand */
+  --orange: #ff6600;
+  --orange-lift: #e65c00;
+  /* On dark grounds only: #FF9955 clears 4.5:1 on #1c1c1c, #FF6600 does not. */
+  --orange-on-dark: #ff9955;
+  /* On light grounds only: the rust carries the accent at 5.9:1 on white. */
+  --rust: #b34700;
+  --rust-hover: #8f3900;
 
-  --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
-  --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Neutrals */
+  --ink: #1c1c1c;
+  --ink-deep: #141414;
+  --ink-mid: #333;
+  --zinc-700: #3f3f46;
+  --zinc-600: #52525b;
+  --zinc-500: #71717a;
+  --zinc-400: #a1a1aa;
+  --zinc-300: #d4d4d8;
+  --zinc-200: #e4e4e7;
+  --zinc-100: #f4f4f5;
+  --zinc-50: #fafafa;
+  --line: #e6e6e6;
+  --white: #fff;
 
-  --gutter: clamp(1.25rem, 5vw, 3rem);
-  --measure: 1120px;
+  /* Hairlines on a dark ground, where a solid neutral reads too heavy. */
+  --line-on-dark: rgb(255 255 255 / 18%);
+
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* The mockup is drawn at 1160px wide with a 44px gutter. */
+  --measure: 1160px;
+  --gutter: clamp(1.25rem, 4vw, 2.75rem);
+
+  /* Every interactive control meets this, per the brief. */
+  --target: 44px;
 }
 
 * {
@@ -31,31 +53,46 @@
 
 html {
   scroll-behavior: smooth;
+  /* The sticky header must not cover the heading of an anchored section. */
+  scroll-padding-top: 96px;
 }
 
 body {
   margin: 0;
-  background: var(--ink-deep);
-  color: var(--paper);
-  font-family: var(--font-body);
-  font-size: 1.0625rem;
-  line-height: 1.65;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+/**
+ * Headings run light (300) and tight, with an italic accent phrase carried by
+ * <em>. The weight is deliberate: at 40px+ a 300 reads as editorial rather
+ * than promotional, which is the whole register of this direction.
+ */
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.05;
   margin: 0;
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+h1 em,
+h2 em,
+h3 em {
+  font-style: italic;
+  font-weight: 400;
 }
 
 p {
   margin: 0;
+  text-wrap: pretty;
 }
 
 a {
@@ -70,14 +107,25 @@ ol {
   list-style: none;
 }
 
+img {
+  max-width: 100%;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
 :focus-visible {
-  outline: 2px solid var(--brass);
-  outline-offset: 3px;
+  outline: 3px solid var(--orange);
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--brass);
-  color: var(--ink-deep);
+  background: var(--orange);
+  color: var(--white);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -88,10 +136,8 @@ ol {
   *,
   *::before,
   *::after {
-    animation-duration: 0.001ms !important;
-    /* Beats the staggered inline delays on the passport entries. */
-    animation-delay: 0.001ms !important;
-    animation-iteration-count: 1 !important;
+    /* Stops the wordmark marquee outright rather than merely shortening it. */
+    animation: none !important;
     transition-duration: 0.001ms !important;
   }
 }
