@@ -12,10 +12,6 @@
  * text on white (2.9:1); --rust carries the accent on light grounds instead.
  */
 
-.page {
-  overflow-x: clip;
-}
-
 .container {
   max-width: var(--measure);
   margin: 0 auto;
@@ -35,6 +31,16 @@
 }
 
 /* ---------------------------------------------------------------- Primitives */
+
+/*
+ * Contrast rules, verified by __tests__/unit/contrast.test.ts:
+ *   - Orange is a BACKGROUND. White on #FF6600 is 2.94:1 and fails AA at every
+ *     size, so labels on an orange fill are charcoal (5.80:1), not white.
+ *   - Orange as TEXT or as a meaningful fill on a light ground fails too, so
+ *     --rust carries those (5.50:1 on white).
+ *   - #FF9955 is the accent on dark grounds only (8.07:1 on #1c1c1c).
+ * Changing any of these back will fail the test, not just the audit.
+ */
 
 .eyebrow {
   font-size: 0.719rem;
@@ -69,7 +75,7 @@
 .btnOrange {
   composes: btn;
   background: var(--orange);
-  color: var(--white);
+  color: var(--ink);
 }
 
 .btnOrange:hover {
@@ -155,147 +161,7 @@
   gap: 14px;
 }
 
-/* ------------------------------------------------------------- Utility strip */
-
-.utility {
-  background: var(--ink);
-  color: var(--zinc-200);
-  font-size: 0.719rem;
-}
-
-.utilityInner {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-  padding-block: 6px;
-}
-
-.utilityContact {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  letter-spacing: 0.04em;
-}
-
-.utilityContact a:hover {
-  color: var(--orange-on-dark);
-}
-
-.utilitySocial {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  font-size: 0.656rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.utilitySocial a:hover {
-  color: var(--orange-on-dark);
-}
-
-.utilitySearch {
-  color: var(--orange-on-dark);
-}
-
-/* --------------------------------------------------------------------- Header */
-
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: var(--white);
-  border-bottom: 1px solid var(--line);
-}
-
-.headerInner {
-  min-height: 78px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-}
-
-.logo {
-  display: block;
-  height: 38px;
-  width: auto;
-  flex: none;
-}
-
-.nav {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  font-size: 0.688rem;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ink-mid);
-  font-weight: 600;
-}
-
-.navLink {
-  padding-block: 4px;
-  border-bottom: 2px solid transparent;
-  white-space: nowrap;
-}
-
-.navLink:hover {
-  color: var(--rust);
-}
-
-.navLinkActive {
-  composes: navLink;
-  color: var(--rust);
-  border-bottom-color: var(--orange);
-}
-
-.navCta {
-  composes: btn;
-  min-height: var(--target);
-  padding: 0 20px;
-  background: var(--orange);
-  color: var(--white);
-  letter-spacing: 0.13em;
-  font-size: 0.688rem;
-}
-
-.navCta:hover {
-  background: var(--orange-lift);
-}
-
 /** Shown only once the nav no longer fits on one line. */
-.navToggle {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: var(--target);
-  height: var(--target);
-  background: transparent;
-  border: 1px solid var(--zinc-300);
-  cursor: pointer;
-}
-
-.navToggleBars,
-.navToggleBars::before,
-.navToggleBars::after {
-  display: block;
-  width: 18px;
-  height: 2px;
-  background: var(--ink);
-  content: '';
-}
-
-.navToggleBars::before {
-  transform: translateY(-6px);
-}
-
-.navToggleBars::after {
-  transform: translateY(4px);
-}
 
 /* ----------------------------------------------------------------------- Hero */
 
@@ -455,7 +321,7 @@
   font-size: 2.625rem;
   font-weight: 300;
   letter-spacing: -0.03em;
-  color: var(--white);
+  color: var(--ink);
   line-height: 1;
 }
 
@@ -467,7 +333,7 @@
   font-size: 0.688rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--white);
+  color: var(--ink);
 }
 
 /* -------------------------------------------------------------------- Section */
@@ -715,7 +581,7 @@
 .statusOngoing {
   composes: statusBadge;
   background: var(--orange);
-  color: var(--white);
+  color: var(--ink);
 }
 
 .statusCompleted {
@@ -783,7 +649,7 @@
 
 .progressFill {
   height: 100%;
-  background: var(--orange);
+  background: var(--rust);
 }
 
 .projectFoot {
@@ -1141,7 +1007,7 @@
 .stepNumber {
   font-size: 2rem;
   font-weight: 300;
-  color: var(--orange);
+  color: var(--rust);
   line-height: 1;
   font-family: var(--font-mono);
 }
@@ -1386,7 +1252,7 @@
   composes: btn;
   min-height: 50px;
   background: var(--orange);
-  color: var(--white);
+  color: var(--ink);
   width: 100%;
 }
 
@@ -1427,351 +1293,144 @@
   overflow: hidden;
 }
 
-/* --------------------------------------------------------------------- Footer */
-
-.footer {
-  background: var(--ink);
-  padding-block: 72px 40px;
-}
-
-.footerGrid {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1fr 1.1fr;
-  gap: 34px;
-}
-
-.footerBrand {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.footerLogo {
-  height: 32px;
-  width: auto;
-  display: block;
-}
-
-.footerAddress {
-  font-size: 0.844rem;
-  line-height: 1.8;
-  color: var(--zinc-200);
-}
-
-.footerWhatsapp {
-  font-size: 0.719rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--orange-on-dark);
-  font-weight: 600;
-}
-
-.footerCol {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.footerHead {
-  font-size: 0.656rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--orange-on-dark);
-  font-weight: 600;
-}
-
-.footerLink {
-  font-size: 0.844rem;
-  color: var(--zinc-200);
-}
-
-.footerLink:hover {
-  color: var(--white);
-  text-decoration: underline;
-}
-
-.legalBar {
-  background: var(--ink-deep);
-}
-
-.legalInner {
-  padding-block: 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 0.719rem;
-  color: var(--zinc-400);
-}
-
-.legalBadge {
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-/* -------------------------------------------------------------- Cookie banner */
-
-.cookie {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 50;
-  background: var(--white);
-  border-top: 2px solid var(--orange);
-  box-shadow: 0 -8px 24px rgb(0 0 0 / 10%);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.cookieInner {
-  padding-block: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  flex-wrap: wrap;
-}
-
-.cookieText {
-  font-size: 0.813rem;
-  line-height: 1.65;
-  color: var(--zinc-700);
-  max-width: 620px;
-}
-
-.cookieText strong {
-  color: var(--ink);
-}
-
-.cookieActions {
-  display: flex;
-  gap: 10px;
-  flex: none;
-  flex-wrap: wrap;
-}
-
-.cookieBtn {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--target);
-  padding: 0 18px;
-  font-size: 0.688rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  border: 1px solid transparent;
-}
-
-.cookieManage {
-  composes: cookieBtn;
-  border-color: var(--zinc-400);
-  background: var(--white);
-  color: var(--ink);
-}
-
-.cookieEssential {
-  composes: cookieBtn;
-  background: var(--ink);
-  color: var(--white);
-}
-
-.cookieAccept {
-  composes: cookieBtn;
-  background: var(--orange);
-  color: var(--white);
-}
-
 /* --------------------------------------------------------------- Breakpoints */
-
-@media (max-width: 1180px) {
-  .nav {
-    gap: 14px;
-    font-size: 0.625rem;
-  }
-}
 
 @media (max-width: 1080px) {
   /* The nav no longer fits beside the logo; it moves behind a disclosure. */
-  .navToggle {
-    display: inline-flex;
-  }
-
-  .nav {
-    display: none;
-  }
-
-  .navOpen {
-    display: flex;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 8px var(--gutter) 20px;
-    background: var(--white);
-    border-bottom: 1px solid var(--line);
-    box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
-    font-size: 0.75rem;
-  }
-
-  .navOpen .navLink,
-  .navOpen .navLinkActive {
-    display: flex;
-    align-items: center;
-    min-height: var(--target);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .navOpen .navCta {
-    margin-top: 12px;
-  }
-
-  .header {
-    position: relative;
-  }
-
-  .heroInner {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .heroRail,
-  .heroCall {
-    display: none;
-  }
-
-  .mediaGrid,
-  .registerGrid {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
-
-  .passport {
-    grid-template-columns: 1fr;
-  }
-
-  .passportPhoto {
-    min-height: 320px;
-  }
-
-  .passportBody {
-    padding-block: 56px;
-    max-width: none;
-  }
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    .heroInner {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  
+    .heroRail,
+    .heroCall {
+      display: none;
+    }
+  
+    .mediaGrid,
+    .registerGrid {
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+  
+    .passport {
+      grid-template-columns: 1fr;
+    }
+  
+    .passportPhoto {
+      min-height: 320px;
+    }
+  
+    .passportBody {
+      padding-block: 56px;
+      max-width: none;
+    }
 }
 
 @media (max-width: 900px) {
   .section,
-  .sectionLight,
-  .sectionMuted {
-    padding-block: 64px;
-  }
-
-  .aboutGrid {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
-
-  .aboutPhoto {
-    height: 320px;
-  }
-
-  .serviceGrid,
-  .projectGrid,
-  .newsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .statsInner {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
-  }
-
-  /* Vertical rules only read correctly on a single row, so they come off. */
-  .valueGrid,
-  .stepGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 36px 0;
-  }
-
-  .value:nth-child(2n),
-  .step:nth-child(2n) {
-    border-right: 0;
-  }
-
-  .step:nth-child(odd) {
-    padding-left: 0;
-  }
+    .sectionLight,
+    .sectionMuted {
+      padding-block: 64px;
+    }
+  
+    .aboutGrid {
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+  
+    .aboutPhoto {
+      height: 320px;
+    }
+  
+    .serviceGrid,
+    .projectGrid,
+    .newsGrid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    .statsInner {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+    }
+  
+    /* Vertical rules only read correctly on a single row, so they come off. */
+    .valueGrid,
+    .stepGrid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 36px 0;
+    }
+  
+    .value:nth-child(2n),
+    .step:nth-child(2n) {
+      border-right: 0;
+    }
+  
+    .step:nth-child(odd) {
+      padding-left: 0;
+    }
 }
 
 @media (max-width: 640px) {
   .serviceGrid,
-  .projectGrid,
-  .newsGrid,
-  .statsInner,
-  .valueGrid,
-  .stepGrid,
-  .formRow {
-    grid-template-columns: 1fr;
-  }
-
-  .value,
-  .step {
-    border-right: 0;
-    padding-inline: 0;
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .valuesHead {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .utilityContact {
-    gap: 14px;
-  }
-
-  .utilitySocial {
-    display: none;
-  }
-
-  .hero {
-    min-height: 480px;
-  }
-
-  .form {
-    padding: 24px;
-  }
-
-  .footerGrid {
-    grid-template-columns: 1fr 1fr;
-    gap: 28px;
-  }
-
-  .footerBrand {
-    grid-column: 1 / -1;
-  }
-
-  .cookieInner {
-    gap: 16px;
-  }
-
-  .cookieActions {
-    width: 100%;
-  }
-
-  .cookieBtn {
-    flex: 1;
-    justify-content: center;
-  }
-
-  /* A 28px wordmark scrolling past on a phone is noise, not texture. */
-  .marquee {
-    display: none;
-  }
+    .projectGrid,
+    .newsGrid,
+    .statsInner,
+    .valueGrid,
+    .stepGrid,
+    .formRow {
+      grid-template-columns: 1fr;
+    }
+  
+    .value,
+    .step {
+      border-right: 0;
+      padding-inline: 0;
+      align-items: flex-start;
+      text-align: left;
+    }
+  
+    .valuesHead {
+      align-items: flex-start;
+      text-align: left;
+    }
+  
+    
+  
+    
+  
+    .hero {
+      min-height: 480px;
+    }
+  
+    .form {
+      padding: 24px;
+    }
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    /* A 28px wordmark scrolling past on a phone is noise, not texture. */
+    .marquee {
+      display: none;
+    }
 }

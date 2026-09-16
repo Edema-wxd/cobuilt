@@ -1,5 +1,6 @@
-import { Fragment, useEffect, useState } from 'react';
-import Head from 'next/head';
+import { Fragment, useState } from 'react';
+import SiteLayout from '../components/SiteLayout';
+import { PHONE, PHONE_HREF } from '../components/site';
 import styles from '../styles/Landing.module.css';
 
 /**
@@ -18,28 +19,11 @@ import styles from '../styles/Landing.module.css';
  */
 
 const IMAGES = {
-  hero: '/images/hero-aerial-estate.jpg',
-  villa: '/images/villa-and-pool.jpg',
-  site: '/images/construction-site.jpg',
-  apartments: '/images/apartment-blocks.jpg',
+  hero: '/images/hero-aerial-estate.webp',
+  villa: '/images/villa-and-pool.webp',
+  site: '/images/construction-site.webp',
+  apartments: '/images/apartment-blocks.webp',
 } as const;
-
-const PHONE = '+234 700 262 8458';
-const PHONE_HREF = 'tel:+2347002628458';
-const EMAIL = 'hello@cobuiltpartners.com';
-
-/** The nine-item global navigation the standards document mandates. */
-const NAV: Array<{ label: string; href: string }> = [
-  { label: 'Home', href: '#top' },
-  { label: 'About', href: '#about' },
-  { label: 'Leadership', href: '#leadership' },
-  { label: 'Services', href: '#services' },
-  { label: 'Projects', href: '#projects' },
-  { label: 'Passport™', href: '#passport' },
-  { label: 'Media', href: '#media' },
-  { label: 'Careers', href: '/careers' },
-  { label: 'Contact', href: '#register' },
-];
 
 const STATS: Array<{ value: string; plus?: boolean; label: string }> = [
   { value: '5', plus: true, label: 'Projects delivered' },
@@ -226,49 +210,7 @@ const ENQUIRER_TYPES = [
   'Other',
 ] as const;
 
-/** Rendered as plain text until the page behind it exists. */
-const FOOTER_COLUMNS: Array<{ head: string; items: Array<{ label: string; href?: string }> }> = [
-  {
-    head: 'Company',
-    items: [
-      { label: 'About', href: '#about' },
-      { label: 'Leadership', href: '#leadership' },
-      { label: 'Governance' },
-      { label: 'Careers' },
-    ],
-  },
-  {
-    head: 'Projects',
-    items: [
-      { label: 'Past projects', href: '#projects' },
-      { label: 'Ongoing projects', href: '#projects' },
-      { label: 'Future projects', href: '#projects' },
-      { label: 'Project Passport™', href: '#passport' },
-    ],
-  },
-  {
-    head: 'Resources',
-    items: [
-      { label: 'News & insights', href: '#media' },
-      { label: 'Video library', href: '#leadership' },
-      { label: 'Downloads' },
-      { label: 'FAQs' },
-    ],
-  },
-  {
-    head: 'Legal',
-    items: [
-      { label: 'Privacy Policy' },
-      { label: 'Terms & Conditions' },
-      { label: 'Cookie Policy' },
-      { label: 'Accessibility Statement' },
-    ],
-  },
-];
-
 const MARQUEE_PHRASES = ['CoBuilt Investment Partners', 'Building Trust Through Every Brick'];
-
-const COOKIE_KEY = 'cobuilt.cookie-consent';
 
 type FormState = 'idle' | 'sending' | 'done' | 'error';
 
@@ -293,7 +235,6 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
 }
 
 export default function Home() {
-  const [navOpen, setNavOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
 
   const [name, setName] = useState('');
@@ -302,28 +243,6 @@ export default function Home() {
   const [website, setWebsite] = useState('');
   const [state, setState] = useState<FormState>('idle');
   const [message, setMessage] = useState('');
-
-  // Undecided until the stored choice is read, so the banner never flashes for
-  // someone who has already answered it.
-  const [cookieChoice, setCookieChoice] = useState<string | null | undefined>(undefined);
-
-  useEffect(() => {
-    try {
-      setCookieChoice(window.localStorage.getItem(COOKIE_KEY));
-    } catch {
-      // Private mode or blocked storage: show the banner, store nothing.
-      setCookieChoice(null);
-    }
-  }, []);
-
-  function recordCookieChoice(choice: 'all' | 'essential'): void {
-    setCookieChoice(choice);
-    try {
-      window.localStorage.setItem(COOKIE_KEY, choice);
-    } catch {
-      // The choice still applies to this page view.
-    }
-  }
 
   const visibleProjects =
     filter === 'all' ? PROJECTS : PROJECTS.filter((project) => project.status === filter);
@@ -363,78 +282,12 @@ export default function Home() {
   }
 
   return (
-    <div className={styles.page}>
-      <Head>
-        <title>CoBuilt Investment Partners — Building Trust Through Every Brick</title>
-        <meta
-          name="description"
-          content="CoBuilt Investment Partners delivers high-quality residential, commercial, mixed-use and strategic developments in Nigeria. Every project carries a Project Passport — a permanent, public record from commencement to handover."
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#1c1c1c" />
-      </Head>
-
-      <div className={styles.utility}>
-        <div className={`${styles.container} ${styles.utilityInner}`}>
-          <div className={styles.utilityContact}>
-            <a href={PHONE_HREF}>{PHONE}</a>
-            <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-          </div>
-          <div className={styles.utilitySocial}>
-            <a href="#register">WhatsApp Business</a>
-            <a href="#register">LinkedIn</a>
-            <a href="#leadership">YouTube</a>
-            <a className={styles.utilitySearch} href="#projects">
-              Search
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <header className={styles.header}>
-        <div className={`${styles.container} ${styles.headerInner}`}>
-          <a href="#top" aria-label="CoBuilt Investment Partners — home">
-            <img
-              className={styles.logo}
-              src="/images/cobuilt-logo-light.png"
-              alt="CoBuilt Investment Partners"
-              width={112}
-              height={38}
-            />
-          </a>
-
-          <nav
-            className={navOpen ? `${styles.nav} ${styles.navOpen}` : styles.nav}
-            aria-label="Main"
-          >
-            {NAV.map((item, index) => (
-              <a
-                key={item.label}
-                className={index === 0 ? styles.navLinkActive : styles.navLink}
-                href={item.href}
-                aria-current={index === 0 ? 'page' : undefined}
-                onClick={() => setNavOpen(false)}
-              >
-                {item.label}
-              </a>
-            ))}
-            <a className={styles.navCta} href="#register">
-              Discuss your project
-            </a>
-          </nav>
-
-          <button
-            className={styles.navToggle}
-            type="button"
-            aria-expanded={navOpen}
-            aria-label={navOpen ? 'Close menu' : 'Open menu'}
-            onClick={() => setNavOpen((open) => !open)}
-          >
-            <span className={styles.navToggleBars} aria-hidden="true" />
-          </button>
-        </div>
-      </header>
-
+    <SiteLayout
+      title="CoBuilt Investment Partners — Building Trust Through Every Brick"
+      description="CoBuilt Investment Partners delivers high-quality residential, commercial, mixed-use and strategic developments in Nigeria. Every project carries a Project Passport — a permanent, public record from commencement to handover."
+      current="/"
+      preloadImage={IMAGES.hero}
+    >
       <main id="top">
         <section className={styles.hero}>
           <div
@@ -977,86 +830,6 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className={styles.footer}>
-        <div className={`${styles.container} ${styles.footerGrid}`}>
-          <div className={styles.footerBrand}>
-            <img
-              className={styles.footerLogo}
-              src="/images/cobuilt-logo-dark.png"
-              alt="CoBuilt Investment Partners"
-              width={95}
-              height={32}
-            />
-            <p className={styles.footerAddress}>
-              27 Apex Drive, TechZone District
-              <br />
-              Victoria Heights, Lagos
-              <br />
-              Mon–Fri, 08:00–17:00 WAT
-            </p>
-            <p className={styles.footerWhatsapp}>Chat on WhatsApp Business</p>
-          </div>
-
-          {FOOTER_COLUMNS.map((column) => (
-            <div key={column.head} className={styles.footerCol}>
-              <p className={styles.footerHead}>{column.head}</p>
-              {column.items.map((item) =>
-                item.href ? (
-                  <a key={item.label} className={styles.footerLink} href={item.href}>
-                    {item.label}
-                  </a>
-                ) : (
-                  <span key={item.label} className={styles.footerLink}>
-                    {item.label}
-                  </span>
-                ),
-              )}
-            </div>
-          ))}
-        </div>
-      </footer>
-
-      <div className={styles.legalBar}>
-        <div className={`${styles.container} ${styles.legalInner}`}>
-          <span>© 2026 CoBuilt Investment Partners. All rights reserved.</span>
-          <span className={styles.legalBadge}>WCAG 2.2 AA · NDPA compliant</span>
-        </div>
-      </div>
-
-      {cookieChoice === null ? (
-        <aside className={styles.cookie} aria-label="Cookie preferences">
-          <div className={`${styles.container} ${styles.cookieInner}`}>
-            <p className={styles.cookieText}>
-              <strong>Cookies.</strong> Only essential cookies are enabled by default. You may
-              accept analytics, functional and marketing cookies, or manage your preferences at any
-              time.
-            </p>
-            <div className={styles.cookieActions}>
-              <button
-                className={styles.cookieManage}
-                type="button"
-                onClick={() => recordCookieChoice('essential')}
-              >
-                Manage
-              </button>
-              <button
-                className={styles.cookieEssential}
-                type="button"
-                onClick={() => recordCookieChoice('essential')}
-              >
-                Essential only
-              </button>
-              <button
-                className={styles.cookieAccept}
-                type="button"
-                onClick={() => recordCookieChoice('all')}
-              >
-                Accept all
-              </button>
-            </div>
-          </div>
-        </aside>
-      ) : null}
-    </div>
+    </SiteLayout>
   );
 }

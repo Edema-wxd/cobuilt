@@ -59,6 +59,8 @@ html {
 
 body {
   margin: 0;
+  /* Guards the marquee and any full-bleed section from widening the page. */
+  overflow-x: clip;
   background: var(--white);
   color: var(--ink);
   font-family: var(--font-sans);
@@ -118,14 +120,21 @@ select {
   color: inherit;
 }
 
+/**
+ * Dual ring. A single orange ring fails 1.4.11 against white (2.94:1), and a
+ * single dark ring would vanish on the charcoal sections. The inner white ring
+ * carries the dark grounds, the outer ink ring carries the light ones, so the
+ * indicator clears 3:1 wherever it lands.
+ */
 :focus-visible {
-  outline: 3px solid var(--orange);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--white);
 }
 
 ::selection {
   background: var(--orange);
-  color: var(--white);
+  color: var(--ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
