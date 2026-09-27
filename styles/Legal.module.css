@@ -1,0 +1,333 @@
+/* Terms and privacy. The document itself sits on paper because it is a record;
+   the contents list stays on the green ground beside it. */
+
+.header {
+  padding-block: clamp(3rem, 8vw, 5.5rem) clamp(2.5rem, 6vw, 4rem);
+  background: var(--ink);
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: clamp(2.4rem, 5.6vw, 4rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.lead {
+  margin-top: 1.4rem;
+  max-width: 40rem;
+  color: rgba(242, 239, 230, 0.78);
+  font-size: 1.08rem;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  margin: 2.25rem 0 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ink-line);
+}
+
+.metaItem {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.metaLabel {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sage);
+}
+
+.metaValue {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.metaValue a {
+  color: var(--brass-soft);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+  padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(3.5rem, 8vw, 6rem);
+}
+
+/* --- Contents ------------------------------------------------------------ */
+
+.toc {
+  position: sticky;
+  top: 6rem;
+}
+
+.tocHead {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 1rem;
+}
+
+.tocList {
+  display: grid;
+  border-top: 1px solid var(--ink-line);
+}
+
+.tocLink {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--ink-line);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: rgba(242, 239, 230, 0.72);
+  transition: color 160ms ease;
+}
+
+.tocLink:hover {
+  color: var(--paper);
+}
+
+.tocIndex {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--brass);
+  padding-top: 0.15rem;
+}
+
+/* --- The document -------------------------------------------------------- */
+
+.doc {
+  background: var(--paper);
+  color: var(--paper-ink);
+  padding: clamp(1.75rem, 5vw, 3.5rem);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+}
+
+.summary {
+  padding: 1.25rem 1.4rem;
+  margin-bottom: 2.5rem;
+  border-left: 3px solid var(--stamp);
+  background: rgba(91, 74, 126, 0.07);
+}
+
+.summaryHead {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stamp);
+  margin-bottom: 0.75rem;
+}
+
+.summary ul {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 1.1rem;
+  list-style: disc;
+  font-size: 0.98rem;
+}
+
+.section {
+  scroll-margin-top: 6rem;
+  padding-top: 2.25rem;
+  margin-top: 2.25rem;
+  border-top: 1px solid var(--paper-line);
+}
+
+.section:first-of-type {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+  margin-bottom: 1.1rem;
+}
+
+.sectionIndex {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: #6f7a73;
+}
+
+.prose {
+  display: grid;
+  gap: 1rem;
+  max-width: 44rem;
+}
+
+.prose h3 {
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  margin-top: 0.5rem;
+}
+
+.prose ul,
+.prose ol {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.prose ul {
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li::marker {
+  color: #6f7a73;
+}
+
+.prose a {
+  color: var(--stamp);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.prose strong {
+  font-weight: 600;
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 0.05rem 0.3rem;
+  background: rgba(26, 35, 30, 0.06);
+}
+
+/* A register of what is held: one entry per kind of record. */
+.records {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.record {
+  border: 1px solid var(--paper-line);
+  background: #fbfaf5;
+}
+
+.recordTitle {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--paper-line);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.recordFields {
+  margin: 0;
+  padding: 0.35rem 1rem 0.75rem;
+}
+
+.recordField {
+  padding: 0.5rem 0;
+  border-bottom: 1px dotted var(--paper-line);
+}
+
+.recordField:last-child {
+  border-bottom: 0;
+}
+
+.recordLabel {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5f6b63;
+}
+
+.recordValue {
+  margin: 0.2rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.docFooter {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--paper-line);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5f6b63;
+}
+
+.docFooter a {
+  color: var(--stamp);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+@media (max-width: 960px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .toc {
+    position: static;
+  }
+
+  .tocList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .tocList,
+  .records {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  .toc {
+    display: none;
+  }
+
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc {
+    box-shadow: none;
+    padding: 0;
+  }
+}

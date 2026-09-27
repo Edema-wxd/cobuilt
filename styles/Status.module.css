@@ -1,0 +1,230 @@
+/* 404 and error screens. The paper card reads as the result of a register
+   search: the same record styling as the Project Passport on the landing page. */
+
+.screen {
+  position: relative;
+  padding-block: clamp(3.5rem, 9vw, 6.5rem) clamp(4.5rem, 10vw, 7.5rem);
+  background: var(--ink);
+}
+
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(58deg, rgba(201, 162, 39, 0.05) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-58deg, rgba(201, 162, 39, 0.04) 0 1px, transparent 1px 9px);
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(2.5rem, 6vw, 4.5rem);
+  align-items: center;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: clamp(2.2rem, 5.2vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.lead {
+  margin-top: 1.5rem;
+  max-width: 32rem;
+  color: rgba(242, 239, 230, 0.78);
+  font-size: 1.08rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2.25rem;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.75rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ink-line);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage);
+}
+
+.links a:hover {
+  color: var(--paper);
+}
+
+/* --- The record card ----------------------------------------------------- */
+
+.card {
+  position: relative;
+  background: var(--paper);
+  color: var(--paper-ink);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  animation: rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--ink-deep);
+  color: var(--brass-soft);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.cardBody {
+  padding: 1.75rem 1.5rem 1.5rem;
+}
+
+.code {
+  font-family: var(--font-display);
+  font-size: clamp(4.5rem, 12vw, 7rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+}
+
+.rows {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--paper-line);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px dotted var(--paper-line);
+}
+
+.rowLabel {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #5f6b63;
+}
+
+.rowValue {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.stamp {
+  position: absolute;
+  right: 1.5rem;
+  top: 3.75rem;
+  width: 6.5rem;
+  height: 6.5rem;
+  border: 2px solid var(--stamp);
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: var(--stamp);
+  transform: rotate(-13deg);
+  animation: stamp 620ms cubic-bezier(0.2, 1.4, 0.4, 1) 500ms both;
+}
+
+.stamp::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--stamp);
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+.stampSmall {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.stampLarge {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.mrz {
+  padding: 0.85rem 1.5rem 1.1rem;
+  border-top: 2px solid var(--paper-line);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  color: #46504a;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-13deg) scale(1.75);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-13deg) scale(1);
+  }
+}
+
+@media (max-width: 960px) {
+  .inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stamp {
+    width: 5.25rem;
+    height: 5.25rem;
+    right: 1rem;
+    top: 3.5rem;
+  }
+
+  .row {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+}
