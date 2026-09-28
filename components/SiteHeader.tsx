@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import { EMAIL, NAV, PHONE, PHONE_HREF } from './site';
 import { container } from './ui';

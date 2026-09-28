@@ -1,6 +1,7 @@
-import ProsePage from '../components/ProsePage';
-import { EMAIL } from '../components/site';
-import * as prose from '../components/prose';
+import type { Metadata } from 'next';
+import ProsePage from '../../components/ProsePage';
+import { EMAIL } from '../../components/site';
+import * as prose from '../../components/prose';
 
 /**
  * Careers.
@@ -10,13 +11,18 @@ import * as prose from '../components/prose';
  * so plainly and routes speculative applications somewhere real, rather than
  * showing invented roles.
  */
+export const metadata: Metadata = {
+  title: 'Working at CoBuilt',
+  description:
+    'Careers at CoBuilt Investment Partners — how we work, the disciplines we hire into, and how to send a speculative application.',
+};
+
 export default function Careers() {
   return (
     <ProsePage
       eyebrow="Careers"
       title="Working at CoBuilt"
       standfirst="We build in the open, and we hire people who are comfortable working that way."
-      description="Careers at CoBuilt Investment Partners — how we work, the disciplines we hire into, and how to send a speculative application."
       current="/careers"
     >
       <section className={prose.section}>

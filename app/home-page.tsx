@@ -1,3 +1,5 @@
+'use client';
+
 import { Fragment, useState } from 'react';
 import SiteLayout from '../components/SiteLayout';
 import { PHONE, PHONE_HREF } from '../components/site';
@@ -291,7 +293,7 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
   );
 }
 
-export default function Home() {
+export default function HomePage() {
   const [filter, setFilter] = useState<Filter>('all');
 
   const [name, setName] = useState('');
@@ -339,12 +341,7 @@ export default function Home() {
   }
 
   return (
-    <SiteLayout
-      title="CoBuilt Investment Partners — Building Trust Through Every Brick"
-      description="CoBuilt Investment Partners delivers high-quality residential, commercial, mixed-use and strategic developments in Nigeria. Every project carries a Project Passport — a permanent, public record from commencement to handover."
-      current="/"
-      preloadImage={IMAGES.hero}
-    >
+    <SiteLayout current="/" preloadImage={IMAGES.hero}>
       <main id="top">
         <section className="relative isolate flex items-center bg-line sm:min-h-135">
           <div

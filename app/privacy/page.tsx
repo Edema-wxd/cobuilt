@@ -1,6 +1,7 @@
-import ProsePage from '../components/ProsePage';
-import { EMAIL, PHONE, PHONE_HREF } from '../components/site';
-import * as prose from '../components/prose';
+import type { Metadata } from 'next';
+import ProsePage from '../../components/ProsePage';
+import { EMAIL, PHONE, PHONE_HREF } from '../../components/site';
+import * as prose from '../../components/prose';
 
 /**
  * Privacy Policy (NDPA).
@@ -19,6 +20,12 @@ const RETENTION: Array<[string, string, string]> = [
   ['Account records', 'Email, name, role, sign-in history', 'While the account is open'],
 ];
 
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description:
+    'How CoBuilt Investment Partners handles personal data under the Nigeria Data Protection Act — what we collect, why, how long we keep it, and your rights.',
+};
+
 export default function Privacy() {
   return (
     <ProsePage
@@ -26,7 +33,6 @@ export default function Privacy() {
       title="Privacy Policy"
       standfirst="How CoBuilt Investment Partners collects, uses and retains personal data, and the rights you hold over it under the Nigeria Data Protection Act."
       updated="16 September 2026"
-      description="How CoBuilt Investment Partners handles personal data under the Nigeria Data Protection Act — what we collect, why, how long we keep it, and your rights."
     >
       <section className={prose.section}>
         <h2 className={prose.sectionTitle}>Who we are</h2>

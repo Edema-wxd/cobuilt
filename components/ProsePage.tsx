@@ -9,27 +9,26 @@ interface Props {
   standfirst: string;
   /** Human-readable date, e.g. "16 September 2026". Omitted on non-policy pages. */
   updated?: string;
-  description: string;
   current?: string;
   children: ReactNode;
 }
 
-/** Shared shell for the standalone text pages. */
+/**
+ * Shared shell for the standalone text pages.
+ *
+ * `title` is the visible heading only; the document title comes from the
+ * page's own `metadata` export.
+ */
 export default function ProsePage({
   eyebrow,
   title,
   standfirst,
   updated,
-  description,
   current,
   children,
 }: Props) {
   return (
-    <SiteLayout
-      title={`${title} — CoBuilt Investment Partners`}
-      description={description}
-      {...(current ? { current } : {})}
-    >
+    <SiteLayout {...(current ? { current } : {})}>
       <main>
         <div className={prose.head}>
           <div className={prose.headInner}>

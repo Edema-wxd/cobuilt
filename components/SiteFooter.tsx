@@ -1,3 +1,5 @@
+'use client';
+
 import { ADDRESS_LINES, FOOTER_COLUMNS } from './site';
 import { openPreferences } from './cookieConsent';
 import { container } from './ui';

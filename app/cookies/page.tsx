@@ -1,7 +1,8 @@
-import ProsePage from '../components/ProsePage';
-import { EMAIL } from '../components/site';
-import { openPreferences } from '../components/cookieConsent';
-import * as prose from '../components/prose';
+import type { Metadata } from 'next';
+import ProsePage from '../../components/ProsePage';
+import { EMAIL } from '../../components/site';
+import CookiePreferencesButton from '../../components/CookiePreferencesButton';
+import * as prose from '../../components/prose';
 
 /**
  * Cookie Policy.
@@ -33,6 +34,12 @@ const CATEGORIES: Array<[string, string, string]> = [
   ],
 ];
 
+export const metadata: Metadata = {
+  title: 'Cookie Policy',
+  description:
+    'The cookies CoBuilt Investment Partners sets, what each category does, how long it lasts, and how to change your preferences.',
+};
+
 export default function Cookies() {
   return (
     <ProsePage
@@ -40,7 +47,6 @@ export default function Cookies() {
       title="Cookie Policy"
       standfirst="What we store on your device, why, and how to change your mind at any time."
       updated="16 September 2026"
-      description="The cookies CoBuilt Investment Partners sets, what each category does, how long it lasts, and how to change your preferences."
     >
       <section className={prose.section}>
         <h2 className={prose.sectionTitle}>Our approach</h2>
@@ -82,9 +88,7 @@ export default function Cookies() {
           your device, so you will be asked again on a different browser, or if you clear your
           site data.
         </p>
-        <button className={prose.action} type="button" onClick={openPreferences}>
-          Change cookie preferences
-        </button>
+        <CookiePreferencesButton />
       </section>
 
       <section className={prose.section}>

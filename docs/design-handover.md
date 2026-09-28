@@ -9,7 +9,10 @@ covers far more than that — 41 API routes, most with no interface yet. This
 document is the list of what to design next, in the order worth building.
 
 **Reference:** Var-2026-003, Phase 1 · **Direction:** 3c, "Corporate Digital
-Standards" · **Stack for implementation:** Next.js pages router, Tailwind v4.
+Standards" · **Stack for implementation:** Next.js App Router for pages, pages
+router for the API, Tailwind v4. (This document originally specified the pages
+router throughout; the pages were migrated to the App Router — see
+`docs/decisions.md` §2.12.)
 
 ---
 

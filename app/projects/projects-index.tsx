@@ -1,6 +1,8 @@
+'use client';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter, useSearchParams } from 'next/navigation';
 import SiteLayout from '../../components/SiteLayout';
 import { passportHref } from '../../components/site';
 import {
@@ -16,7 +18,7 @@ import {
  * Projects index — `/projects`.
  *
  * Built from the handoff mockup "CoBuilt Projects" (direction 3c). The page
- * reads `/api/projects` on the client rather than in `getServerSideProps`: the
+ * reads `/api/projects` in the browser rather than on the server: the
  * list endpoint needs PostgreSQL, and a checkout without a database should
  * still render the page and say plainly that the list could not be loaded,
  * which is the state the mockup designs for. Filters live in the query string,
@@ -140,13 +142,8 @@ const pill =
   'inline-flex min-h-target flex-none cursor-pointer items-center gap-2 border px-4.5 text-[0.688rem] font-semibold uppercase tracking-[0.14em]';
 const uppercaseLink = 'font-semibold uppercase tracking-[0.14em] text-rust hover:text-rust-hover';
 
-/** Query values arrive as `string | string[] | undefined`; the API takes one. */
-function first(value: string | string[] | undefined): string {
-  return (Array.isArray(value) ? value[0] : value) ?? '';
-}
-
-function toPage(value: string | string[] | undefined): number {
-  const page = Number.parseInt(first(value), 10);
+function toPage(value: string): number {
+  const page = Number.parseInt(value, 10);
   return Number.isFinite(page) && page > 0 ? page : 1;
 }
 
@@ -176,12 +173,17 @@ function Skeleton() {
 
 export default function ProjectsIndex() {
   const router = useRouter();
-  const query = router.query;
+  const searchParams = useSearchParams();
+  // Depended on rather than the params object itself: a stable string is a
+  // sound effect dependency, where the object identity is not guaranteed.
+  const queryString = searchParams?.toString() ?? '';
 
-  const status = first(query.status);
-  const sort = (first(query.sort) || 'recent') as Sort;
-  const q = first(query.q);
-  const page = toPage(query.page);
+  const param = useCallback((key: string) => searchParams?.get(key) ?? '', [searchParams]);
+
+  const status = param('status');
+  const sort = (param('sort') || 'recent') as Sort;
+  const q = param('q');
+  const page = toPage(param('page'));
 
   const [facets, setFacets] = useState<Facets | null>(null);
   const [data, setData] = useState<ProjectPage | null>(null);
@@ -195,31 +197,35 @@ export default function ProjectsIndex() {
   // The URL is the single source of truth for filters; the text field keeps a
   // local draft only so typing is not one router push per keystroke.
   useEffect(() => {
-    if (!router.isReady) return;
     setDraftQ(q);
-  }, [router.isReady, q]);
+  }, [q]);
 
   const setQuery = useCallback(
     (changes: Record<string, string>) => {
-      const next: Record<string, string> = {};
-      for (const [key, value] of Object.entries({ ...router.query, ...changes })) {
-        const single = first(value);
+      const next = new URLSearchParams();
+      const merged: Record<string, string> = {};
+      for (const [key, value] of searchParams?.entries() ?? []) merged[key] = value;
+      Object.assign(merged, changes);
+
+      for (const [key, value] of Object.entries(merged)) {
         // A cleared filter leaves the URL rather than sitting in it as an empty
         // parameter, and any filter change returns to the first page.
-        if (single && !(key === 'page' && single === '1')) next[key] = single;
+        if (value && !(key === 'page' && value === '1')) next.set(key, value);
       }
-      void router.push({ pathname: '/projects', query: next }, undefined, { scroll: false });
+
+      const qs = next.toString();
+      router.push(qs ? `/projects?${qs}` : '/projects', { scroll: false });
     },
-    [router],
+    [router, searchParams],
   );
 
   // Debounced, so a search is one request after typing stops rather than one
   // per character. Submitting the form applies it immediately.
   useEffect(() => {
-    if (!router.isReady || draftQ === q) return;
+    if (draftQ === q) return;
     const timer = setTimeout(() => setQuery({ q: draftQ, page: '1' }), 400);
     return () => clearTimeout(timer);
-  }, [draftQ, q, router.isReady, setQuery]);
+  }, [draftQ, q, setQuery]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -235,13 +241,12 @@ export default function ProjectsIndex() {
   }, []);
 
   useEffect(() => {
-    if (!router.isReady) return;
     const controller = new AbortController();
     setState('loading');
 
     const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE), sort });
     for (const key of ['status', 'type', 'location', 'sector', 'tag', 'q'] as const) {
-      const value = first(query[key]);
+      const value = param(key);
       if (value) params.set(key, value);
     }
 
@@ -260,7 +265,9 @@ export default function ProjectsIndex() {
       });
 
     return () => controller.abort();
-  }, [router.isReady, query, page, sort, attempt]);
+    // `queryString` stands in for every filter `param` reads above: it changes
+    // whenever any of them does, and is a stable string rather than an object.
+  }, [queryString, page, sort, attempt]);
 
   // The phone filter sheet is a dialog: Escape closes it, focus moves into it
   // and back to the button that opened it, and the page behind it cannot scroll.
@@ -288,7 +295,7 @@ export default function ProjectsIndex() {
     active.push({ key: 'status', label: STATUS_LABEL[status as Status] ?? status });
   }
   for (const item of SELECTS) {
-    const value = first(query[item.key]);
+    const value = param(item.key);
     if (value) active.push({ key: item.key, label: facetLabel(facets, item.facet, value) });
   }
   if (q) active.push({ key: 'q', label: `“${q}”` });
@@ -300,7 +307,7 @@ export default function ProjectsIndex() {
 
   function clearAll(): void {
     setDraftQ('');
-    void router.push('/projects', undefined, { scroll: false });
+    router.push('/projects', { scroll: false });
   }
 
   /**
@@ -315,7 +322,7 @@ export default function ProjectsIndex() {
       const options = facets?.[item.facet] ?? [];
       // A filter with nothing behind it is not offered — except the one the URL
       // already carries, which must stay selectable so it can be cleared.
-      const value = first(query[item.key]);
+      const value = param(item.key);
       if (options.length === 0 && !value) return <div key={item.key} className="hidden" />;
 
       // A value the facets do not list — a stale `?tag=`, or a facet group the
@@ -349,11 +356,7 @@ export default function ProjectsIndex() {
   }
 
   return (
-    <SiteLayout
-      title="Projects — CoBuilt Investment Partners"
-      description="Completed, under construction and planned developments from CoBuilt Investment Partners, each linked to its Project Passport™ — a dated, public record from commencement to handover."
-      current="/projects"
-    >
+    <SiteLayout current="/projects">
       <main>
         <nav
           className="border-b border-line bg-white"

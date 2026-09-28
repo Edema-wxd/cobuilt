@@ -1,6 +1,7 @@
-import ProsePage from '../components/ProsePage';
-import { EMAIL, PHONE, PHONE_HREF } from '../components/site';
-import * as prose from '../components/prose';
+import type { Metadata } from 'next';
+import ProsePage from '../../components/ProsePage';
+import { EMAIL, PHONE, PHONE_HREF } from '../../components/site';
+import * as prose from '../../components/prose';
 
 /**
  * Accessibility Statement.
@@ -9,6 +10,12 @@ import * as prose from '../components/prose';
  * 2.2 AA" flatly: the claim is partial conformance, and the exceptions below
  * are the honest list. Close one of them and it should come off this page.
  */
+export const metadata: Metadata = {
+  title: 'Accessibility Statement',
+  description:
+    "CoBuilt Investment Partners' accessibility statement: target conformance with WCAG 2.2 AA, what has been verified, and the known exceptions.",
+};
+
 export default function Accessibility() {
   return (
     <ProsePage
@@ -16,7 +23,6 @@ export default function Accessibility() {
       title="Accessibility Statement"
       standfirst="What this site does to be usable by everyone, what we have verified, and what we know is still outstanding."
       updated="16 September 2026"
-      description="CoBuilt Investment Partners' accessibility statement: target conformance with WCAG 2.2 AA, what has been verified, and the known exceptions."
     >
       <section className={prose.section}>
         <h2 className={prose.sectionTitle}>Our commitment</h2>

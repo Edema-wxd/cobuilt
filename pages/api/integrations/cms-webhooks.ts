@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { revalidatePath } from 'next/cache';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
 import { applyWebhook, type CmsWebhookPayload } from '@/lib/cms/sync';
@@ -72,7 +73,10 @@ export default async function handler(
   const revalidated: string[] = [];
   for (const path of result.revalidate) {
     try {
-      await res.revalidate(path);
+      // `revalidatePath` rather than `res.revalidate`: the pages it targets are
+      // App Router routes now, and `res.revalidate` only reaches pages-router
+      // ones. This route itself stays a pages API route.
+      revalidatePath(path);
       revalidated.push(path);
     } catch (error) {
       logger.warn('ISR revalidation failed', {

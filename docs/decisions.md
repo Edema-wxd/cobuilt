@@ -159,7 +159,7 @@ reading one is itself written to the audit log.
 ### 2.9 The projects index reads the API on the client
 
 `/projects` fetches `/api/projects` and `/api/search/facets` from the browser
-rather than in `getServerSideProps`. The list needs PostgreSQL, and a checkout
+rather than on the server. The list needs PostgreSQL, and a checkout
 without a database should still render the page and say plainly that the list
 could not be loaded — which is the state the mockup designs for. Filters, sort
 and page live in the query string, so a filtered view is shareable and the back
@@ -183,10 +183,11 @@ serializer would close the first two; both are backend changes, not design ones.
 shareable URL for a development, so it needs the project's own SEO fields in
 the document head, an Open Graph image for link previews, and a real 404 for a
 slug that does not exist — none of which a client-side fetch gives. It reads
-the repositories directly in `getServerSideProps` rather than calling its own
-API over HTTP: one round trip, and the response shape is guaranteed by the same
-serializers the API uses. A database failure still renders the page, with the
-"couldn't be loaded" state and a 503, rather than a 500.
+the repositories directly in `app/projects/[slug]/load-project.ts` rather than
+calling its own API over HTTP: one round trip, and the response shape is
+guaranteed by the same serializers the API uses. A database failure still
+renders the page with the "couldn't be loaded" state rather than a 500 — see
+§2.12 for the status code that changed with the router migration.
 
 Three reads the public API does not expose were added to
 `src/lib/repositories/projects.ts` for it — `labelsByIds` for service and tag
@@ -243,6 +244,47 @@ previous day — a Passport opened on 15 January was served as the 14th. The
 helper now reads the year, month and day as stored. This was a live API bug,
 not only a page bug: the same dates are wrong in `/api/projects/[idOrSlug]` and
 in every passport milestone response.
+
+### 2.12 The pages are App Router; the API stays on the pages router
+
+The handover specified the pages router (design handover §preamble). The pages
+now live in `app/`; the 41 API routes stay in `pages/api`. The two coexist in
+one Next application, which is what made the split worth taking: every reason to
+be on the App Router — Server Components, nested layouts, the metadata API — is
+on the page side, while the API's value is in one request pipeline
+(`src/lib/http/route.ts`) that already works and is exercised by the test suite.
+Moving it would mean rewriting that pipeline and six library modules around Web
+`Request`/`Response` for no behavioural gain.
+
+What this changed on the page side:
+
+| Was | Now |
+|---|---|
+| `pages/_app.tsx` + `pages/_document.tsx` | `app/layout.tsx`, with `viewport` and an icon in `metadata` |
+| `next/head` per page, via `SiteLayout`'s `title`/`description` props | A `metadata` export per page; the root layout holds the `%s — CoBuilt Investment Partners` title template |
+| `getServerSideProps` in `pages/projects/[slug].tsx` | `app/projects/[slug]/load-project.ts`, wrapped in `cache` so the page and `generateMetadata` share one set of queries |
+| `useRouter().query` on the index | `useSearchParams()`, with `router.push` from `next/navigation` |
+| `res.revalidate(path)` in the CMS webhook | `revalidatePath(path)` — `res.revalidate` only reaches pages-router routes |
+
+Two consequences worth knowing:
+
+- **`/projects` is rendered per request** (`dynamic = 'force-dynamic'`). Its body
+  reads the query string through `useSearchParams`, which a static prerender
+  cannot resolve; Next would otherwise require a Suspense boundary and the
+  prerendered HTML would be the fallback rather than the page. Rendering
+  dynamically means the server sends the full page, chrome and loading state
+  included, already reflecting the filters in the URL.
+- **A project page no longer returns 503 when the database is down.** An App
+  Router page cannot set its own status code. The visible behaviour is
+  unchanged — the "couldn't be loaded" state still renders — but the status is
+  now 200. If the status matters to monitoring, it needs a route handler or
+  middleware.
+
+Components that hold state or handlers — `SiteHeader`, `SiteFooter`,
+`CookieBanner`, the two project pages and the landing page — carry
+`'use client'`. The prose pages are server components; the one button on the
+cookie policy page is split into `components/CookiePreferencesButton.tsx` so the
+page itself did not have to become a client component.
 
 ---
 

@@ -1,9 +1,9 @@
+'use client';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
-import type { GetServerSideProps } from 'next';
-import Head from 'next/head';
-import SiteLayout from '../../components/SiteLayout';
-import { passportHref } from '../../components/site';
+import SiteLayout from '../../../components/SiteLayout';
+import { passportHref } from '../../../components/site';
 import {
   btnOrange,
   btnOutline,
@@ -14,7 +14,7 @@ import {
   eyebrowOnDark,
   eyebrowOnLine,
   media,
-} from '../../components/ui';
+} from '../../../components/ui';
 
 /**
  * Project detail — `/projects/[slug]`.
@@ -87,7 +87,7 @@ interface RelatedProject {
   featuredImageUrl: string | null;
 }
 
-interface Project {
+export interface Project {
   id: string;
   title: string;
   slug: string;
@@ -112,7 +112,7 @@ interface Project {
   };
 }
 
-interface Props {
+export interface ProjectDetailProps {
   project: Project | null;
   services: Label[];
   tags: Label[];
@@ -281,7 +281,7 @@ export default function ProjectDetail({
   tours,
   passport,
   related,
-}: Props) {
+}: ProjectDetailProps) {
   const [activeTourId, setActiveTourId] = useState<string | null>(
     tours.find((tour) => tour.featured)?.id ?? tours[0]?.id ?? null,
   );
@@ -312,11 +312,7 @@ export default function ProjectDetail({
 
   if (!project) {
     return (
-      <SiteLayout
-        title="Project — CoBuilt Investment Partners"
-        description="This project could not be loaded."
-        current="/projects"
-      >
+      <SiteLayout current="/projects">
         <main className="bg-white py-14 md:py-20">
           <div className={`${container} flex max-w-160 flex-col items-start gap-4`}>
             <h1 className={sectionTitle}>This project couldn&rsquo;t be loaded just now.</h1>
@@ -338,12 +334,6 @@ export default function ProjectDetail({
     );
   }
 
-  const title = project.seo.metaTitle ?? `${project.title} — CoBuilt Investment Partners`;
-  const description =
-    project.seo.metaDescription ??
-    project.description ??
-    `${project.title}: a CoBuilt development with its Project Passport™ — a dated, public record from commencement to handover.`;
-  const shareImage = project.seo.openGraphImageUrl ?? project.featuredImageUrl;
   // Until the Passport page exists this is an anchor to the band below, so the
   // band's own "open the full record" link would only point at itself.
   const passportLink = passportHref(project.slug);
@@ -369,20 +359,9 @@ export default function ProjectDetail({
 
   return (
     <SiteLayout
-      title={title}
-      description={description}
       current="/projects"
       {...(project.featuredImageUrl ? { preloadImage: project.featuredImageUrl } : {})}
     >
-      <Head>
-        {project.seo.canonicalUrl ? <link rel="canonical" href={project.seo.canonicalUrl} /> : null}
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content={project.title} />
-        <meta property="og:description" content={description} />
-        {shareImage ? <meta property="og:image" content={shareImage} /> : null}
-        <meta name="twitter:card" content={shareImage ? 'summary_large_image' : 'summary'} />
-      </Head>
-
       <main>
         <nav className="border-b border-line bg-white" aria-label="Breadcrumb">
           <div className={`${container} flex min-h-12 items-center gap-3 text-[0.781rem]`}>
@@ -1037,147 +1016,3 @@ export default function ProjectDetail({
     </SiteLayout>
   );
 }
-
-const MILESTONE_LABEL: Record<string, string> = {
-  commencement: 'Commencement',
-  foundation: 'Foundation',
-  superstructure: 'Superstructure',
-  roofing: 'Roofing',
-  mep: 'MEP',
-  finishes: 'Finishes',
-  practical_completion: 'Practical completion',
-  handover: 'Handover',
-  custom: 'Milestone',
-};
-
-/**
- * An editor-supplied tour URL, returned only if it is one this page can frame.
- * A `javascript:` or `data:` URL in an iframe `src` executes in this page's
- * context, which is the same hole `embed_code` is withheld to avoid.
- */
-function httpsUrl(value: string | null): string | null {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    return url.protocol === 'https:' ? url.toString() : null;
-  } catch {
-    return null;
-  }
-}
-
-const EMPTY: Props = {
-  project: null,
-  services: [],
-  tags: [],
-  images: [],
-  tours: [],
-  passport: null,
-  related: [],
-};
-
-export const getServerSideProps: GetServerSideProps<Props> = async ({ params, res }) => {
-  const slug = typeof params?.slug === 'string' ? params.slug : '';
-  if (!slug) return { notFound: true };
-
-  // Imported here rather than at the top of the file: everything below reaches
-  // PostgreSQL, and Next.js only strips server imports out of the client
-  // bundle when they are confined to this function.
-  const projectsRepo = await import('@/lib/repositories/projects');
-  const toursRepo = await import('@/lib/repositories/tours');
-  const passportRepo = await import('@/lib/repositories/passport');
-  const { serializeProject, serializeTour, toDateOnly } = await import('@/lib/serializers');
-
-  try {
-    const row = await projectsRepo.findBySlug(slug);
-    if (!row) return { notFound: true };
-
-    const project = serializeProject(row);
-
-    const [services, tags, albums, tourRows, milestones, nearby] = await Promise.all([
-      projectsRepo.labelsByIds('services', project.serviceIds),
-      projectsRepo.labelsByIds('tags', project.tagIds),
-      projectsRepo.galleryForProject(project.id, project.galleryIds),
-      toursRepo.listForProject(project.id),
-      row.passport_enabled ? passportRepo.listForProject(project.id) : Promise.resolve([]),
-      projectsRepo.listProjects({
-        // "More in Lagos" is the index filtered by this project's location, so
-        // no related-projects field is needed. One extra row is requested to
-        // cover this project being among them.
-        ...(row.location_id ? { location: row.location_id } : {}),
-        page: 1,
-        pageSize: 4,
-        sort: 'recent',
-      }),
-    ]);
-
-    const total = milestones.length;
-    const completed = milestones.filter((milestone) => milestone.status === 'completed').length;
-    const next = milestones.find((milestone) => milestone.status !== 'completed') ?? null;
-
-    // The record's last entry is when a milestone was last recorded, which is
-    // not the same as the date it happened on — the provenance of the record is
-    // the point of showing it.
-    const lastEntry = milestones.reduce<string | null>((latest, milestone) => {
-      const recorded = milestone.triggered_at ? new Date(milestone.triggered_at).toISOString() : null;
-      return recorded && (!latest || recorded > latest) ? recorded : latest;
-    }, null);
-
-    return {
-      props: {
-        project: project as Project,
-        services,
-        tags,
-        // Albums are a CMS grouping; the page shows one run of photography.
-        images: albums.flatMap((album) => album.imageUrls).filter(Boolean),
-        tours: tourRows
-          .filter((tour) => tour.processing_status === 'ready')
-          .map(serializeTour)
-          .map(({ id, name, type, description, thumbnailUrl, tourUrl, fileSizeBytes, featured }) => ({
-            id,
-            name,
-            type,
-            description,
-            thumbnailUrl,
-            // A model's `tourUrl` is the .glb file itself, not a page, so it is
-            // never an embed; anything else must be https before it is framed.
-            embedUrl: type === 'threejs_model' ? null : httpsUrl(tourUrl),
-            fileSizeBytes,
-            featured,
-          })),
-        passport: row.passport_enabled
-          ? {
-              total,
-              completed,
-              percent: total === 0 ? 0 : Math.round((completed / total) * 100),
-              lastEntry,
-              next: next
-                ? {
-                    label: next.title ?? MILESTONE_LABEL[next.milestone_type] ?? 'Milestone',
-                    status: next.status,
-                    // Same reason `toDateOnly` reads local parts: a DATE column
-                    // is local midnight, and toISOString() would move it a day.
-                    scheduledDate: toDateOnly(next.scheduled_date),
-                  }
-                : null,
-            }
-          : null,
-        related: nearby.results
-          .filter((item) => item.id !== project.id)
-          .slice(0, 3)
-          .map((item) => ({
-            id: item.id,
-            title: item.title,
-            slug: item.slug,
-            status: item.status,
-            location: item.location_name ?? null,
-            featuredImageUrl: item.featured_image_url,
-          })),
-      },
-    };
-  } catch {
-    // No database, or it is down. The page still renders and says so, rather
-    // than returning a 500 — the same posture the projects index takes.
-    res.statusCode = 503;
-    return { props: EMPTY };
-  }
-};

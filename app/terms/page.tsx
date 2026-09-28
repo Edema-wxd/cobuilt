@@ -1,6 +1,7 @@
-import ProsePage from '../components/ProsePage';
-import { EMAIL } from '../components/site';
-import * as prose from '../components/prose';
+import type { Metadata } from 'next';
+import ProsePage from '../../components/ProsePage';
+import { EMAIL } from '../../components/site';
+import * as prose from '../../components/prose';
 
 /**
  * Terms & Conditions.
@@ -9,6 +10,12 @@ import * as prose from '../components/prose';
  * Standards brief turns on: the site carries no investment call to action, and
  * this states the same position in binding terms.
  */
+export const metadata: Metadata = {
+  title: 'Terms & Conditions',
+  description:
+    'Terms of use for the CoBuilt Investment Partners website, including the position on investment, the status of Project Passport information, and limitations of liability.',
+};
+
 export default function Terms() {
   return (
     <ProsePage
@@ -16,7 +23,6 @@ export default function Terms() {
       title="Terms & Conditions"
       standfirst="The terms on which CoBuilt Investment Partners makes this website and its contents available to you."
       updated="16 September 2026"
-      description="Terms of use for the CoBuilt Investment Partners website, including the position on investment, the status of Project Passport information, and limitations of liability."
     >
       <section className={prose.section}>
         <h2 className={prose.sectionTitle}>Acceptance</h2>
