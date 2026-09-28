@@ -23,21 +23,32 @@ function documentedPaths(): Set<string> {
   return new Set(Object.keys(doc.paths));
 }
 
-function implementedPaths(): Set<string> {
-  const files = execSync('find pages/api -name "*.ts"', { cwd: process.cwd() })
+function find(pattern: string): string[] {
+  return execSync(pattern, { cwd: process.cwd() })
     .toString()
     .trim()
     .split('\n')
     .filter(Boolean);
+}
+
+function implementedPaths(): Set<string> {
+  // Most routes are pages API routes: pages/api/foo.ts → /api/foo.
+  const pagesRoutes = find('find pages/api -name "*.ts"').map((file) =>
+    `/${file}`
+      .replace(/^\/pages/, '')
+      .replace(/\.ts$/, '')
+      .replace(/\/index$/, ''),
+  );
+
+  // The CMS webhook is an App Router route handler, because only there can it
+  // revalidate App Router pages (docs/decisions.md §2.12):
+  // app/api/foo/route.ts → /api/foo.
+  const appRoutes = find('find app/api -name "route.ts"').map((file) =>
+    `/${file}`.replace(/^\/app/, '').replace(/\/route\.ts$/, ''),
+  );
 
   return new Set(
-    files.map((file) =>
-      `/${file}`
-        .replace(/^\/pages/, '')          // pages/api/... is served at /api/...
-        .replace(/\.ts$/, '')
-        .replace(/\/index$/, '')
-        .replace(/\[(\w+)\]/g, '{$1}'),   // [slug] → {slug}
-    ),
+    [...pagesRoutes, ...appRoutes].map((path) => path.replace(/\[(\w+)\]/g, '{$1}')),
   );
 }
 

@@ -248,13 +248,25 @@ in every passport milestone response.
 ### 2.12 The pages are App Router; the API stays on the pages router
 
 The handover specified the pages router (design handover §preamble). The pages
-now live in `app/`; the 41 API routes stay in `pages/api`. The two coexist in
-one Next application, which is what made the split worth taking: every reason to
-be on the App Router — Server Components, nested layouts, the metadata API — is
-on the page side, while the API's value is in one request pipeline
-(`src/lib/http/route.ts`) that already works and is exercised by the test suite.
-Moving it would mean rewriting that pipeline and six library modules around Web
-`Request`/`Response` for no behavioural gain.
+now live in `app/`; the API routes stay in `pages/api`, with one exception noted
+below. The two coexist in one Next application, which is what made the split
+worth taking: every reason to be on the App Router — Server Components, nested
+layouts, the metadata API — is on the page side, while the API's value is in one
+request pipeline (`src/lib/http/route.ts`) that already works and is exercised by
+the test suite. Moving it would mean rewriting that pipeline and six library
+modules around Web `Request`/`Response` for no behavioural gain.
+
+**The exception is the CMS webhook.** `revalidatePath` is the only way to
+revalidate an App Router page, and calling it from a pages API route throws
+`Invariant: static generation store missing` — every time, silently, because the
+call is wrapped in a best-effort try/catch. So
+`app/api/integrations/cms-webhooks/route.ts` is an App Router route handler: a
+route whose job is to revalidate pages has to live where the page cache does. It
+never used the shared pipeline anyway, because an HMAC signature has to be
+checked against the raw bytes before anything parses them; `readRawRequestBody`
+in `src/lib/http/rawBody.ts` is the Web `Request` equivalent of `readRawBody`.
+`__tests__/unit/openapi.test.ts` scans `app/api` as well as `pages/api` so the
+spec-drift check still covers it.
 
 What this changed on the page side:
 
@@ -264,7 +276,7 @@ What this changed on the page side:
 | `next/head` per page, via `SiteLayout`'s `title`/`description` props | A `metadata` export per page; the root layout holds the `%s — CoBuilt Investment Partners` title template |
 | `getServerSideProps` in `pages/projects/[slug].tsx` | `app/projects/[slug]/load-project.ts`, wrapped in `cache` so the page and `generateMetadata` share one set of queries |
 | `useRouter().query` on the index | `useSearchParams()`, with `router.push` from `next/navigation` |
-| `res.revalidate(path)` in the CMS webhook | `revalidatePath(path)` — `res.revalidate` only reaches pages-router routes |
+| `res.revalidate(path)` in the CMS webhook | `revalidatePath(path)`, from an App Router route handler — see above |
 
 Two consequences worth knowing:
 

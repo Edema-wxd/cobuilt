@@ -32,6 +32,38 @@ export async function readRawBody(req: NextApiRequest): Promise<Buffer> {
 }
 
 /**
+ * The same read for an App Router route handler, which receives a Web `Request`
+ * rather than a Node stream. It reads the stream in chunks rather than calling
+ * `arrayBuffer()` so an oversized payload is refused partway through instead of
+ * being buffered whole first.
+ */
+export async function readRawRequestBody(request: Request): Promise<Buffer> {
+  if (!request.body) return Buffer.alloc(0);
+
+  const reader = request.body.getReader();
+  const chunks: Buffer[] = [];
+  let total = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      total += value.byteLength;
+      if (total > MAX_WEBHOOK_BYTES) {
+        throw new Error('Webhook payload exceeds the 1 MB limit');
+      }
+      chunks.push(Buffer.from(value));
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return Buffer.concat(chunks);
+}
+
+/**
  * Verifies an HMAC-SHA256 signature. `signature` may carry a `sha256=` prefix,
  * as Meta's WhatsApp webhooks send.
  */
