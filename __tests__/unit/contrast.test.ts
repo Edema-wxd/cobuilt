@@ -69,6 +69,7 @@ describe('palette tokens', () => {
       'orange-lift',
       'orange-on-dark',
       'rust',
+      'rust-hover',
       'ink',
       'ink-deep',
       'white',
@@ -102,6 +103,10 @@ describe('contrast of rendered pairings', () => {
     ['eyebrow on muted section', 'rust', 'zinc-100', AA_TEXT],
     ['step number (32px)', 'rust', 'white', AA_LARGE],
     ['progress fill against its track', 'rust', 'line', AA_NON_TEXT],
+    // Plain rust is 4.41:1 on the `line` ground, so the register band's eyebrow
+    // takes the darker rust instead.
+    ['eyebrow on the register ground', 'rust-hover', 'line', AA_TEXT],
+    ['card link, hover', 'rust-hover', 'white', AA_TEXT],
 
     // Accents on dark grounds are the light orange.
     ['hero accent on scrim', 'orange-on-dark', 'ink', AA_TEXT],
@@ -119,6 +124,20 @@ describe('contrast of rendered pairings', () => {
     ['pending milestone', 'zinc-400', 'ink', AA_TEXT],
 
     // The focus ring is two rings so that one of them always contrasts.
+    // Filter controls on /projects: a control boundary is non-text contrast, and
+    // zinc-400 is only 2.33:1 on the muted ground the filter bar sits on.
+    ['filter control border on the muted ground', 'zinc-500', 'zinc-100', AA_NON_TEXT],
+    ['pagination control border on white', 'zinc-500', 'white', AA_NON_TEXT],
+    ['results meta on the muted ground', 'zinc-700', 'zinc-100', AA_TEXT],
+    ['card status badge, upcoming', 'ink', 'line', AA_TEXT],
+
+    // Project detail: the gallery's "view all" tile and the tour viewer chrome
+    // both sit on the deeper charcoal rather than on `ink`.
+    ['gallery scrim label', 'white', 'ink-deep', AA_TEXT],
+    ['tour viewer chrome label', 'white', 'ink-deep', AA_TEXT],
+    ['tour "exit tour" control', 'orange-on-dark', 'ink-deep', AA_TEXT],
+    ['tour loading copy', 'zinc-200', 'ink-deep', AA_TEXT],
+
     ['focus ring, outer, on white', 'ink', 'white', AA_NON_TEXT],
     ['focus ring, inner, on charcoal', 'white', 'ink', AA_NON_TEXT],
   ];

@@ -26,7 +26,7 @@ export const NAV: NavItem[] = [
   { label: 'About', href: '/#about' },
   { label: 'Leadership', href: '/#leadership' },
   { label: 'Services', href: '/#services' },
-  { label: 'Projects', href: '/#projects' },
+  { label: 'Projects', href: '/projects' },
   { label: 'Passport™', href: '/#passport' },
   { label: 'Media', href: '/#media' },
   { label: 'Careers', href: '/careers' },
@@ -54,9 +54,9 @@ export const FOOTER_COLUMNS: Array<{ head: string; items: FooterItem[] }> = [
   {
     head: 'Projects',
     items: [
-      { label: 'Past projects', href: '/#projects' },
-      { label: 'Ongoing projects', href: '/#projects' },
-      { label: 'Future projects', href: '/#projects' },
+      { label: 'Past projects', href: '/projects?status=completed' },
+      { label: 'Ongoing projects', href: '/projects?status=ongoing' },
+      { label: 'Future projects', href: '/projects?status=future' },
       { label: 'Project Passport™', href: '/#passport' },
     ],
   },
@@ -80,3 +80,15 @@ export const FOOTER_COLUMNS: Array<{ head: string; items: FooterItem[] }> = [
     ],
   },
 ];
+
+/**
+ * Where a Project Passport™ link goes.
+ *
+ * The Passport page itself — `/projects/[slug]/passport` — is not built yet
+ * (docs/design-handover.md §3.1). Until it is, every Passport link resolves to
+ * the passport summary band on the project page rather than to a 404. This is
+ * the one place to change when that page ships.
+ */
+export function passportHref(slug: string): string {
+  return `/projects/${slug}#passport`;
+}

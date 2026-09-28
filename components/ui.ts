@@ -14,6 +14,11 @@ export const container = 'mx-auto w-full max-w-measure px-gutter';
 
 const eyebrowBase = 'text-[0.719rem] font-medium uppercase tracking-[0.28em]';
 export const eyebrow = `${eyebrowBase} text-rust`;
+/**
+ * On the `line` ground the plain rust eyebrow is 4.41:1 — under AA at this
+ * size — so the darker rust carries it there (6.11:1).
+ */
+export const eyebrowOnLine = `${eyebrowBase} text-rust-hover`;
 export const eyebrowOnDark = `${eyebrowBase} text-orange-on-dark`;
 
 const btn =

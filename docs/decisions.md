@@ -156,6 +156,94 @@ lifetime instead of persisting until the token expires.
 Full contact details are returned only by the single-submission endpoint, and
 reading one is itself written to the audit log.
 
+### 2.9 The projects index reads the API on the client
+
+`/projects` fetches `/api/projects` and `/api/search/facets` from the browser
+rather than in `getServerSideProps`. The list needs PostgreSQL, and a checkout
+without a database should still render the page and say plainly that the list
+could not be loaded — which is the state the mockup designs for. Filters, sort
+and page live in the query string, so a filtered view is shareable and the back
+button works.
+
+Three fields the mockup shows are not in the list response, so the page
+degrades around them rather than inventing them:
+
+| Shown in the mockup | Status | Rendered as |
+|---|---|---|
+| Project reference code (`CB-2024-014`) | No such field on `projects` | The card's mono slot carries the location instead |
+| `passport.progress` — stage and percent | Detail endpoint only | The progress bar renders only if the list response ever carries it |
+| Tag filter | `/api/search/facets?type=project` returns no tags | The Tag select appears once facets include them; `?tag=` filtering already works |
+
+Adding a `reference` column and folding passport progress into the list
+serializer would close the first two; both are backend changes, not design ones.
+
+### 2.10 The project page renders on the server
+
+`/projects/[slug]` is the exception to §2.9. A project page is the canonical,
+shareable URL for a development, so it needs the project's own SEO fields in
+the document head, an Open Graph image for link previews, and a real 404 for a
+slug that does not exist — none of which a client-side fetch gives. It reads
+the repositories directly in `getServerSideProps` rather than calling its own
+API over HTTP: one round trip, and the response shape is guaranteed by the same
+serializers the API uses. A database failure still renders the page, with the
+"couldn't be loaded" state and a 503, rather than a 500.
+
+Three reads the public API does not expose were added to
+`src/lib/repositories/projects.ts` for it — `labelsByIds` for service and tag
+names, and `galleryForProject` for album images. `serializeProject` returns
+`serviceIds`, `tagIds` and `galleryIds` as bare UUIDs, which is all the list
+endpoints need; joining four more tables on every list request to serve one
+page would be the wrong trade. Expanding them on the detail endpoint too is a
+reasonable follow-up if another client needs them.
+
+What the mockup shows and the data does not carry:
+
+| Shown in the mockup | Status | Rendered as |
+|---|---|---|
+| Project reference code (`CB-2024-014`) | No such column, as in §2.9 | The hero's mono slot carries "Passport™ open" instead |
+| Image captions ("Render · north elevation") | `gallery_albums` stores URLs only | Omitted; images carry an indexed alt text |
+| Tour file size | **Is** in the API (`fileSizeBytes`) | Shown, against the mockup's flag that it was missing |
+
+Gallery albums attach to a project two ways — `gallery_albums.project_id`, which
+a CMS mirror would set, and `projects.gallery_ids`, which is what the admin API
+actually writes. `galleryForProject` accepts both, because matching only the
+first would have meant every album attached the supported way silently
+disappeared.
+
+The mockup's "More in Lagos" row is the index query filtered by this project's
+location, so no related-projects field was needed.
+
+3D tours are entered but not yet viewed in-house. Whether a tour can be opened
+is decided by its **type**, not by whether a URL happens to be set: the admin
+route fills a `threejs_model`'s `tour_url` with the public URL of the .glb
+itself, so a URL says nothing about whether there is a page to frame. A
+`matterport_embed` or `custom_viewer` with an **https** `tour_url` opens in the
+designed viewer chrome; a `threejs_model`, and a `matterport_embed` carrying
+only `embed_code`, both show the mockup's fallback panel with copy that says
+which of the two it is.
+
+Two things are withheld from the viewer deliberately. `embed_code` is never
+injected — it is CMS-authored HTML, and rendering it would be an XSS path. And
+the `tour_url` is vetted as https on the server before it reaches the browser,
+then framed with `sandbox`: an editor-supplied `javascript:` URL in an iframe
+`src` executes in this page's context, which is the same hole withholding
+`embed_code` closes.
+
+Passport links are a stopgap. `/projects/[slug]/passport` does not exist yet
+(design handover §3.1), so `passportHref()` in `components/site.ts` resolves
+every Passport link — the index cards and this page's hero — to the passport
+summary band on the project page rather than to a 404. That function is the one
+place to change when the Passport page ships.
+
+### 2.11 `DATE` columns are serialized from their calendar parts
+
+`toDateOnly` pushed `DATE` values through `toISOString()`. pg returns a `DATE`
+as a Date at *local* midnight, so anywhere west of UTC that reported the
+previous day — a Passport opened on 15 January was served as the 14th. The
+helper now reads the year, month and day as stored. This was a live API bug,
+not only a page bug: the same dates are wrong in `/api/projects/[idOrSlug]` and
+in every passport milestone response.
+
 ---
 
 ## 3. Still open

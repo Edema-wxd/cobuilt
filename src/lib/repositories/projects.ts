@@ -363,3 +363,78 @@ export async function allPublishedSlugs(): Promise<string[]> {
   );
   return rows.map((r) => r.slug);
 }
+
+/**
+ * Labels for the taxonomy IDs a project carries.
+ *
+ * `serializeProject` returns `serviceIds` and `tagIds` as bare UUIDs, which is
+ * all the list endpoints need. The project page renders both as names, so it
+ * resolves them here rather than making the serializer join two more tables on
+ * every list request.
+ */
+export interface TaxonomyLabel {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+/** Whitelisted, because the table name is interpolated into the SQL. */
+const LABEL_TABLES = { services: 'services', tags: 'tags' } as const;
+
+export async function labelsByIds(
+  table: keyof typeof LABEL_TABLES,
+  ids: readonly string[],
+): Promise<TaxonomyLabel[]> {
+  if (ids.length === 0) return [];
+
+  const { rows } = await query<TaxonomyLabel>(
+    `SELECT id, name, slug FROM ${LABEL_TABLES[table]}
+      WHERE id = ANY($1::uuid[])
+      ORDER BY name`,
+    [ids],
+  );
+  return rows;
+}
+
+export interface GalleryAlbum {
+  id: string;
+  title: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  imageUrls: string[];
+}
+
+/**
+ * Published photo albums for a project, oldest first.
+ *
+ * An album can be attached either way round: `gallery_albums.project_id`, which
+ * the CMS mirror sets, or `projects.gallery_ids`, which is what the admin API
+ * writes. Matching only one of them loses every album attached the other way,
+ * so both are accepted and the union is returned.
+ */
+export async function galleryForProject(
+  projectId: string,
+  albumIds: readonly string[] = [],
+): Promise<GalleryAlbum[]> {
+  const { rows } = await query<{
+    id: string;
+    title: string;
+    description: string | null;
+    cover_image_url: string | null;
+    image_urls: string[] | null;
+  }>(
+    `SELECT id, title, description, cover_image_url, image_urls
+       FROM gallery_albums
+      WHERE published = TRUE AND (project_id = $1 OR id = ANY($2::uuid[]))
+      ORDER BY created_at ASC`,
+    [projectId, albumIds],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    coverImageUrl: row.cover_image_url,
+    imageUrls: row.image_urls ?? [],
+  }));
+}

@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/shadcn-ui-design-system-9d9bee70-855b-4d4a-8942-8f056872544e/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/shadcn-ui-design-system-9d9bee70-855b-4d4a-8942-8f056872544e/tokens/colors.css">
+<link rel="stylesheet" href="_ds/shadcn-ui-design-system-9d9bee70-855b-4d4a-8942-8f056872544e/tokens/typography.css">
+<link rel="stylesheet" href="_ds/shadcn-ui-design-system-9d9bee70-855b-4d4a-8942-8f056872544e/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/shadcn-ui-design-system-9d9bee70-855b-4d4a-8942-8f056872544e/tokens/shadows.css">
+<link rel="stylesheet" href="_ds/shadcn-ui-design-system-9d9bee70-855b-4d4a-8942-8f056872544e/components/ui.css">
+<link rel="stylesheet" href="_ds/shadcn-ui-design-system-9d9bee70-855b-4d4a-8942-8f056872544e/styles.css">
+<script src="_ds/shadcn-ui-design-system-9d9bee70-855b-4d4a-8942-8f056872544e/_ds_bundle.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+  body { margin: 0; background: #f4f4f5; font-family: Geist, system-ui, sans-serif; }
+  a { color: #B34700; text-decoration: none; }
+  a:hover { color: #8f3900; text-decoration: underline; }
+  @keyframes cb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+</style>
+</helmet>
+
+<div style="padding:64px; display:flex; flex-direction:column; gap:80px; font-family:Geist, system-ui, sans-serif;">
+
+<section style="display:flex; flex-direction:column; gap:28px;">
+  <div style="display:flex; flex-direction:column; gap:8px;">
+    <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#71717a;">Turn 3 · Rebuilt on the Palton Morgan structural reference</div>
+    <div style="font-size:15px; color:#52525b; max-width:940px; text-wrap:pretty;">Both market-led directions redrawn in the premium-developer page vocabulary: eyebrow labels over large headlines with an italic accent phrase, a stat band immediately under the hero, project cards carrying price / unit mix / location, a four-value expertise row, a numbered path-to-ownership sequence, a wordmark marquee, testimonials, news and a deep multi-column footer. <a href="#3a">3a</a> renders it in charcoal with the Passport as the proof mechanism; <a href="#3b">3b</a> renders it light and editorial. The brief-compliant version lives in its own file.</div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:56px; align-items:flex-start;">
+
+    <div id="3a" style="display:flex; flex-direction:column; gap:14px;">
+      <div style="display:flex; align-items:baseline; gap:12px;">
+        <span style="display:inline-block; background:#FF6600; color:#fff; font-size:13px; font-weight:700; letter-spacing:0.08em; padding:4px 10px; border-radius:6px;">3a</span>
+        <span style="font-size:20px; font-weight:600; color:#18181b;">The Ledger — charcoal, proof-led</span>
+      </div>
+
+      <div style="width:1160px; border:1px solid #d4d4d8; border-radius:14px; overflow:hidden; box-shadow:0 18px 50px rgba(0,0,0,0.12); background:#1c1c1c;">
+        <div style="height:40px; background:#e4e4e7; border-bottom:1px solid #d4d4d8; display:flex; align-items:center; gap:8px; padding:0 14px;">
+          <div style="width:11px; height:11px; border-radius:50%; background:#c4c4c8;"></div>
+          <div style="width:11px; height:11px; border-radius:50%; background:#c4c4c8;"></div>
+          <div style="width:11px; height:11px; border-radius:50%; background:#c4c4c8;"></div>
+          <div style="margin-left:12px; background:#fff; border:1px solid #d4d4d8; border-radius:6px; height:24px; display:flex; align-items:center; padding:0 12px; font-size:11px; color:#52525b; min-width:280px;">cobuiltpartners.com</div>
+        </div>
+
+        <div style="position:relative; background:#1c1c1c;">
+          <div style="position:absolute; inset:0; background:#333;">
+            <div style="{{ heroA }}"></div>
+          </div>
+          <div style="{{ overlayA }}"></div>
+
+          <div style="position:relative; height:74px; padding:0 48px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.14);">
+            <img src="assets/cobuilt-logo-dark.png" alt="CoBuilt Partners" style="height:38px; width:auto; display:block;">
+            <div style="display:flex; align-items:center; gap:30px; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:#e4e4e7; font-weight:500;">
+              <span>About</span><span>Projects</span><span>Project Passport™</span><span>Invest</span><span>Media</span>
+              <span style="border:1px solid rgba(255,255,255,0.4); padding:11px 20px; border-radius:2px; letter-spacing:0.14em;">Contact us</span>
+            </div>
+          </div>
+
+          <div style="position:relative; padding:96px 48px 88px; display:grid; grid-template-columns:56px 1fr 300px; gap:40px; align-items:center; min-height:470px;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:20px;">
+              <span style="width:1px; height:56px; background:rgba(255,255,255,0.28); display:block;"></span>
+              <span style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; color:#a1a1aa; writing-mode:vertical-rl;">Follow us</span>
+              <span style="font-size:11px; letter-spacing:0.14em; color:#e4e4e7; writing-mode:vertical-rl;">LI · IG · YT</span>
+              <span style="width:1px; height:56px; background:rgba(255,255,255,0.28); display:block;"></span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:26px;">
+              <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#FF9955;">Building Trust Through Every Brick</div>
+              <h1 style="margin:0; font-size:66px; line-height:1.02; font-weight:300; letter-spacing:-0.035em; color:#fff; text-wrap:balance;">Delivering <em style="font-style:italic; font-weight:400; color:#FF9955;">lasting value</em> through every development</h1>
+              <p style="margin:0; font-size:17px; line-height:1.7; color:#d4d4d8; max-width:520px; text-wrap:pretty;">CoBuilt Investment Partners delivers high-quality residential, commercial, mixed-use and strategic developments — combining strategic planning, disciplined execution and responsible investment practices.</p>
+              <div style="display:flex; gap:14px; padding-top:6px;">
+                <span style="background:#FF6600; color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 30px; min-height:52px; display:flex; align-items:center; border-radius:2px;">Explore our projects</span>
+                <span style="border:1px solid rgba(255,255,255,0.4); color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 30px; min-height:52px; display:flex; align-items:center; border-radius:2px;">Partner with us</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end; text-align:right;">
+              <span style="font-size:10.5px; letter-spacing:0.24em; text-transform:uppercase; color:#FF9955;">Call us</span>
+              <span style="font-size:20px; font-weight:400; color:#fff; letter-spacing:-0.01em;">+234 700 262 8458</span>
+              <span style="font-size:12.5px; color:#a1a1aa;">Mon–Fri, 08:00–17:00 WAT</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#FF6600; padding:44px 48px; display:grid; grid-template-columns:repeat(4,1fr); gap:32px;">
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size:44px; font-weight:300; letter-spacing:-0.03em; color:#fff; line-height:1;">30 <span style="font-size:24px;">+</span></div>
+            <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#fff;">Units developed</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size:44px; font-weight:300; letter-spacing:-0.03em; color:#fff; line-height:1;">5 <span style="font-size:24px;">+</span></div>
+            <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#fff;">Projects delivered</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size:44px; font-weight:300; letter-spacing:-0.03em; color:#fff; line-height:1;">₦1.5B<span style="font-size:24px;">+</span></div>
+            <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#fff;">Project value created</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="font-size:44px; font-weight:300; letter-spacing:-0.03em; color:#fff; line-height:1;">3</div>
+            <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#fff;">Projects under development</div>
+          </div>
+        </div>
+
+        <div style="background:#1c1c1c; padding:96px 48px; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:64px; align-items:center;">
+          <div style="display:flex; flex-direction:column; gap:22px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#FF9955;">About CoBuilt</div>
+            <h2 style="margin:0; font-size:44px; line-height:1.08; font-weight:300; letter-spacing:-0.03em; color:#fff; text-wrap:balance;">The developer that shows its <em style="font-style:italic; font-weight:400; color:#FF9955;">working</em>.</h2>
+            <p style="margin:0; font-size:16px; line-height:1.8; color:#d4d4d8; text-wrap:pretty;">We do more than construct buildings — we create environments where people can live, work, invest and thrive. Every project is guided by thoughtful planning, responsible investment and modern construction practices.</p>
+            <p style="margin:0; font-size:16px; line-height:1.8; color:#a1a1aa; text-wrap:pretty;">Our integrated model spans land acquisition, feasibility, planning, financing, development management, construction oversight, sales and long-term asset management.</p>
+            <span style="align-self:flex-start; margin-top:8px; border-bottom:1px solid #FF6600; color:#FF9955; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding-bottom:8px;">Discover our story</span>
+          </div>
+          <div style="height:460px; background:#333; position:relative;">
+            <div style="position:absolute; inset:0; background-image:url('uploads/2a530dd26731abc34b237e7c2a8949e4.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat;"></div>
+          </div>
+        </div>
+
+        <div style="background:#141414; padding:96px 48px; display:flex; flex-direction:column; gap:44px;">
+          <div style="display:flex; flex-direction:column; gap:16px; max-width:700px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#FF9955;">Our projects</div>
+            <h2 style="margin:0; font-size:44px; line-height:1.08; font-weight:300; letter-spacing:-0.03em; color:#fff; text-wrap:balance;">Building communities. Delivering results.</h2>
+            <p style="margin:0; font-size:16px; line-height:1.7; color:#a1a1aa; text-wrap:pretty;">Each development below links to its live Passport, with certified milestone history from groundbreaking to handover.</p>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:24px;">
+
+            <div style="background:#1c1c1c; border:1px solid #2e2e2e; display:flex; flex-direction:column;">
+              <div style="height:230px; background-image:url('uploads/8e6fd464e4e82475f2126818dd9598c3.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; justify-content:flex-start; padding:16px; box-sizing:border-box; font-size:11.5px; line-height:1.5; color:#a1a1aa;"></div>
+              <div style="padding:26px; display:flex; flex-direction:column; gap:14px; flex:1;">
+                <div style="font-size:24px; font-weight:400; color:#fff; letter-spacing:-0.02em;">Anthony Gardens</div>
+                <div style="font-size:14.5px; font-style:italic; color:#a1a1aa; line-height:1.5;">Eighty-four homes, built in the open.</div>
+                <div style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#FF9955; padding-top:4px;">From ₦186,000,000</div>
+                <div style="display:flex; flex-direction:column; gap:8px; padding-top:6px; border-top:1px solid #2e2e2e; margin-top:4px;">
+                  <div style="font-size:13.5px; color:#d4d4d8;">3 &amp; 4 bedroom apartments</div>
+                  <div style="font-size:13.5px; color:#d4d4d8;">Duplex penthouses</div>
+                  <div style="font-size:13.5px; color:#d4d4d8;">Superstructure stage · 68%</div>
+                </div>
+                <div style="margin-top:auto; padding-top:18px; display:flex; align-items:center; justify-content:space-between;">
+                  <span style="font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase; color:#71717a;">Ikoyi, Lagos</span>
+                  <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#FF9955;">Passport →</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#1c1c1c; border:1px solid #2e2e2e; display:flex; flex-direction:column;">
+              <div style="height:230px; background-image:url('uploads/8e6fd464e4e82475f2126818dd9598c3.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; justify-content:flex-start; padding:16px; box-sizing:border-box; font-size:11.5px; line-height:1.5; color:#a1a1aa;"></div>
+              <div style="padding:26px; display:flex; flex-direction:column; gap:14px; flex:1;">
+                <div style="font-size:24px; font-weight:400; color:#fff; letter-spacing:-0.02em;">TechZone Quarter</div>
+                <div style="font-size:14.5px; font-style:italic; color:#a1a1aa; line-height:1.5;">Where the working city meets home.</div>
+                <div style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#FF9955; padding-top:4px;">From ₦142,000,000</div>
+                <div style="display:flex; flex-direction:column; gap:8px; padding-top:6px; border-top:1px solid #2e2e2e; margin-top:4px;">
+                  <div style="font-size:13.5px; color:#d4d4d8;">1 &amp; 2 bedroom residences</div>
+                  <div style="font-size:13.5px; color:#d4d4d8;">Ground-floor retail</div>
+                  <div style="font-size:13.5px; color:#d4d4d8;">Foundation stage · 24%</div>
+                </div>
+                <div style="margin-top:auto; padding-top:18px; display:flex; align-items:center; justify-content:space-between;">
+                  <span style="font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase; color:#71717a;">Wuse 2, Abuja</span>
+                  <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#FF9955;">Passport →</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#1c1c1c; border:1px solid #2e2e2e; display:flex; flex-direction:column;">
+              <div style="height:230px; background-image:url('uploads/9ba3c366a32568e271318564b92adbd1.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; justify-content:flex-start; padding:16px; box-sizing:border-box; font-size:11.5px; line-height:1.5; color:#a1a1aa;"></div>
+              <div style="padding:26px; display:flex; flex-direction:column; gap:14px; flex:1;">
+                <div style="font-size:24px; font-weight:400; color:#fff; letter-spacing:-0.02em;">Ridge Terraces</div>
+                <div style="font-size:14.5px; font-style:italic; color:#a1a1aa; line-height:1.5;">Delivered on the date we published in 2023.</div>
+                <div style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#71717a; padding-top:4px;">Fully handed over</div>
+                <div style="display:flex; flex-direction:column; gap:8px; padding-top:6px; border-top:1px solid #2e2e2e; margin-top:4px;">
+                  <div style="font-size:13.5px; color:#d4d4d8;">32 terraced homes</div>
+                  <div style="font-size:13.5px; color:#d4d4d8;">Completed September 2025</div>
+                  <div style="font-size:13.5px; color:#d4d4d8;">Full milestone archive</div>
+                </div>
+                <div style="margin-top:auto; padding-top:18px; display:flex; align-items:center; justify-content:space-between;">
+                  <span style="font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase; color:#71717a;">Independence Layout, Enugu</span>
+                  <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#FF9955;">Passport →</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span style="align-self:center; border:1px solid rgba(255,255,255,0.3); color:#fff; font-size:12px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; padding:0 36px; min-height:52px; display:flex; align-items:center;">Explore all projects</span>
+        </div>
+
+        <div style="background:#fff; padding:88px 48px; display:flex; flex-direction:column; gap:52px;">
+          <div style="display:flex; flex-direction:column; gap:12px; align-items:center; text-align:center;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">Our core values</div>
+            <h2 style="margin:0; font-size:40px; line-height:1.1; font-weight:300; letter-spacing:-0.03em; color:#1c1c1c;">The principles behind every development</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0;">
+            <div style="padding:0 28px; display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center; border-right:1px solid #E6E6E6;">
+              <span style="font-size:22px; color:#FF6600; line-height:1;">◈</span>
+              <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Integrity</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">We conduct our business honestly, ethically and transparently in every decision and commitment.</div>
+            </div>
+            <div style="padding:0 28px; display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center; border-right:1px solid #E6E6E6;">
+              <span style="font-size:22px; color:#FF6600; line-height:1;">◈</span>
+              <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Excellence</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">We pursue the highest standards of professionalism, quality and continuous improvement.</div>
+            </div>
+            <div style="padding:0 28px; display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center; border-right:1px solid #E6E6E6;">
+              <span style="font-size:22px; color:#FF6600; line-height:1;">◈</span>
+              <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Innovation</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">We embrace technology and forward-thinking solutions that create smarter developments.</div>
+            </div>
+            <div style="padding:0 28px; display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center;">
+              <span style="font-size:22px; color:#FF6600; line-height:1;">◈</span>
+              <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Sustainability</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">We balance economic success with environmental stewardship and social responsibility.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#333; padding:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);">
+          <div style="min-height:520px; background-image:url('uploads/73c9926c2db98bd710b3bebbf412a465.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:18px; box-sizing:border-box; font-size:11.5px; color:#d4d4d8;"></div>
+          <div style="padding:80px 48px; display:flex; flex-direction:column; gap:26px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#FF9955;">Project Passport™ · CB-2024-014</div>
+            <h2 style="margin:0; font-size:40px; line-height:1.1; font-weight:300; letter-spacing:-0.03em; color:#fff; text-wrap:balance;">Construction underway, with every stage recorded and <em style="font-style:italic; font-weight:400; color:#FF9955;">certified</em>.</h2>
+            <div style="display:flex; flex-direction:column;">
+              <div style="display:flex; align-items:center; gap:16px; padding:15px 0; border-top:1px solid rgba(255,255,255,0.16);">
+                <span style="font-size:11px; letter-spacing:0.14em; color:#FF9955; width:26px; flex:none;">01</span>
+                <span style="flex:1; font-size:14.5px; color:#fff;">Land acquired</span>
+                <span style="font-size:12.5px; color:#a1a1aa; letter-spacing:0.04em;">Verified 15 Jan 2026</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:16px; padding:15px 0; border-top:1px solid rgba(255,255,255,0.16);">
+                <span style="font-size:11px; letter-spacing:0.14em; color:#FF9955; width:26px; flex:none;">02</span>
+                <span style="flex:1; font-size:14.5px; color:#fff;">Design approved</span>
+                <span style="font-size:12.5px; color:#a1a1aa; letter-spacing:0.04em;">Verified 15 Feb 2026</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:16px; padding:15px 0; border-top:1px solid rgba(255,255,255,0.16);">
+                <span style="font-size:11px; letter-spacing:0.14em; color:#FF9955; width:26px; flex:none;">03</span>
+                <span style="flex:1; font-size:14.5px; color:#fff;">Construction started</span>
+                <span style="font-size:12.5px; color:#a1a1aa; letter-spacing:0.04em;">Verified 05 Mar 2026</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:16px; padding:15px 0; border-top:1px solid rgba(255,255,255,0.16); border-bottom:1px solid rgba(255,255,255,0.16);">
+                <span style="font-size:11px; letter-spacing:0.14em; color:#71717a; width:26px; flex:none;">04</span>
+                <span style="flex:1; font-size:14.5px; color:#a1a1aa;">Roofing</span>
+                <span style="font-size:12.5px; color:#71717a; letter-spacing:0.04em;">Scheduled Nov 2026</span>
+              </div>
+            </div>
+            <span style="align-self:flex-start; background:#FF6600; color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 30px; min-height:52px; display:flex; align-items:center;">Open this Passport</span>
+          </div>
+        </div>
+
+        <div style="background:#fff; padding:88px 48px; display:flex; flex-direction:column; gap:48px;">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">How it works</div>
+            <h2 style="margin:0; font-size:40px; line-height:1.1; font-weight:300; letter-spacing:-0.03em; color:#1c1c1c;">Your path to ownership</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:22px;">
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div style="height:190px; background-image:url('uploads/9ba3c366a32568e271318564b92adbd1.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="font-size:11px; letter-spacing:0.2em; color:#FF6600; font-weight:600;">01</div>
+              <div style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Discover</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Browse the portfolio and open any Passport before you speak to anyone.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div style="height:190px; background-image:url('uploads/2a530dd26731abc34b237e7c2a8949e4.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="font-size:11px; letter-spacing:0.2em; color:#FF6600; font-weight:600;">02</div>
+              <div style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Consult</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Review unit mix, payment structure and programme with a named advisor.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div style="height:190px; background-image:url('uploads/73c9926c2db98bd710b3bebbf412a465.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="font-size:11px; letter-spacing:0.2em; color:#FF6600; font-weight:600;">03</div>
+              <div style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Verify</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Walk the site on a Thursday and match what you see to the published record.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div style="height:190px; background-image:url('uploads/2a530dd26731abc34b237e7c2a8949e4.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="font-size:11px; letter-spacing:0.2em; color:#FF6600; font-weight:600;">04</div>
+              <div style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Own</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Complete documentation, take your keys, keep the archive permanently.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#141414; overflow:hidden; padding:26px 0; border-top:1px solid #2e2e2e; border-bottom:1px solid #2e2e2e;">
+          <div style="display:flex; width:max-content; animation:cb-marquee 26s linear infinite; gap:56px; align-items:center;">
+            <span style="font-size:30px; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#2e2e2e; white-space:nowrap;">CoBuilt Investment Partners</span>
+            <span style="font-size:30px; color:#FF6600;">◈</span>
+            <span style="font-size:30px; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#2e2e2e; white-space:nowrap;">Building Trust Through Every Brick</span>
+            <span style="font-size:30px; color:#FF6600;">◈</span>
+            <span style="font-size:30px; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#2e2e2e; white-space:nowrap;">CoBuilt Investment Partners</span>
+            <span style="font-size:30px; color:#FF6600;">◈</span>
+            <span style="font-size:30px; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#2e2e2e; white-space:nowrap;">Building Trust Through Every Brick</span>
+            <span style="font-size:30px; color:#FF6600;">◈</span>
+          </div>
+        </div>
+
+        <div style="background:#1c1c1c; padding:88px 48px; display:grid; grid-template-columns:340px 1fr; gap:56px; align-items:start;">
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#FF9955;">Testimonials</div>
+            <h2 style="margin:0; font-size:36px; line-height:1.12; font-weight:300; letter-spacing:-0.03em; color:#fff;">What our owners and partners say</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+            <div style="border:1px solid #2e2e2e; padding:30px; display:flex; flex-direction:column; gap:18px;">
+              <span style="font-size:22px; color:#FF6600; line-height:1;">◈</span>
+              <p style="margin:0; font-size:15.5px; line-height:1.75; color:#d4d4d8; text-wrap:pretty;">“Every query we raised was answered with a document rather than an assurance. As an engineer, that is the only kind of answer I trust.”</p>
+              <div style="padding-top:6px; border-top:1px solid #2e2e2e;">
+                <div style="font-size:14.5px; color:#fff;">Jude O.</div>
+                <div style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#71717a; margin-top:4px;">Homeowner · Ridge Terraces</div>
+              </div>
+            </div>
+            <div style="border:1px solid #2e2e2e; padding:30px; display:flex; flex-direction:column; gap:18px;">
+              <span style="font-size:22px; color:#FF6600; line-height:1;">◈</span>
+              <p style="margin:0; font-size:15.5px; line-height:1.75; color:#d4d4d8; text-wrap:pretty;">“I wanted to see the foundation before committing capital. CoBuilt was the only developer that simply showed me — dated, and signed.”</p>
+              <div style="padding-top:6px; border-top:1px solid #2e2e2e;">
+                <div style="font-size:14.5px; color:#fff;">Portfolio Director</div>
+                <div style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#71717a; margin-top:4px;">Lagos wealth management firm</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff; padding:88px 48px; display:flex; flex-direction:column; gap:36px;">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:32px;">
+            <div style="display:flex; flex-direction:column; gap:12px; max-width:560px;">
+              <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">News &amp; insights</div>
+              <h2 style="margin:0; font-size:38px; line-height:1.1; font-weight:300; letter-spacing:-0.03em; color:#1c1c1c; text-wrap:balance;">Keep up with company updates in one place</h2>
+            </div>
+            <span style="border:1px solid #d4d4d8; color:#1c1c1c; font-size:11.5px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; padding:0 26px; min-height:48px; display:flex; align-items:center; flex:none;">More news</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:24px;">
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="height:200px; background-image:url('uploads/73c9926c2db98bd710b3bebbf412a465.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="display:flex; gap:12px; align-items:center; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#71717a;"><span style="color:#B34700;">Project update</span><span>02 Sep 2026</span></div>
+              <div style="font-size:19px; font-weight:400; line-height:1.35; color:#1c1c1c; text-wrap:pretty;">Anthony Gardens reaches sixth-floor slab, on programme</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="height:200px; background-image:url('uploads/8e6fd464e4e82475f2126818dd9598c3.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="display:flex; gap:12px; align-items:center; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#71717a;"><span style="color:#B34700;">Insight</span><span>21 Aug 2026</span></div>
+              <div style="font-size:19px; font-weight:400; line-height:1.35; color:#1c1c1c; text-wrap:pretty;">What verified milestone reporting changes for Nigerian development</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="height:200px; background-image:url('uploads/2a530dd26731abc34b237e7c2a8949e4.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="display:flex; gap:12px; align-items:center; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#71717a;"><span style="color:#B34700;">Announcement</span><span>04 Aug 2026</span></div>
+              <div style="font-size:19px; font-weight:400; line-height:1.35; color:#1c1c1c; text-wrap:pretty;">CoBuilt publishes its 2026 sustainability commitments</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#FF6600; padding:76px 48px; display:grid; grid-template-columns:1fr 460px; gap:56px; align-items:center;">
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <h2 style="margin:0; font-size:44px; line-height:1.08; font-weight:300; letter-spacing:-0.03em; color:#fff;">Stay informed</h2>
+            <p style="margin:0; font-size:16px; line-height:1.7; color:#fff; max-width:460px; text-wrap:pretty;">Project launches, milestone notifications and company updates, sent as they happen.</p>
+          </div>
+          <div style="display:flex; gap:12px;">
+            <div style="flex:1; background:#fff; min-height:54px; display:flex; align-items:center; padding:0 18px; font-size:14px; color:#71717a;">Your email address</div>
+            <span style="background:#1c1c1c; color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 28px; min-height:54px; display:flex; align-items:center;">Subscribe</span>
+          </div>
+        </div>
+
+        <div style="background:#141414; padding:72px 48px 40px; display:grid; grid-template-columns:1.5fr 1fr 1fr 1.2fr; gap:44px;">
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <img src="assets/cobuilt-logo-dark.png" alt="CoBuilt Partners" style="height:34px; width:auto; display:block;">
+            <div style="font-size:14px; line-height:1.8; color:#a1a1aa; max-width:300px; text-wrap:pretty;">Nigerian property development held to a published standard of proof — from groundbreaking through to handover.</div>
+            <div style="font-size:11.5px; letter-spacing:0.16em; text-transform:uppercase; color:#e4e4e7;">LinkedIn · Instagram · YouTube · WhatsApp</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:13px;">
+            <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#FF9955; font-weight:600;">Quick links</div>
+            <div style="font-size:14px; color:#a1a1aa;">About us</div>
+            <div style="font-size:14px; color:#a1a1aa;">Leadership</div>
+            <div style="font-size:14px; color:#a1a1aa;">Projects</div>
+            <div style="font-size:14px; color:#a1a1aa;">Careers</div>
+            <div style="font-size:14px; color:#a1a1aa;">Contact</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:13px;">
+            <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#FF9955; font-weight:600;">Transparency</div>
+            <div style="font-size:14px; color:#a1a1aa;">Project Passport™</div>
+            <div style="font-size:14px; color:#a1a1aa;">Milestone archive</div>
+            <div style="font-size:14px; color:#a1a1aa;">Governance</div>
+            <div style="font-size:14px; color:#a1a1aa;">Downloads</div>
+            <div style="font-size:14px; color:#a1a1aa;">Privacy (NDPA)</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:13px;">
+            <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#FF9955; font-weight:600;">Catch us here</div>
+            <div style="font-size:14px; line-height:1.75; color:#a1a1aa;">27 Apex Drive, TechZone District<br>Victoria Heights, Lagos</div>
+            <div style="font-size:14px; color:#a1a1aa;">hello@cobuiltpartners.com</div>
+            <div style="font-size:14px; color:#a1a1aa;">+234 700 262 8458</div>
+          </div>
+        </div>
+        <div style="background:#141414; border-top:1px solid #2e2e2e; padding:20px 48px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#71717a;">
+          <div>© 2026 CoBuilt Investment Partners. All rights reserved.</div>
+          <div style="letter-spacing:0.14em; text-transform:uppercase;">Building Trust Through Every Brick</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="3b" style="display:flex; flex-direction:column; gap:14px;">
+      <div style="display:flex; align-items:baseline; gap:12px;">
+        <span style="display:inline-block; background:#FF6600; color:#fff; font-size:13px; font-weight:700; letter-spacing:0.08em; padding:4px 10px; border-radius:6px;">3b</span>
+        <span style="font-size:20px; font-weight:600; color:#18181b;">Site Lines — light, editorial</span>
+      </div>
+
+      <div style="width:1160px; border:1px solid #d4d4d8; border-radius:14px; overflow:hidden; box-shadow:0 18px 50px rgba(0,0,0,0.12); background:#fff;">
+        <div style="height:40px; background:#e4e4e7; border-bottom:1px solid #d4d4d8; display:flex; align-items:center; gap:8px; padding:0 14px;">
+          <div style="width:11px; height:11px; border-radius:50%; background:#c4c4c8;"></div>
+          <div style="width:11px; height:11px; border-radius:50%; background:#c4c4c8;"></div>
+          <div style="width:11px; height:11px; border-radius:50%; background:#c4c4c8;"></div>
+          <div style="margin-left:12px; background:#fff; border:1px solid #d4d4d8; border-radius:6px; height:24px; display:flex; align-items:center; padding:0 12px; font-size:11px; color:#52525b; min-width:280px;">cobuiltpartners.com</div>
+        </div>
+
+        <div style="height:80px; padding:0 56px; display:flex; align-items:center; justify-content:space-between; background:#fff; border-bottom:1px solid #E6E6E6;">
+          <img src="assets/cobuilt-logo-light.png" alt="CoBuilt Partners" style="height:38px; width:auto; display:block;">
+          <div style="display:flex; align-items:center; gap:30px; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:#333; font-weight:500;">
+            <span>About</span><span>Projects</span><span>Passport™</span><span>Invest</span><span>Journal</span>
+            <span style="background:#1c1c1c; color:#fff; padding:12px 22px; letter-spacing:0.14em; font-weight:600;">Get in touch</span>
+          </div>
+        </div>
+
+        <div style="position:relative; height:560px; background:#E6E6E6;">
+          <div style="{{ heroB }}"></div>
+          <div style="{{ overlayB }}"></div>
+          <div style="position:absolute; left:56px; right:56px; bottom:56px; display:flex; align-items:flex-end; justify-content:space-between; gap:56px;">
+            <div style="display:flex; flex-direction:column; gap:22px; max-width:640px;">
+              <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#FFD9C2;">Lagos · Abuja · Enugu</div>
+              <h1 style="margin:0; font-size:72px; line-height:0.98; font-weight:300; letter-spacing:-0.04em; color:#fff; text-wrap:balance;">Building trust through every <em style="font-style:italic; font-weight:400;">brick</em>.</h1>
+              <p style="margin:0; font-size:18px; line-height:1.65; color:rgba(255,255,255,0.9); max-width:470px; text-wrap:pretty;">Creating sustainable developments and delivering lasting value for investors, businesses and communities.</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px; flex:none;">
+              <span style="background:#FF6600; color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 30px; min-height:54px; display:flex; align-items:center; justify-content:center;">Explore our projects</span>
+              <span style="border:1px solid rgba(255,255,255,0.5); color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 30px; min-height:54px; display:flex; align-items:center; justify-content:center;">How Passport™ works</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff; border-bottom:1px solid #E6E6E6; padding:52px 56px; display:grid; grid-template-columns:repeat(4,1fr); gap:32px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="font-size:46px; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c; line-height:1;">30<span style="color:#FF6600;">+</span></div>
+            <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#52525b;">Units developed</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="font-size:46px; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c; line-height:1;">5<span style="color:#FF6600;">+</span></div>
+            <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#52525b;">Projects delivered</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="font-size:46px; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c; line-height:1;">10<span style="color:#FF6600;">+</span></div>
+            <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#52525b;">Strategic partners</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="font-size:46px; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c; line-height:1;">₦1.5B<span style="color:#FF6600;">+</span></div>
+            <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#52525b;">Project value created</div>
+          </div>
+        </div>
+
+        <div style="background:#fff; padding:96px 56px; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:72px; align-items:center;">
+          <div style="height:520px; background:#E6E6E6; position:relative;">
+            <div style="position:absolute; inset:0; background-image:url('uploads/2a530dd26731abc34b237e7c2a8949e4.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat;"></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:22px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">About CoBuilt</div>
+            <h2 style="margin:0; font-size:46px; line-height:1.06; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c; text-wrap:balance;">Most developers ask for trust. We publish the <em style="font-style:italic; font-weight:400; color:#B34700;">receipts</em>.</h2>
+            <p style="margin:0; font-size:16.5px; line-height:1.8; color:#3f3f46; text-wrap:pretty;">Exceptional developments begin with a clear vision, and are delivered through integrity, expertise, innovation and collaboration.</p>
+            <p style="margin:0; font-size:16.5px; line-height:1.8; color:#52525b; text-wrap:pretty;">We do more than construct buildings — we create environments where people can live, work, invest and thrive, guided by responsible investment and modern construction practice.</p>
+            <span style="align-self:flex-start; margin-top:8px; border-bottom:1px solid #FF6600; color:#B34700; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding-bottom:8px;">Discover our story</span>
+          </div>
+        </div>
+
+        <div style="background:#f4f4f5; padding:96px 56px; display:flex; flex-direction:column; gap:44px;">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:40px;">
+            <div style="display:flex; flex-direction:column; gap:14px; max-width:620px;">
+              <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">Our projects</div>
+              <h2 style="margin:0; font-size:46px; line-height:1.06; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c; text-wrap:balance;">Building communities. Delivering results.</h2>
+            </div>
+            <span style="border:1px solid #d4d4d8; background:#fff; color:#1c1c1c; font-size:11.5px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; padding:0 26px; min-height:48px; display:flex; align-items:center; flex:none;">All projects</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1.45fr 1fr; gap:24px;">
+            <div style="background:#fff; border:1px solid #E6E6E6; display:flex; flex-direction:column;">
+              <div style="height:380px; background-image:url('uploads/8e6fd464e4e82475f2126818dd9598c3.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:16px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="padding:34px; display:grid; grid-template-columns:1fr 260px; gap:32px; align-items:start;">
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                  <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#71717a;">Ikoyi, Lagos · Ongoing</div>
+                  <div style="font-size:32px; font-weight:400; letter-spacing:-0.025em; color:#1c1c1c;">Anthony Gardens</div>
+                  <div style="font-size:16px; font-style:italic; color:#52525b; line-height:1.6;">Eighty-four homes, built in the open.</div>
+                  <div style="font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:#B34700; padding-top:6px;">From ₦186,000,000</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px; border-left:1px solid #E6E6E6; padding-left:28px;">
+                  <div style="font-size:14px; color:#3f3f46;">3 &amp; 4 bedroom apartments</div>
+                  <div style="font-size:14px; color:#3f3f46;">Duplex penthouses</div>
+                  <div style="font-size:14px; color:#3f3f46;">Currently selling</div>
+                  <div style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#B34700; padding-top:8px;">View Passport →</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-rows:1fr 1fr; gap:24px;">
+              <div style="background:#fff; border:1px solid #E6E6E6; display:flex; flex-direction:column;">
+                <div style="height:150px; background-image:url('uploads/8e6fd464e4e82475f2126818dd9598c3.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+                <div style="padding:24px; display:flex; flex-direction:column; gap:10px; flex:1;">
+                  <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#71717a;">Wuse 2, Abuja · Ongoing</div>
+                  <div style="font-size:23px; font-weight:400; letter-spacing:-0.02em; color:#1c1c1c;">TechZone Quarter</div>
+                  <div style="font-size:14.5px; font-style:italic; color:#52525b;">Where the working city meets home.</div>
+                  <div style="font-size:11.5px; letter-spacing:0.16em; text-transform:uppercase; color:#B34700; margin-top:auto; padding-top:12px;">From ₦142,000,000</div>
+                </div>
+              </div>
+              <div style="background:#fff; border:1px solid #E6E6E6; display:flex; flex-direction:column;">
+                <div style="height:150px; background-image:url('uploads/9ba3c366a32568e271318564b92adbd1.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+                <div style="padding:24px; display:flex; flex-direction:column; gap:10px; flex:1;">
+                  <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#71717a;">Enugu · Delivered 2025</div>
+                  <div style="font-size:23px; font-weight:400; letter-spacing:-0.02em; color:#1c1c1c;">Ridge Terraces</div>
+                  <div style="font-size:14.5px; font-style:italic; color:#52525b;">Handed over on the published date.</div>
+                  <div style="font-size:11.5px; letter-spacing:0.16em; text-transform:uppercase; color:#71717a; margin-top:auto; padding-top:12px;">32 homes · fully sold</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#1c1c1c; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);">
+          <div style="min-height:500px; background:#333; position:relative;">
+            <div style="position:absolute; inset:0; background-image:url('uploads/73c9926c2db98bd710b3bebbf412a465.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat;"></div>
+          </div>
+          <div style="padding:80px 56px; display:flex; flex-direction:column; gap:26px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#FF9955;">Project Passport™</div>
+            <h2 style="margin:0; font-size:42px; line-height:1.08; font-weight:300; letter-spacing:-0.035em; color:#fff; text-wrap:balance;">From land acquisition to handover, every stage <em style="font-style:italic; font-weight:400; color:#FF9955;">recorded</em>.</h2>
+            <p style="margin:0; font-size:16px; line-height:1.75; color:#d4d4d8; max-width:440px; text-wrap:pretty;">Site photography, quantity-surveyor readings and an independent engineer's certificate at every stage — from commencement to handover, kept permanently.</p>
+            <div style="display:flex; flex-direction:column;">
+              <div style="display:flex; justify-content:space-between; padding:15px 0; border-top:1px solid rgba(255,255,255,0.16); font-size:14.5px;"><span style="color:#d4d4d8;">Overall progress</span><span style="color:#fff;">68%</span></div>
+              <div style="display:flex; justify-content:space-between; padding:15px 0; border-top:1px solid rgba(255,255,255,0.16); font-size:14.5px;"><span style="color:#d4d4d8;">Updates published</span><span style="color:#fff;">41</span></div>
+              <div style="display:flex; justify-content:space-between; padding:15px 0; border-top:1px solid rgba(255,255,255,0.16); border-bottom:1px solid rgba(255,255,255,0.16); font-size:14.5px;"><span style="color:#d4d4d8;">Last updated</span><span style="color:#fff;">28 Aug 2026</span></div>
+            </div>
+            <span style="align-self:flex-start; background:#FF6600; color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 30px; min-height:52px; display:flex; align-items:center;">Partner with us</span>
+          </div>
+        </div>
+
+        <div style="background:#fff; padding:96px 56px; display:flex; flex-direction:column; gap:52px;">
+          <div style="display:flex; flex-direction:column; gap:12px; max-width:620px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">Our core values</div>
+            <h2 style="margin:0; font-size:42px; line-height:1.08; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c;">The principles behind every development</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:32px;">
+            <div style="display:flex; flex-direction:column; gap:14px; border-top:2px solid #FF6600; padding-top:24px;">
+              <span style="font-size:20px; color:#FF6600; line-height:1;">◈</span>
+              <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Integrity</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Honest, ethical and transparent conduct in every decision and commitment.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; border-top:2px solid #E6E6E6; padding-top:24px;">
+              <span style="font-size:20px; color:#FF6600; line-height:1;">◈</span>
+              <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Excellence</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">The highest standards of professionalism, quality and continuous improvement.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; border-top:2px solid #E6E6E6; padding-top:24px;">
+              <span style="font-size:20px; color:#FF6600; line-height:1;">◈</span>
+              <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Innovation</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Technology and forward-thinking solutions that create smarter developments.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; border-top:2px solid #E6E6E6; padding-top:24px;">
+              <span style="font-size:20px; color:#FF6600; line-height:1;">◈</span>
+              <div style="font-size:13px; letter-spacing:0.18em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Sustainability</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Economic success balanced with environmental and social responsibility.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#f4f4f5; padding:96px 56px; display:flex; flex-direction:column; gap:48px;">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">How it works</div>
+            <h2 style="margin:0; font-size:42px; line-height:1.08; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c;">Your path to ownership</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0;">
+            <div style="display:flex; flex-direction:column; gap:14px; padding-right:28px; border-right:1px solid #d4d4d8;">
+              <div style="font-size:34px; font-weight:300; color:#FF6600; line-height:1;">01</div>
+              <div style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Discover</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Browse the portfolio and open any Passport before you speak to anyone.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; padding:0 28px; border-right:1px solid #d4d4d8;">
+              <div style="font-size:34px; font-weight:300; color:#FF6600; line-height:1;">02</div>
+              <div style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Consult</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Review unit mix, payment structure and programme with a named advisor.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; padding:0 28px; border-right:1px solid #d4d4d8;">
+              <div style="font-size:34px; font-weight:300; color:#FF6600; line-height:1;">03</div>
+              <div style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Verify</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Walk the site and match what you see against the published record.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px; padding-left:28px;">
+              <div style="font-size:34px; font-weight:300; color:#FF6600; line-height:1;">04</div>
+              <div style="font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:#1c1c1c; font-weight:600;">Own</div>
+              <div style="font-size:14.5px; line-height:1.7; color:#52525b; text-wrap:pretty;">Complete documentation, take your keys, keep the archive permanently.</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:18px; padding-top:8px;">
+            <span style="font-size:16px; color:#3f3f46;">Be a part of our journey.</span>
+            <span style="background:#1c1c1c; color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 28px; min-height:50px; display:flex; align-items:center;">Get in touch</span>
+          </div>
+        </div>
+
+        <div style="background:#fff; overflow:hidden; padding:24px 0; border-top:1px solid #E6E6E6; border-bottom:1px solid #E6E6E6;">
+          <div style="display:flex; width:max-content; animation:cb-marquee 26s linear infinite; gap:56px; align-items:center;">
+            <span style="font-size:28px; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#E6E6E6; white-space:nowrap;">CoBuilt Investment Partners</span>
+            <span style="font-size:28px; color:#FF6600;">◈</span>
+            <span style="font-size:28px; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#E6E6E6; white-space:nowrap;">Building Trust Through Every Brick</span>
+            <span style="font-size:28px; color:#FF6600;">◈</span>
+            <span style="font-size:28px; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#E6E6E6; white-space:nowrap;">CoBuilt Investment Partners</span>
+            <span style="font-size:28px; color:#FF6600;">◈</span>
+            <span style="font-size:28px; font-weight:300; letter-spacing:0.14em; text-transform:uppercase; color:#E6E6E6; white-space:nowrap;">Building Trust Through Every Brick</span>
+            <span style="font-size:28px; color:#FF6600;">◈</span>
+          </div>
+        </div>
+
+        <div style="background:#E6E6E6; padding:88px 56px; display:grid; grid-template-columns:300px 1fr; gap:56px; align-items:start;">
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">Testimonials</div>
+            <h2 style="margin:0; font-size:34px; line-height:1.1; font-weight:300; letter-spacing:-0.03em; color:#1c1c1c;">What our residents say</h2>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+            <div style="background:#fff; padding:32px; display:flex; flex-direction:column; gap:18px;">
+              <span style="font-size:20px; color:#FF6600; line-height:1;">◈</span>
+              <p style="margin:0; font-size:15.5px; line-height:1.75; color:#3f3f46; text-wrap:pretty;">“Owning a home is a dream for many. Unlike projects that start and stall, CoBuilt delivered — and I could follow every stage of it.”</p>
+              <div style="padding-top:8px; border-top:1px solid #E6E6E6;">
+                <div style="font-size:15px; color:#1c1c1c;">Charles F.</div>
+                <div style="font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:#71717a; margin-top:4px;">Homeowner · Ridge Terraces</div>
+              </div>
+            </div>
+            <div style="background:#fff; padding:32px; display:flex; flex-direction:column; gap:18px;">
+              <span style="font-size:20px; color:#FF6600; line-height:1;">◈</span>
+              <p style="margin:0; font-size:15.5px; line-height:1.75; color:#3f3f46; text-wrap:pretty;">“I wanted to see the foundation before I wired the money. CoBuilt was the only developer that simply showed me.”</p>
+              <div style="padding-top:8px; border-top:1px solid #E6E6E6;">
+                <div style="font-size:15px; color:#1c1c1c;">Portfolio Director</div>
+                <div style="font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:#71717a; margin-top:4px;">Lagos wealth management firm</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff; padding:96px 56px; display:flex; flex-direction:column; gap:36px;">
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:32px;">
+            <div style="display:flex; flex-direction:column; gap:12px; max-width:580px;">
+              <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#B34700;">Journal</div>
+              <h2 style="margin:0; font-size:42px; line-height:1.08; font-weight:300; letter-spacing:-0.035em; color:#1c1c1c; text-wrap:balance;">Notes from the sites and the studio</h2>
+            </div>
+            <span style="border:1px solid #d4d4d8; color:#1c1c1c; font-size:11.5px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; padding:0 26px; min-height:48px; display:flex; align-items:center; flex:none;">Read the journal</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:24px;">
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="height:210px; background-image:url('uploads/73c9926c2db98bd710b3bebbf412a465.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="display:flex; gap:12px; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#71717a;"><span style="color:#B34700;">Site note</span><span>02 Sep 2026</span></div>
+              <div style="font-size:19px; font-weight:400; line-height:1.35; color:#1c1c1c; text-wrap:pretty;">Anthony Gardens reaches sixth-floor slab, on programme</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="height:210px; background-image:url('uploads/8e6fd464e4e82475f2126818dd9598c3.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="display:flex; gap:12px; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#71717a;"><span style="color:#B34700;">Essay</span><span>21 Aug 2026</span></div>
+              <div style="font-size:19px; font-weight:400; line-height:1.35; color:#1c1c1c; text-wrap:pretty;">What verified reporting changes for Nigerian development</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="height:210px; background-image:url('uploads/2a530dd26731abc34b237e7c2a8949e4.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; display:flex; align-items:flex-start; padding:14px; box-sizing:border-box; font-size:11.5px; color:#52525b;"></div>
+              <div style="display:flex; gap:12px; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#71717a;"><span style="color:#B34700;">Studio</span><span>04 Aug 2026</span></div>
+              <div style="font-size:19px; font-weight:400; line-height:1.35; color:#1c1c1c; text-wrap:pretty;">Choosing facades that survive the Lagos coastline</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#1c1c1c; padding:88px 56px; display:flex; flex-direction:column; align-items:center; gap:22px; text-align:center;">
+          <div style="font-size:11.5px; letter-spacing:0.28em; text-transform:uppercase; color:#FF9955;">Stay informed</div>
+          <h2 style="margin:0; font-size:44px; line-height:1.06; font-weight:300; letter-spacing:-0.035em; color:#fff; max-width:680px; text-wrap:balance;">Project launches and milestone notifications, as they happen.</h2>
+          <div style="display:flex; gap:12px; padding-top:10px; width:520px;">
+            <div style="flex:1; border:1px solid rgba(255,255,255,0.3); min-height:54px; display:flex; align-items:center; padding:0 18px; font-size:14px; color:#a1a1aa;">Your email address</div>
+            <span style="background:#FF6600; color:#fff; font-size:12px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; padding:0 28px; min-height:54px; display:flex; align-items:center; flex:none;">Subscribe</span>
+          </div>
+        </div>
+
+        <div style="background:#fff; padding:72px 56px 40px; display:grid; grid-template-columns:1.5fr 1fr 1fr 1.2fr; gap:44px; border-top:1px solid #E6E6E6;">
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <img src="assets/cobuilt-logo-light.png" alt="CoBuilt Partners" style="height:34px; width:auto; display:block;">
+            <div style="font-size:14px; line-height:1.8; color:#52525b; max-width:300px; text-wrap:pretty;">Nigerian property development held to a published standard of proof — from groundbreaking through to handover.</div>
+            <div style="font-size:11.5px; letter-spacing:0.16em; text-transform:uppercase; color:#3f3f46;">LinkedIn · Instagram · YouTube · WhatsApp</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:13px;">
+            <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#B34700; font-weight:600;">Quick links</div>
+            <div style="font-size:14px; color:#52525b;">About us</div>
+            <div style="font-size:14px; color:#52525b;">Leadership</div>
+            <div style="font-size:14px; color:#52525b;">Projects</div>
+            <div style="font-size:14px; color:#52525b;">Careers</div>
+            <div style="font-size:14px; color:#52525b;">Contact</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:13px;">
+            <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#B34700; font-weight:600;">Transparency</div>
+            <div style="font-size:14px; color:#52525b;">Project Passport™</div>
+            <div style="font-size:14px; color:#52525b;">Milestone archive</div>
+            <div style="font-size:14px; color:#52525b;">Governance</div>
+            <div style="font-size:14px; color:#52525b;">Downloads</div>
+            <div style="font-size:14px; color:#52525b;">Privacy (NDPA)</div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:13px;">
+            <div style="font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#B34700; font-weight:600;">Catch us here</div>
+            <div style="font-size:14px; line-height:1.75; color:#52525b;">27 Apex Drive, TechZone District<br>Victoria Heights, Lagos</div>
+            <div style="font-size:14px; color:#52525b;">hello@cobuiltpartners.com</div>
+            <div style="font-size:14px; color:#52525b;">+234 700 262 8458</div>
+          </div>
+        </div>
+        <div style="background:#fff; border-top:1px solid #E6E6E6; padding:20px 56px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#71717a;">
+          <div>© 2026 CoBuilt Investment Partners. All rights reserved.</div>
+          <div style="letter-spacing:0.14em; text-transform:uppercase;">Building Trust Through Every Brick</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;heroImageA&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;options&quot;: [&quot;Aerial estate&quot;, &quot;Apartment blocks&quot;, &quot;Construction site&quot;, &quot;Villa and pool&quot;],
+    &quot;default&quot;: &quot;Aerial estate&quot;,
+    &quot;tsType&quot;: &quot;string&quot;,
+    &quot;section&quot;: &quot;Hero imagery&quot;
+  },
+  &quot;heroImageB&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;options&quot;: [&quot;Aerial estate&quot;, &quot;Apartment blocks&quot;, &quot;Construction site&quot;, &quot;Villa and pool&quot;],
+    &quot;default&quot;: &quot;Apartment blocks&quot;,
+    &quot;tsType&quot;: &quot;string&quot;,
+    &quot;section&quot;: &quot;Hero imagery&quot;
+  },
+  &quot;heroFocus&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;options&quot;: [&quot;center&quot;, &quot;top&quot;, &quot;bottom&quot;, &quot;left center&quot;, &quot;right center&quot;],
+    &quot;default&quot;: &quot;center&quot;,
+    &quot;tsType&quot;: &quot;string&quot;,
+    &quot;section&quot;: &quot;Hero imagery&quot;
+  },
+  &quot;heroOverlay&quot;: {
+    &quot;editor&quot;: &quot;range&quot;,
+    &quot;min&quot;: 0,
+    &quot;max&quot;: 1,
+    &quot;step&quot;: 0.05,
+    &quot;default&quot;: 1,
+    &quot;tsType&quot;: &quot;number&quot;,
+    &quot;section&quot;: &quot;Hero imagery&quot;
+  }
+}">
+const HERO_IMAGES = {
+  "Aerial estate": "uploads/9ba3c366a32568e271318564b92adbd1.jpg",
+  "Apartment blocks": "uploads/8e6fd464e4e82475f2126818dd9598c3.jpg",
+  "Construction site": "uploads/73c9926c2db98bd710b3bebbf412a465.jpg",
+  "Villa and pool": "uploads/2a530dd26731abc34b237e7c2a8949e4.jpg"
+};
+
+class Component extends DCLogic {
+  photo(name, focus) {
+    const url = HERO_IMAGES[name] || HERO_IMAGES["Aerial estate"];
+    return {
+      position: "absolute", inset: 0,
+      backgroundImage: "url('" + url + "')",
+      backgroundSize: "cover",
+      backgroundPosition: focus,
+      backgroundRepeat: "no-repeat"
+    };
+  }
+  renderVals() {
+    const p = this.props;
+    const focus = p.heroFocus ?? "center";
+    // floor the scrim so headline/eyebrow copy stays legible at the slider's low end
+    const strength = 0.85 + 0.15 * (p.heroOverlay ?? 1);
+    return {
+      heroA: this.photo(p.heroImageA ?? "Aerial estate", focus),
+      heroB: this.photo(p.heroImageB ?? "Apartment blocks", focus),
+      overlayA: {
+        position: "absolute", inset: 0, pointerEvents: "none", opacity: strength,
+        background: "linear-gradient(92deg, rgba(20,20,20,0.94) 0%, rgba(20,20,20,0.78) 44%, rgba(20,20,20,0.28) 100%)"
+      },
+      overlayB: {
+        position: "absolute", inset: 0, pointerEvents: "none", opacity: strength,
+        background: "linear-gradient(180deg, rgba(20,20,20,0.30) 0%, rgba(20,20,20,0.34) 32%, rgba(20,20,20,0.80) 58%, rgba(20,20,20,0.92) 100%)"
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

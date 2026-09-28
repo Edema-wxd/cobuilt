@@ -9,6 +9,7 @@ import {
   container,
   eyebrow,
   eyebrowOnDark,
+  eyebrowOnLine,
   media,
 } from '../components/ui';
 
@@ -617,7 +618,7 @@ export default function Home() {
             </div>
 
             <div className="mt-7 flex justify-center sm:mt-10">
-              <a className={`${btnOutline} w-full sm:w-auto`} href="#register">
+              <a className={`${btnOutline} w-full sm:w-auto`} href="/projects">
                 Explore all projects
               </a>
             </div>
@@ -872,7 +873,7 @@ export default function Home() {
             className={`${container} grid grid-cols-1 items-center gap-7 sm:gap-9 lg:grid-cols-2 lg:gap-13`}
           >
             <div className="flex flex-col gap-4 [&_h2_em]:text-rust">
-              <p className={eyebrow}>Register your interest</p>
+              <p className={eyebrowOnLine}>Register your interest</p>
               <h2 className={titleSm}>
                 Follow our developments as they <em>progress</em>.
               </h2>

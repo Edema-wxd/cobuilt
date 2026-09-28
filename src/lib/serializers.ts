@@ -22,9 +22,18 @@ function toIso(value: Date | string | null): string | null {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
 
-function toDateOnly(value: Date | string | null): string | null {
-  const iso = toIso(value);
-  return iso ? iso.slice(0, 10) : null;
+/**
+ * `DATE` columns come back from pg as a Date at LOCAL midnight, so pushing one
+ * through `toISOString()` reports the previous day anywhere west of UTC. These
+ * are milestone and handover dates on a record whose whole claim is that its
+ * dates are accurate, so the calendar parts are read as they were stored.
+ */
+export function toDateOnly(value: Date | string | null): string | null {
+  if (!value) return null;
+  if (typeof value === 'string') return value.slice(0, 10);
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${value.getFullYear()}-${month}-${day}`;
 }
 
 function toNumber(value: string | number | null): number | null {

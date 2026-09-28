@@ -80,7 +80,12 @@ export default function SiteHeader({ current = '/' }: Props) {
             <a className={utilityLink} href="/#leadership">
               YouTube
             </a>
-            <a className="text-orange-on-dark" href="/#projects">
+            {/*
+              `/search` does not exist yet (docs/design-handover.md §3.5). The
+              projects index is the only searchable surface that does, so the
+              entry point goes there rather than to a landing-page anchor.
+            */}
+            <a className="text-orange-on-dark" href="/projects">
               Search
             </a>
           </div>
