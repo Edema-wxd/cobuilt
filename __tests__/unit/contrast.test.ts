@@ -74,8 +74,10 @@ describe('palette tokens', () => {
       'ink-deep',
       'white',
       'line',
+      'zinc-50',
       'zinc-100',
       'zinc-200',
+      'zinc-300',
       'zinc-400',
       'zinc-500',
       'zinc-600',
@@ -137,6 +139,40 @@ describe('contrast of rendered pairings', () => {
     ['tour viewer chrome label', 'white', 'ink-deep', AA_TEXT],
     ['tour "exit tour" control', 'orange-on-dark', 'ink-deep', AA_TEXT],
     ['tour loading copy', 'zinc-200', 'ink-deep', AA_TEXT],
+
+    // Project Passport™: the record is kept on white so that every entry reads
+    // as a document, with the progress band on the muted ground above it.
+    ['record entry number', 'rust', 'white', AA_TEXT],
+    ['record data label', 'zinc-700', 'white', AA_TEXT],
+    ['record entry provenance line', 'zinc-600', 'white', AA_TEXT],
+    ['record delay disclosure', 'zinc-700', 'zinc-100', AA_TEXT],
+    ['record "stands at entry" link on the muted ground', 'rust-hover', 'zinc-100', AA_TEXT],
+    ['record progress fill against its track', 'rust', 'zinc-300', AA_NON_TEXT],
+    ['record document link border', 'zinc-500', 'white', AA_NON_TEXT],
+    ['record terms band copy', 'zinc-200', 'ink', AA_TEXT],
+    ['record hero project ID', 'zinc-400', 'ink', AA_TEXT],
+    ['delayed milestone chip border', 'ink', 'white', AA_NON_TEXT],
+
+    // The pages built out from the nav: About, Leadership, Services, Passport,
+    // Media and Contact. The page hero reuses the charcoal pairings above; these
+    // are the ones those pages introduced.
+    ['page hero breadcrumb link', 'zinc-200', 'ink', AA_TEXT],
+    ['page hero breadcrumb, current page', 'zinc-400', 'ink', AA_TEXT],
+    ['page hero mono meta', 'zinc-400', 'ink', AA_TEXT],
+    // The Passport status key. "Delayed" is the one state that cannot be a
+    // filled badge — it must read as a fact, not an alarm — so it is rust on
+    // white with a rust rule.
+    ['passport "delayed" status label', 'rust', 'white', AA_TEXT],
+    ['passport "delayed" status border', 'rust', 'white', AA_NON_TEXT],
+    // Empty, error and informational cards sit on the lightest grey.
+    ['eyebrow on an empty-state card', 'rust', 'zinc-50', AA_TEXT],
+    ['body copy on an empty-state card', 'zinc-700', 'zinc-50', AA_TEXT],
+    ['informational service card body', 'zinc-600', 'zinc-50', AA_TEXT],
+    // The media centre's category pills carry a count inside the pill, so it
+    // contrasts against the pill's own ground rather than the page's.
+    ['category pill count, selected', 'zinc-200', 'ink', AA_TEXT],
+    ['category pill count, unselected', 'zinc-600', 'white', AA_TEXT],
+    ['article tag chip border', 'zinc-500', 'white', AA_NON_TEXT],
 
     ['focus ring, outer, on white', 'ink', 'white', AA_NON_TEXT],
     ['focus ring, inner, on charcoal', 'white', 'ink', AA_NON_TEXT],

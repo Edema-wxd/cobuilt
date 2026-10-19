@@ -1,9 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ReactElement } from 'react';
 import SiteLayout from '../../../components/SiteLayout';
 import { passportHref } from '../../../components/site';
+import {
+  AccentedTitle,
+  MILESTONE_STATUS_CLASS,
+  MILESTONE_STATUS_LABEL,
+  STATUS_CLASS,
+  STATUS_LABEL,
+  badge,
+  cssUrl,
+  formatDay,
+  formatQuarter,
+  paragraphs,
+} from './project-shared';
+import type { MilestoneStatus, Status } from './project-shared';
 import {
   btnOrange,
   btnOutline,
@@ -43,8 +55,6 @@ import {
  *     URLs only, so the hero and gallery images run without them.
  */
 
-type Status = 'future' | 'ongoing' | 'completed';
-type MilestoneStatus = 'pending' | 'in_progress' | 'completed' | 'delayed';
 type TourType = 'threejs_model' | 'matterport_embed' | 'custom_viewer';
 
 interface Label {
@@ -122,39 +132,6 @@ export interface ProjectDetailProps {
   related: RelatedProject[];
 }
 
-const STATUS_LABEL: Record<Status, string> = {
-  ongoing: 'Ongoing',
-  completed: 'Completed',
-  future: 'Upcoming',
-};
-
-const badge =
-  'whitespace-nowrap px-2.5 py-1.25 text-[0.625rem] font-bold uppercase tracking-[0.14em]';
-
-const STATUS_CLASS: Record<Status, string> = {
-  ongoing: `${badge} bg-orange text-ink`,
-  completed: `${badge} bg-ink text-white`,
-  future: `${badge} bg-line text-ink`,
-};
-
-/**
- * A delayed milestone is reported, not hidden — the brand promise rests on it —
- * so it reads as a plain outlined chip rather than an error colour.
- */
-const MILESTONE_STATUS_CLASS: Record<MilestoneStatus, string> = {
-  completed: `${badge} bg-ink text-white`,
-  in_progress: `${badge} bg-orange text-ink`,
-  delayed: `${badge} border border-ink bg-white text-ink`,
-  pending: `${badge} bg-line text-ink`,
-};
-
-const MILESTONE_STATUS_LABEL: Record<MilestoneStatus, string> = {
-  completed: 'Completed',
-  in_progress: 'In progress',
-  delayed: 'Delayed',
-  pending: 'Scheduled',
-};
-
 /**
  * Whether this page can open a given tour.
  *
@@ -181,41 +158,6 @@ const uppercaseLink =
 const sectionTitle = 'text-[length:clamp(1.75rem,3vw,2.5rem)]';
 const blockHead =
   'text-[0.719rem] font-semibold uppercase tracking-[0.2em] text-ink';
-
-/**
- * Image URLs are editor- and CMS-supplied and land inside a CSS `url('…')`.
- * An apostrophe would close the string early — at best breaking the tile, at
- * worst letting the rest of the URL be read as further declarations.
- */
-function cssUrl(url: string): string {
-  return `url('${url.replace(/[\\'"()\n\r]/g, (char) => `\\${char}`)}')`;
-}
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/**
- * Date-only values are formatted by hand from their parts. `new Date('2026-01-15')`
- * parses as UTC midnight and then prints in the viewer's zone, which west of
- * UTC shows the day before — on a record whose whole claim is that its dates
- * are accurate, that is not a rounding error.
- */
-function formatDay(value: string | null): string | null {
-  const parts = value?.slice(0, 10).split('-');
-  if (!parts || parts.length !== 3) return null;
-  const [year, month, day] = parts;
-  const name = MONTHS[Number(month) - 1];
-  if (!year || !day || !name) return null;
-  return `${Number(day)} ${name} ${year}`;
-}
-
-/** Completion targets are a commitment to a quarter, not to a day. */
-function formatQuarter(value: string | null): string | null {
-  const parts = value?.slice(0, 10).split('-');
-  if (!parts || parts.length !== 3) return null;
-  const [year, month] = parts;
-  if (!year || !month) return null;
-  return `Q${Math.floor((Number(month) - 1) / 3) + 1} ${year}`;
-}
 
 function formatBytes(bytes: number | null): string | null {
   if (!bytes || bytes <= 0) return null;
@@ -251,26 +193,6 @@ function highlightLines(value: unknown): string[] {
       .map(([key, item]) => `${sentenceCase(key)}: ${String(item)}`);
   }
   return [];
-}
-
-/** CMS long copy is plain text; blank lines are its paragraph breaks. */
-function paragraphs(value: string | null): string[] {
-  return (value ?? '')
-    .split(/\n\s*\n/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
-/** The title with its last word italicised, which is the house headline form. */
-function AccentedTitle({ title }: { title: string }): ReactElement {
-  const words = title.trim().split(/\s+/);
-  if (words.length < 2) return <>{title}</>;
-  const accent = words[words.length - 1];
-  return (
-    <>
-      {words.slice(0, -1).join(' ')} <em>{accent}</em>
-    </>
-  );
 }
 
 export default function ProjectDetail({
@@ -334,8 +256,6 @@ export default function ProjectDetail({
     );
   }
 
-  // Until the Passport page exists this is an anchor to the band below, so the
-  // band's own "open the full record" link would only point at itself.
   const passportLink = passportHref(project.slug);
 
   const specs: Array<{ label: string; value: string; mono?: boolean }> = [];
@@ -542,8 +462,8 @@ export default function ProjectDetail({
                       : 'Every milestone is complete.'}
                   </p>
                 )}
-                <a className={uppercaseLink} href="/#passport">
-                  <span className="sr-only">{project.title} — </span>What a Passport™ records →
+                <a className={uppercaseLink} href={passportLink}>
+                  <span className="sr-only">{project.title} — </span>Open the full record →
                 </a>
               </div>
             </div>

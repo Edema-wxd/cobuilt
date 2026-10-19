@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { EMAIL, NAV, PHONE, PHONE_HREF } from './site';
+import { EMAIL, NAV, PHONE, PHONE_HREF, WHATSAPP_HREF } from './site';
 import { container } from './ui';
 
 const utilityLink = 'hover:text-orange-on-dark';
@@ -73,13 +73,19 @@ export default function SiteHeader({ current = '/' }: Props) {
             </a>
           </div>
           <div className="hidden items-center gap-5 text-[0.656rem] uppercase tracking-[0.1em] sm:flex">
-            <a className={utilityLink} href="/#register">
+            <a className={utilityLink} href={WHATSAPP_HREF}>
               WhatsApp Business
             </a>
-            <a className={utilityLink} href="/#register">
+            {/*
+              The company's LinkedIn and YouTube accounts are not confirmed, so
+              these resolve to the pages that carry the same thing on this site
+              — the contact channels, and the video library — rather than to a
+              guessed external URL.
+            */}
+            <a className={utilityLink} href="/contact">
               LinkedIn
             </a>
-            <a className={utilityLink} href="/#leadership">
+            <a className={utilityLink} href="/leadership#video-library">
               YouTube
             </a>
             {/*
@@ -131,7 +137,7 @@ export default function SiteHeader({ current = '/' }: Props) {
             {/* Charcoal, not white: white on #FF6600 is 2.94:1. */}
             <a
               className="inline-flex min-h-target items-center justify-center border border-transparent bg-orange px-5 text-[0.688rem] font-semibold uppercase tracking-[0.13em] text-ink transition-colors duration-150 hover:bg-orange-lift max-lg:mt-3"
-              href="/#register"
+              href="/contact"
             >
               Discuss your project
             </a>

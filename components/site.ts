@@ -1,13 +1,18 @@
 /**
  * Shared site chrome data.
  *
- * Navigation hrefs are root-absolute (`/#about`, not `#about`) so the same
+ * Navigation hrefs are root-absolute (`/projects`, not `projects`) so the same
  * header works on the landing page and on the standalone pages beneath it.
+ * Every one of the nine resolves to a page of its own: the six that pointed at
+ * a homepage anchor (About, Leadership, Services, Passport™, Media, Contact)
+ * now have one. See docs/decisions.md §2.13.
  */
 
 export const PHONE = '+234 700 262 8458';
 export const PHONE_HREF = 'tel:+2347002628458';
 export const EMAIL = 'hello@cobuiltpartners.com';
+/** The same line as `PHONE`, in the digits-only form wa.me requires. */
+export const WHATSAPP_HREF = 'https://wa.me/2347002628458';
 
 export const ADDRESS_LINES = [
   '27 Apex Drive, TechZone District',
@@ -23,14 +28,14 @@ export interface NavItem {
 /** The nine-item global navigation the standards document mandates. */
 export const NAV: NavItem[] = [
   { label: 'Home', href: '/' },
-  { label: 'About', href: '/#about' },
-  { label: 'Leadership', href: '/#leadership' },
-  { label: 'Services', href: '/#services' },
+  { label: 'About', href: '/about' },
+  { label: 'Leadership', href: '/leadership' },
+  { label: 'Services', href: '/services' },
   { label: 'Projects', href: '/projects' },
-  { label: 'Passport™', href: '/#passport' },
-  { label: 'Media', href: '/#media' },
+  { label: 'Passport™', href: '/passport' },
+  { label: 'Media', href: '/news' },
   { label: 'Careers', href: '/careers' },
-  { label: 'Contact', href: '/#register' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 export interface FooterItem {
@@ -45,8 +50,8 @@ export const FOOTER_COLUMNS: Array<{ head: string; items: FooterItem[] }> = [
   {
     head: 'Company',
     items: [
-      { label: 'About', href: '/#about' },
-      { label: 'Leadership', href: '/#leadership' },
+      { label: 'About', href: '/about' },
+      { label: 'Leadership', href: '/leadership' },
       { label: 'Governance' },
       { label: 'Careers', href: '/careers' },
     ],
@@ -57,14 +62,14 @@ export const FOOTER_COLUMNS: Array<{ head: string; items: FooterItem[] }> = [
       { label: 'Past projects', href: '/projects?status=completed' },
       { label: 'Ongoing projects', href: '/projects?status=ongoing' },
       { label: 'Future projects', href: '/projects?status=future' },
-      { label: 'Project Passport™', href: '/#passport' },
+      { label: 'Project Passport™', href: '/passport' },
     ],
   },
   {
     head: 'Resources',
     items: [
-      { label: 'News & insights', href: '/#media' },
-      { label: 'Video library', href: '/#leadership' },
+      { label: 'News & insights', href: '/news' },
+      { label: 'Video library', href: '/leadership#video-library' },
       { label: 'Downloads' },
       { label: 'FAQs' },
     ],
@@ -84,11 +89,12 @@ export const FOOTER_COLUMNS: Array<{ head: string; items: FooterItem[] }> = [
 /**
  * Where a Project Passport™ link goes.
  *
- * The Passport page itself — `/projects/[slug]/passport` — is not built yet
- * (docs/design-handover.md §3.1). Until it is, every Passport link resolves to
- * the passport summary band on the project page rather than to a 404. This is
- * the one place to change when that page ships.
+ * The per-project record at `/projects/[slug]/passport`, which is the page the
+ * brief rests on. Until it was built this resolved to the passport summary
+ * band on the project page so that no Passport link 404'd; that stopgap is
+ * gone. `/passport` — the page that explains what a Passport is — is a
+ * different thing, and is where the nav and footer entries point.
  */
 export function passportHref(slug: string): string {
-  return `/projects/${slug}#passport`;
+  return `/projects/${slug}/passport`;
 }

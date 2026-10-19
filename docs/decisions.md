@@ -230,11 +230,10 @@ then framed with `sandbox`: an editor-supplied `javascript:` URL in an iframe
 `src` executes in this page's context, which is the same hole withholding
 `embed_code` closes.
 
-Passport links are a stopgap. `/projects/[slug]/passport` does not exist yet
-(design handover §3.1), so `passportHref()` in `components/site.ts` resolves
-every Passport link — the index cards and this page's hero — to the passport
-summary band on the project page rather than to a 404. That function is the one
-place to change when the Passport page ships.
+Passport links are no longer a stopgap: `passportHref()` resolves to the record
+itself, which is built — see §2.14. The project page keeps its summary band,
+and the band's trailing link now opens the full record rather than the
+Passport explainer.
 
 ### 2.11 `DATE` columns are serialized from their calendar parts
 
@@ -299,6 +298,138 @@ cookie policy page is split into `components/CookiePreferencesButton.tsx` so the
 page itself did not have to become a client component.
 
 ---
+
+### 2.14 The Project Passport™ record is server-rendered, and everything on it is dated
+
+`/projects/[slug]/passport` is the page the brief rests on (design handover
+§3.1): a permanent, public record of one development, milestone by milestone.
+It is built in `app/projects/[slug]/passport/`, and it is a **server component**
+with no client JavaScript at all. The project page next door is a client
+component because it drives a gallery and a tour viewer; a record has nothing
+to drive, and three things follow from rendering it on the server:
+
+- every entry is in the HTML as served, so no filter or disclosure hides part of
+  the record from a reader, a crawler or a printer;
+- the page is readable with JavaScript off, which for a document whose whole
+  claim is permanence is the right default;
+- the timestamps are formatted once, on the server, rather than differing
+  between the server render and the browser's zone.
+
+**A slipped date is reported, never revised.** Every entry shows the date the
+milestone was scheduled for beside the date it was met, and states the variance
+in words — "10 days ahead of schedule", "5 days later than scheduled". A
+milestone whose status is `delayed` with no actual date yet says so explicitly
+and does not invent a revised date. The count of delayed milestones is
+disclosed in the progress band *above* the record, so a reader does not have to
+find it. `delayed` stays an outlined chip rather than a red one: it is a fact
+about a programme, not a failure state.
+
+**Provenance is on the page**, because credibility is the product here. The
+project ID, the number of entries, the time each entry was written into the
+record, and whether an entry was later revised. Times are reported in **West
+Africa Time**, converted by hand as a fixed UTC+1 rather than through `Intl`:
+WAT has no daylight saving, and a fixed offset renders the same string on every
+server and in every runtime, which is what makes two readers of an archive
+agree about it. `formatRecordedAt` and the date helpers are covered by
+`__tests__/unit/passport.test.ts`, including the §2.11 west-of-UTC case.
+
+Four states, all designed: the record; a Passport that is open with nothing
+recorded yet; a project whose Passport is not open at all, which answers rather
+than 404s because the URL is a real one for a real development, and which
+`generateMetadata` marks `noindex` so it cannot win a search result that would
+disappoint; and a database that could not be reached.
+
+Editor-supplied URLs are vetted on the server, in the loader, before they reach
+the browser — the same posture as the tour viewer. A document or video URL that
+is not `https` is dropped rather than rendered, so a `javascript:` URL in
+`document_urls` never becomes an `href`. Document names are read from the last
+segment of the URL, because `document_urls` is a bare text array with no title
+column and the alternative is a link that reads as a CDN path.
+
+No investment call to action, per the brief's §1 — and this page publishes no
+figures, so unlike the project page it carries no investor band and the
+licensing notice has nothing to attach to. Its closing band states the terms
+the record is kept under and points at the development and the portfolio.
+
+Two things were factored out rather than copied. `app/projects/[slug]/project-shared.tsx`
+now holds the primitives both pages use — the date formatters, the milestone
+labels, the status chips, the URL vetting — so the formatters that §2.11 records
+getting wrong exist once. And a project change in the CMS webhook now
+revalidates `/projects/[slug]/passport` alongside the index and the detail page,
+since the record is a page of its own.
+
+What the data does not carry, and which therefore degrades rather than appears:
+
+| Wanted | Status | Rendered as |
+|---|---|---|
+| A citable reference per entry | `passport_milestones` has a UUID, which is not a human reference | The entry's position in the published sequence (`Entry 03`), with the recorded-at timestamp beside it |
+| Photo captions | `photo_urls` is a bare text array | Tiles carry an indexed alt text naming the milestone |
+| An embedded site video | `video_url` is unvetted CMS input, as `embed_code` is (§2.10) | A link that opens in a new tab, https only — never an iframe |
+
+### 2.15 The six anchor nav items are pages, not anchors
+
+Six of the nine mandated nav items — About, Leadership, Services, Passport™,
+Media and Contact — pointed at a band on the landing page, and Contact pointed
+at the newsletter form, which is a different thing from an enquiry. Fifteen
+links on the landing page resolved to an anchor instead of a destination. All
+of them now reach a page:
+
+| Nav item | Page | Content source |
+|---|---|---|
+| About | `/about` | Static |
+| Leadership | `/leadership` | Static |
+| Services | `/services`, `/services/[slug]` | Static, `app/services/services.ts` |
+| Passport™ | `/passport` | Static |
+| Media | `/news`, `/news/[slug]` | `/api/news` |
+| Contact | `/contact` | Posts to `/api/forms/inquiry` |
+
+**Contact and newsletter are separate, and separately consented.** `/contact`
+posts to `/api/forms/inquiry` — it reaches a person, and the NDPA consent is
+for replying to the enquiry. The landing page's band keeps the newsletter
+(`/api/forms/newsletter`, double opt-in), and its third hero action is now
+labelled "Register your interest" rather than "Contact us", because that is
+what it does.
+
+**The landing page's own service cards and the service pages read one module.**
+`app/services/services.ts` holds the six disciplines; the landing grid imports
+it rather than keeping its own copy, so the card line and the page cannot drift.
+Property Investment stays informational there and on its page: no call to
+action, and the licensing notice above the fold rather than only at the foot.
+
+**Services, About, Leadership and Passport™ are static.** There is a `services`
+table, but it is filter taxonomy — a name, a slug, a one-line description — and
+no endpoint publishes page copy. Rather than invent CMS content types, these
+pages hold their copy in the repo and render without PostgreSQL, like the
+landing page. The media centre is the opposite case: `/api/news` exists, so
+`/news` reads it on the client (§2.9) and `/news/[slug]` on the server (§2.10).
+
+**`/news/category/[category]` is not a route.** The category is a filter on the
+media centre (`/news?category=update`), which keeps one list, one empty state
+and one pagination implementation. The API route of that name is untouched.
+
+**Article bodies are rendered without `dangerouslySetInnerHTML`.**
+`news_articles.content` is free text with no declared format and the CMS is not
+settled (design handover §5.1), so `components/ArticleBody.tsx` strips HTML
+tags to their text and honours a Markdown subset — headings, lists, quotes.
+Inline emphasis is deliberately not parsed: losing `**bold**` mid-sentence is
+cosmetic, where a half-built inline parser on editor input is a real risk. One
+file to replace when the CMS is confirmed.
+
+**Three patterns were extracted rather than copied.** `components/sections.ts`
+holds the section bands, titles and card classes the landing page established;
+`components/PageHero.tsx` is the charcoal page header, and it carries the
+breadcrumb trail the handover's §4 asked for; `components/CtaBand.tsx` is the
+closing band, which is the only place a new page can offer an action — and it
+offers an enquiry or a registration, never an investment. New contrast pairings
+are in `__tests__/unit/contrast.test.ts` as usual.
+
+**Links with nothing honest behind them were pointed at the nearest true
+thing, not invented.** The landing page's three illustrative project cards go
+to `/projects` rather than to slugs no CMS row has; LinkedIn and YouTube in the
+utility strip go to the contact page and the video library, because the
+company's accounts are unconfirmed and a guessed URL is worse than a local one;
+WhatsApp Business goes to `wa.me` on the office number. Governance, Downloads
+and FAQs stay unlinked in the footer, as they were.
 
 ## 3. Still open
 

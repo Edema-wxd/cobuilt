@@ -139,7 +139,7 @@ async function handleUpsert(
       status: 'applied',
       model,
       entryId,
-      revalidate: ['/projects', `/projects/${row!.slug}`],
+      revalidate: ['/projects', `/projects/${row!.slug}`, `/projects/${row!.slug}/passport`],
     };
   }
 
@@ -255,7 +255,12 @@ async function handleDelete(model: string, entryId: string): Promise<SyncResult>
     if (row) {
       await enqueueSearch({ action: 'delete', index: 'projects', id: row.id });
       await invalidatePrefix('projects');
-      return { status: 'applied', model, entryId, revalidate: ['/projects', `/projects/${row.slug}`] };
+      return {
+        status: 'applied',
+        model,
+        entryId,
+        revalidate: ['/projects', `/projects/${row.slug}`, `/projects/${row.slug}/passport`],
+      };
     }
     return { status: 'skipped', model, entryId, reason: 'No matching row', revalidate: [] };
   }

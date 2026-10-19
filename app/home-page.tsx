@@ -3,6 +3,22 @@
 import { Fragment, useState } from 'react';
 import SiteLayout from '../components/SiteLayout';
 import { PHONE, PHONE_HREF } from '../components/site';
+import { SERVICES, serviceHref } from './services/services';
+import {
+  cardBody,
+  cardTitle,
+  field,
+  fieldLabel,
+  glyph,
+  input,
+  sectionHead,
+  sectionLight,
+  sectionMuted,
+  titleLg,
+  titleMd,
+  titleSm,
+  uppercaseLink,
+} from '../components/sections';
 import {
   btnOrange,
   btnOutline,
@@ -36,27 +52,11 @@ import {
  * `md` and `lg` add the tablet and desktop layouts back. The page degrades by
  * stacking and by dropping ornament (the hero rail, the marquee), never by
  * dropping content.
+ *
+ * The section bands, titles and card classes this page established now live in
+ * `components/sections.ts`, shared with the pages built from the same patterns
+ * — About, Leadership, Services, Passport™, Media and Contact.
  */
-const section = 'py-13 sm:py-16 md:py-22';
-const sectionLight = `${section} bg-white`;
-const sectionMuted = `${section} border-t border-line bg-zinc-100`;
-const sectionHead = 'flex flex-col gap-3.5';
-
-const titleLg = 'text-[length:clamp(1.875rem,3.4vw,2.75rem)]';
-const titleMd = 'text-[length:clamp(1.75rem,3vw,2.5rem)]';
-const titleSm = 'text-[length:clamp(1.5rem,2.4vw,2.125rem)]';
-
-const glyph = 'text-[1.25rem] leading-none';
-const cardTitle = 'text-[0.781rem] font-semibold uppercase text-ink';
-const cardBody = 'text-[0.906rem] leading-[1.7] text-zinc-600';
-const uppercaseLink = 'font-semibold uppercase tracking-[0.14em] text-rust hover:text-rust-hover';
-
-const field = 'flex flex-col gap-1.75';
-const fieldLabel = 'text-[0.688rem] font-semibold uppercase tracking-[0.14em] text-zinc-700';
-/** 16px on a phone: below that, iOS Safari zooms the page when a field takes focus. */
-const input =
-  'min-h-12 w-full rounded-none border border-zinc-400 bg-white px-3.5 text-base text-ink sm:min-h-11.5 sm:text-[0.875rem]';
-
 const IMAGES = {
   hero: '/images/hero-aerial-estate.webp',
   villa: '/images/villa-and-pool.webp',
@@ -69,38 +69,6 @@ const STATS: Array<{ value: string; plus?: boolean; label: string }> = [
   { value: '3', label: 'Projects under development' },
   { value: '30', plus: true, label: 'Units developed' },
   { value: '5', plus: true, label: 'Locations' },
-];
-
-const SERVICES: Array<{
-  title: string;
-  body: string;
-  informational?: boolean;
-}> = [
-  {
-    title: 'Real Estate Development',
-    body: 'High-quality residential, commercial, mixed-use and strategic developments.',
-  },
-  {
-    title: 'Construction Management',
-    body: 'Project execution focused on quality craftsmanship, cost efficiency, safety and timely delivery.',
-  },
-  {
-    title: 'Development Management',
-    body: 'Every stage from concept to completion, coordinated efficiently and professionally.',
-  },
-  {
-    title: 'Project Advisory',
-    body: 'Feasibility studies, commercial assessment, procurement planning and development strategy.',
-  },
-  {
-    title: 'Asset & Property Management',
-    body: 'Preserving and enhancing the long-term value of completed developments.',
-  },
-  {
-    title: 'Property Investment',
-    body: 'Information only. No investment is offered or solicited pending regulatory licensing.',
-    informational: true,
-  },
 ];
 
 type ProjectStatus = 'ongoing' | 'completed' | 'future';
@@ -379,14 +347,19 @@ export default function HomePage() {
               </p>
               {/* Stacked full width on a phone, so the primary action is never stranded on its own row. */}
               <div className="flex flex-col gap-2.5 pt-1.5 sm:flex-row sm:flex-wrap sm:gap-3 sm:pt-1">
-                <a className={btnOrange} href="#register">
+                <a className={btnOrange} href="/contact">
                   Discuss your project
                 </a>
                 <a className={btnWhite} href="#projects">
                   Explore our projects
                 </a>
+                {/*
+                  Labelled for what it does: this one scrolls to the newsletter
+                  band, where "Contact us" used to, which is a different thing
+                  from an enquiry. The enquiry form is /contact, above.
+                */}
                 <a className={btnOutlineOnDark} href="#register">
-                  Contact us
+                  Register your interest
                 </a>
               </div>
               {/* Carousel indicators with no carousel behind them; on a phone they only cost height. */}
@@ -456,7 +429,7 @@ export default function HomePage() {
               </p>
               <a
                 className="mt-2 inline-flex min-h-target items-center self-start border-b border-orange text-[0.719rem] font-semibold tracking-[0.16em] text-rust uppercase hover:text-rust-hover sm:block sm:min-h-0 sm:pb-2"
-                href="#passport"
+                href="/about"
               >
                 Read our story
               </a>
@@ -485,7 +458,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
               {SERVICES.map((service) => (
                 <article
-                  key={service.title}
+                  key={service.slug}
                   className={`flex flex-col gap-3 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
                 >
                   <span
@@ -495,7 +468,7 @@ export default function HomePage() {
                     ◈
                   </span>
                   <h3 className={`${cardTitle} tracking-[0.16em]`}>{service.title}</h3>
-                  <p className={cardBody}>{service.body}</p>
+                  <p className={cardBody}>{service.summary}</p>
                   {service.informational ? (
                     <p className="mt-1.5 self-start border border-zinc-400 px-2.5 py-1.5 text-[0.656rem] font-bold tracking-[0.16em] text-zinc-700 uppercase">
                       Informational
@@ -503,7 +476,7 @@ export default function HomePage() {
                   ) : (
                     <a
                       className={`${uppercaseLink} -mt-1.75 -mb-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:mt-1.5 sm:mb-0 sm:block sm:min-h-0 sm:self-auto`}
-                      href="#register"
+                      href={serviceHref(service.slug)}
                     >
                       Learn more →
                     </a>
@@ -604,7 +577,7 @@ export default function HomePage() {
                       </span>
                       <a
                         className={`${uppercaseLink} -my-3.25 inline-flex min-h-target items-center text-[0.688rem] whitespace-nowrap sm:my-0 sm:inline sm:min-h-0`}
-                        href="#passport"
+                        href="/projects"
                       >
                         {project.linkLabel}
                       </a>
@@ -672,7 +645,7 @@ export default function HomePage() {
               ))}
             </ol>
 
-            <a className={`${btnOrange} self-stretch sm:self-start`} href="#register">
+            <a className={`${btnOrange} self-stretch sm:self-start`} href="/passport">
               View Project Passport™
             </a>
           </div>
@@ -760,7 +733,7 @@ export default function HomePage() {
                   </p>
                   <a
                     className={`${uppercaseLink} -my-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:my-0 sm:block sm:min-h-0 sm:self-auto`}
-                    href="#about"
+                    href="/leadership#philosophy"
                   >
                     Leadership philosophy →
                   </a>
@@ -837,7 +810,7 @@ export default function HomePage() {
                 <p className={eyebrow}>Media centre</p>
                 <h2 className={titleMd}>Keep up with company updates in one place</h2>
               </div>
-              <a className={btnOutline} href="#register">
+              <a className={btnOutline} href="/news">
                 More news
               </a>
             </div>

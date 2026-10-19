@@ -3,10 +3,12 @@
 What still needs designing on the CoBuilt Investment Partners website, the rules
 those designs have to hold to, and the data each page can actually show.
 
-Eight pages are live: the landing page, the projects index, a project detail
-page, Careers, and four legal pages. The backend
-covers far more than that — 41 API routes, most with no interface yet. This
-document is the list of what to design next, in the order worth building.
+Sixteen pages are live: the landing page, the projects index, a project detail
+page, a project's Passport record, About, Leadership, Services and the six
+service pages behind it, Passport™, the media centre and its article page,
+Contact, Careers, and four legal pages. The backend covers more still — 41 API
+routes, several with no interface yet. This document is the list of what to
+design next, in the order worth building.
 
 **Reference:** Var-2026-003, Phase 1 · **Direction:** 3c, "Corporate Digital
 Standards" · **Stack for implementation:** Next.js App Router for pages, pages
@@ -128,16 +130,24 @@ it if a page needs more.
 
 ### Tier 1 — the landing page already promises these
 
-Fifteen links on the live home page currently jump to an on-page anchor because
-the page they mean does not exist. Eight of them — "Contact us", the five
-"Learn more →" service links, "Explore all projects" and "More news" — land on
-the newsletter form,
-which is not what any of them promise.
+This tier is **done**, and so is the Tier 2 navigation below it except for
+search. The fifteen links on the home page that jumped to an on-page anchor now
+reach the page they promise, and the two anchors that remain — "Explore our
+projects" and "Register your interest" — are genuine on-page destinations. The
+nav's six anchor items are pages; see `docs/decisions.md` §2.15 for what each
+one is built from and which links were pointed elsewhere rather than invented.
 
-#### 3.1 Project Passport™ — `/projects/[slug]/passport`
+What is left in Tier 1 is search (§3.5) and the tour viewer (§3.7).
+
+#### 3.1 Project Passport™ — `/projects/[slug]/passport` — **built**
 
 The most important page on the site. A public, permanent record of one
 development, milestone by milestone.
+
+Implemented in `app/projects/[slug]/passport/`. Server-rendered with no client
+JavaScript, so the whole record is in the HTML as served. See
+docs/decisions.md §2.14 for what that shapes, and for the three fields the data
+does not carry.
 
 Available per milestone: type (commencement, foundation, superstructure,
 roofing, MEP, finishes, practical completion, handover, or custom), title,
@@ -145,16 +155,27 @@ description, scheduled date, **actual date**, status (pending, in progress,
 completed, delayed), photo URLs, document URLs, video URL, and the timestamp the
 entry was recorded. Plus project-level progress: total, completed, percent.
 
-Design questions worth resolving here:
+How the design questions this section posed were resolved:
 
-- How a **delayed** milestone reads. The brand promise is that a slipped date is
-  reported rather than quietly revised, so "delayed" has to be legible without
-  looking like a failure state. Scheduled vs actual date should both be visible.
-- What a milestone with photography looks like versus one with only a date.
-- How attached documents (certificates, reports) are presented and downloaded.
-- The record's provenance: this page's credibility rests on looking like an
-  archive. Consider how the recorded-at timestamp and project ID are shown.
-- Empty state: a project whose passport is enabled but has no milestones yet.
+- **A delayed milestone** keeps the outlined chip the project page uses, not a
+  red one. Both dates are always shown — "Scheduled for" beside "Met on" — and
+  the variance is stated in words beneath them ("5 days later than scheduled").
+  A milestone reported delayed with no actual date says the scheduled date
+  stands as published and has not been revised. The count of delayed milestones
+  is disclosed in the progress band above the record, not left to be found.
+- **A milestone with photography** carries a 2-to-4-up tile grid under its
+  description, captioned with the count. One with only a date is the same entry
+  without that block: the dates and the provenance line are the entry's spine,
+  and everything else is optional around them.
+- **Attached documents** are a row of bordered links, each naming the document
+  and its file type, opening in a new tab. The name is read from the URL's last
+  segment because there is no title column.
+- **Provenance** is the project ID on the hero's mono rule, a six-cell record
+  summary above the entries, and a mono line closing every entry: the entry's
+  number, when it was written into the record, and when it was revised if it
+  was. Times are in West Africa Time, which is stated.
+- **Empty state**: built, and so is the state for a project whose Passport is
+  not open at all — that one answers rather than 404s, and is `noindex`.
 
 #### 3.2 Project detail — `/projects/[slug]` — **built**
 
@@ -171,9 +192,9 @@ remember §1: no investment CTA even when it is populated.
 
 Also available: 3D virtual tours (see 3.7).
 
-#### 3.3 Projects index — `/projects`
+#### 3.3 Projects index — `/projects` — **built**
 
-Filterable by status, type, location, sector and tag; sortable by recent, title
+Implemented at `app/projects/`. Filterable by status, type, location, sector and tag; sortable by recent, title
 or oldest; paginated; free-text searchable. The home page's All/Past/Ongoing/
 Future pills are the starting point, but this page needs to carry more filters
 than those four — decide how they behave on a phone, where the existing pills
@@ -181,16 +202,25 @@ already scroll horizontally.
 
 Needs an empty state ("no projects match these filters") and a loading state.
 
-#### 3.4 News & insights — `/news`, `/news/[slug]`, `/news/category/[category]`
+#### 3.4 News & insights — `/news`, `/news/[slug]` — **built**
 
-Available: title, excerpt, category, tags, author, published date, featured
-image, and full content for the article. The home page's three-card media
-section is the pattern to extend.
+Implemented at `app/news/`. The index reads `/api/news` on the client, with
+category pills from `/api/search/facets?type=news`, free-text search,
+pagination and designed loading, empty and error states; the article page is
+server-rendered for its SEO fields and link previews, with related articles
+from the repository's tag-overlap ranking.
 
-The article page needs a designed prose style for CMS-authored content —
-headings, lists, pull quotes, images with captions, links. The legal pages have
-a prose style already, but they are dense and formal; an article probably wants
-more air.
+`/news/category/[category]` is deliberately not a route: the category is a
+filter on the index (`/news?category=update`), so there is one list and one
+empty state. The API route of that name is untouched.
+
+The article prose style is `components/ArticleBody.tsx` — a 760px measure at
+17px, airier than the legal pages. It renders CMS text without
+`dangerouslySetInnerHTML`: tags are stripped to their text and a Markdown
+subset (headings, lists, quotes) is honoured. Images with captions and pull
+quotes are **not** yet designed, because nothing in `content` distinguishes
+them; that is a CMS question (§5.1) before it is a design one. See
+`docs/decisions.md` §2.15.
 
 #### 3.5 Search — `/search`
 
@@ -203,15 +233,21 @@ strip), the results page with result types distinguished, facet filtering, the
 autocomplete dropdown, and the no-results state. Note the response says which
 engine answered; that is diagnostic, not something to show visitors.
 
-#### 3.6 Contact — `/contact`
+#### 3.6 Contact — `/contact` — **built**
 
-"Contact" in the nav currently points at the newsletter form, which is a
-different thing. This page posts to a separate enquiry endpoint: name, email,
-phone, subject, message, NDPA consent checkbox.
+Implemented at `app/contact/`. Posts to `/api/forms/inquiry` — a different
+endpoint, and a different thing, from the landing page's newsletter band, which
+is what "Contact" in the nav used to point at. Carries the office address and
+hours, the phone line, email and WhatsApp Business, the four routes an enquiry
+can take, and the NDPA position on what happens to the details.
 
-Needs: the office address and hours (already in the footer), phone, email,
-WhatsApp Business, and success and failure states for the form. Whether to show
-a map is an open question — there is no map integration in the build.
+The form's success state replaces the form rather than sitting under it, so a
+sent enquiry cannot be resubmitted by habit; the failure states distinguish a
+rate limit, a 5xx and a rejected field.
+
+Still open: **no map**. There is no map integration in the build and the
+handover left whether to add one undecided, so the address and hours are given
+in text.
 
 #### 3.7 3D virtual tours
 
@@ -228,15 +264,28 @@ fallback when a tour fails or the device cannot handle it.
 These are nav or footer items that currently point at a homepage anchor or
 nothing at all.
 
-- **`/about`** — the story behind "documented delivery": the integrated model
-  (land acquisition through asset management), history, and the Passport
-  commitment.
-- **`/leadership`** — the home page shows a grey placeholder box where a
-  portrait belongs. Needs a real treatment for leadership profiles, plus the
-  video library that the footer links to.
-- **`/services` and `/services/[slug]`** — six disciplines, each with a "Learn
-  more →" link that currently goes to the newsletter form. Note the sixth,
-  Property Investment, is marked **informational only** and must stay that way.
+- **`/about`** — **built.** The integrated model as eight stages, the four
+  standing obligations behind "documented delivery", the values, and the stat
+  band. No company history: nobody has supplied dated facts, and inventing a
+  founding story on a site about documented delivery is the one thing this page
+  cannot do. It is a page section away when the client provides it.
+- **`/leadership`** — **built.** Profile cards with a remit, the philosophy as
+  four management rules, and the video library the footer links to
+  (`/leadership#video-library`). The portrait slot still says what it is waiting
+  for rather than holding a stock face, and the roles whose profiles are
+  unapproved are listed honestly in a card of the same shape — see §5.2. The
+  treatment is built; the content drops in.
+- **`/services` and `/services/[slug]`** — **built.** Six pages generated from
+  `app/services/services.ts`, which the landing page's own card grid now reads
+  too, so the two cannot drift. Property Investment stays informational: no call
+  to action, the licensing notice above the fold, and its closing band offers
+  only registration.
+- **Passport™ — `/passport`** — **built.** The nav item's explainer: what a
+  Passport is, the eight mandatory entries, the four milestone states with
+  "delayed" treated as a fact rather than an alarm, what evidence attaches, and
+  how to read the provenance. The record itself is §3.1.
+- **Media — `/news`** — **built**; see §3.4.
+- **Contact — `/contact`** — **built**; see §3.6.
 - **`/governance`** — in the footer with no page behind it. Given the brand
   position, this one matters more than it looks.
 - **`/downloads`** — company profile, brochures, certificates. Needs a file list
@@ -262,6 +311,8 @@ admin console is what makes the site maintainable without a developer.
 ### Small gaps worth folding in
 
 - **404 and 500 pages** — visitors currently get the unstyled Next.js default.
+  More routes now call `notFound()` — an unknown service slug, an unknown
+  article — so this is more visible than it was.
 - **Social preview images** — nothing exists for link sharing.
 - **A video library page** — the footer links to one; the home page has a still.
 
@@ -277,7 +328,8 @@ admin console is what makes the site maintainable without a developer.
 - **Forms.** The register form is the reference: label above field, 44px+ targets,
   16px text on phones (smaller zooms the page on iOS), NDPA consent checkbox,
   inline status message. Reuse it for enquiry, auth and admin forms.
-- **Breadcrumbs.** Passport sits three levels deep; there is no wayfinding yet.
+- **Breadcrumbs.** Passport sits three levels deep. `components/PageHero.tsx`
+  takes a `trail`, and the record uses it: Home / Projects / {project} / Passport™.
 
 ---
 
