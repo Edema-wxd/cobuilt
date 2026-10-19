@@ -56,7 +56,12 @@ export const logger = winston.createLogger({
   ],
 });
 
-if (isProduction) {
+// On a serverless host the bundle directory is read-only and the process is
+// discarded after the request, so a file sink would both fail to open and never
+// be read. There, the Console transport above is the log shipper's input.
+const hasWritableFilesystem = !process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+if (isProduction && hasWritableFilesystem) {
   logger.add(new winston.transports.File({ filename: 'logs/error.log', level: 'error' }));
   logger.add(new winston.transports.File({ filename: 'logs/combined.log' }));
 }

@@ -99,8 +99,31 @@ const schema = z.object({
 
 export type Env = z.infer<typeof schema>;
 
+/**
+ * A variable declared but left blank — a hosting dashboard with an empty value,
+ * a `KEY=` line in a .env file — arrives as `''`, not as absent, so Zod skips
+ * the default and the constraint underneath it fails. Dropping blanks here
+ * means a declared-but-empty variable behaves like an unset one.
+ */
+function readEnv(): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (typeof value === 'string' && value.trim() !== '') out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * `next build` imports every route to collect its metadata, so this module is
+ * evaluated at build time with NODE_ENV=production but without the runtime
+ * secrets. Building is not booting: the production check belongs to the first
+ * request, not to the bundler.
+ */
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+
 function load(): Env {
-  const parsed = schema.safeParse(process.env);
+  const raw = readEnv();
+  const parsed = schema.safeParse(raw);
 
   if (!parsed.success) {
     const detail = parsed.error.issues
@@ -109,8 +132,8 @@ function load(): Env {
     throw new Error(`Invalid environment configuration:\n${detail}`);
   }
 
-  if (parsed.data.NODE_ENV === 'production') {
-    const missing = requiredInProduction.filter((key) => !process.env[key]);
+  if (parsed.data.NODE_ENV === 'production' && !isBuildPhase) {
+    const missing = requiredInProduction.filter((key) => !raw[key]);
     if (missing.length > 0) {
       throw new Error(
         `Missing required production environment variables: ${missing.join(', ')}`,
