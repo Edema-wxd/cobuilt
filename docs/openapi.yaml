@@ -39,6 +39,7 @@ tags:
   - name: Project Passport
   - name: Virtual Tours
   - name: News
+  - name: FAQs
   - name: Search
   - name: Forms
   - name: Authentication
@@ -261,6 +262,31 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Tour' }
         '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/faqs:
+    get:
+      tags: [FAQs]
+      summary: List published FAQs
+      security: []
+      parameters:
+        - { name: category, in: query, schema: { type: string, maxLength: 100 } }
+      responses:
+        '200':
+          description: Every published FAQ, in editorial order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        question: { type: string }
+                        answer: { type: string }
+                        category: { type: string, nullable: true }
 
   /api/news:
     get:

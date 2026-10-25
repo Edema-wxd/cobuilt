@@ -291,7 +291,7 @@ nothing at all.
   position, this one matters more than it looks.
 - **`/downloads`** — company profile, brochures, certificates. Needs a file list
   pattern with type and size.
-- **`/faqs`** — FAQs are already a searchable content type in the API.
+- **`/faqs`** — **built.** Grouped by category, each entry a native disclosure with a stable `#id` anchor that search results link to. Read from the new `GET /api/faqs`.
 - **Investor information** — where the regulatory position lives in full. No
   call to action beyond registering interest.
 

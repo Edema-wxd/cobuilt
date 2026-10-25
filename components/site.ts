@@ -70,7 +70,7 @@ export const FOOTER_COLUMNS: Array<{ head: string; items: FooterItem[] }> = [
       { label: 'News & insights', href: '/news' },
       { label: 'Video library', href: '/leadership#video-library' },
       { label: 'Downloads' },
-      { label: 'FAQs' },
+      { label: 'FAQs', href: '/faqs' },
     ],
   },
   {

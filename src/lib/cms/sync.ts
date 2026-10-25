@@ -211,6 +211,7 @@ async function handleUpsert(
     );
 
     await enqueueSearch({ action: 'reindex', index: 'faqs' });
+    await invalidatePrefix('faqs');
     return { status: 'applied', model, entryId, revalidate: ['/faqs'] };
   }
 
