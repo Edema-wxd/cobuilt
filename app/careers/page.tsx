@@ -6,8 +6,7 @@ import * as prose from '../../components/prose';
 /**
  * Careers.
  *
- * The nine-item navigation the brief mandates includes Careers, so the link
- * needs a destination. There are no vacancies to list yet, so the page says
+ * The footer links to Careers, so the link needs a destination. There are no vacancies to list yet, so the page says
  * so plainly and routes speculative applications somewhere real, rather than
  * showing invented roles.
  */

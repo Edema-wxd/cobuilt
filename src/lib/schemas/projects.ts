@@ -26,6 +26,8 @@ const projectBase = {
   sectorId: uuid.nullish(),
   status: projectStatus,
   featuredImageUrl: httpUrl.nullish(),
+  brochureUrl: httpUrl.nullish(),
+  timelineVideoUrls: z.array(httpUrl).max(20).optional(),
   galleryIds: z.array(uuid).max(100).optional(),
   serviceIds: z.array(uuid).max(50).optional(),
   tagIds: z.array(uuid).max(50).optional(),

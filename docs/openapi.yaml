@@ -1204,6 +1204,8 @@ components:
         location:         { type: string, nullable: true }
         sector:           { type: string, nullable: true }
         featuredImageUrl: { type: string, nullable: true }
+        brochureUrl:      { type: string, nullable: true }
+        timelineVideoUrls: { type: array, items: { type: string } }
         galleryIds:       { type: array, items: { type: string, format: uuid } }
         serviceIds:       { type: array, items: { type: string, format: uuid } }
         tagIds:           { type: array, items: { type: string, format: uuid } }
@@ -1281,6 +1283,8 @@ components:
         sectorId:                 { type: string, format: uuid, nullable: true }
         status:                   { $ref: '#/components/schemas/ProjectStatus' }
         featuredImageUrl:         { type: string, nullable: true }
+        brochureUrl:              { type: string, nullable: true }
+        timelineVideoUrls:        { type: array, maxItems: 20, items: { type: string } }
         galleryIds:               { type: array, items: { type: string, format: uuid } }
         serviceIds:               { type: array, items: { type: string, format: uuid } }
         tagIds:                   { type: array, items: { type: string, format: uuid } }

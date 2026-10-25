@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { MILESTONE_LABEL, httpsUrl } from '../project-shared';
+import { MILESTONE_LABEL, httpsUrl, youtubeUrl } from '../project-shared';
 import type { PassportRecordProps, RecordEntry } from './passport-record';
 
 /**
@@ -144,6 +144,10 @@ export const loadRecord = cache(async (slug: string): Promise<LoadResult> => {
           location: project.location,
           sector: project.sector,
           featuredImageUrl: project.featuredImageUrl,
+          brochureUrl: httpsUrl(project.brochureUrl),
+          timelineVideoUrls: project.timelineVideoUrls
+            .map(youtubeUrl)
+            .filter((url): url is string => url !== null),
           passport: project.passport,
         },
         entries,

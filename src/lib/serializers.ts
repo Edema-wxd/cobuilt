@@ -53,6 +53,8 @@ export interface PublicProject {
   location: string | null;
   sector: string | null;
   featuredImageUrl: string | null;
+  brochureUrl: string | null;
+  timelineVideoUrls: string[];
   galleryIds: string[];
   serviceIds: string[];
   tagIds: string[];
@@ -91,6 +93,8 @@ export function serializeProject(row: ProjectRow): PublicProject {
     location: row.location_name ?? null,
     sector: row.sector_name ?? null,
     featuredImageUrl: row.featured_image_url,
+    brochureUrl: row.brochure_url,
+    timelineVideoUrls: row.timeline_video_urls ?? [],
     galleryIds: row.gallery_ids ?? [],
     serviceIds: row.service_ids ?? [],
     tagIds: row.tag_ids ?? [],

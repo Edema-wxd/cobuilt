@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import SiteLayout from '../components/SiteLayout';
 import { PHONE, PHONE_HREF } from '../components/site';
 import { SERVICES, serviceHref } from './services/services';
@@ -63,6 +63,15 @@ const IMAGES = {
   site: '/images/construction-site.webp',
   apartments: '/images/apartment-blocks.webp',
 } as const;
+
+/**
+ * Hero carousel slides. Each entry is a still image today; a video slide
+ * (an autoplaying, muted `<video>` in place of the background div) drops
+ * into this same rotation once footage is ready, so the fade and indicator
+ * logic below does not change.
+ */
+const HERO_SLIDES = [IMAGES.hero, IMAGES.site, IMAGES.villa, IMAGES.apartments] as const;
+const HERO_SLIDE_INTERVAL_MS = 6000;
 
 const STATS: Array<{ value: string; plus?: boolean; label: string }> = [
   { value: '5', plus: true, label: 'Projects delivered' },
@@ -263,6 +272,14 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
 
 export default function HomePage() {
   const [filter, setFilter] = useState<Filter>('all');
+  const [heroSlide, setHeroSlide] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHeroSlide((current) => (current + 1) % HERO_SLIDES.length);
+    }, HERO_SLIDE_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -311,13 +328,23 @@ export default function HomePage() {
   return (
     <SiteLayout current="/" preloadImage={IMAGES.hero}>
       <main id="top">
-        <section className="relative isolate flex items-center bg-line sm:min-h-135">
+        <section className="relative isolate flex min-h-screen items-center overflow-hidden bg-line">
           <div
-            className={`${media} absolute inset-0 -z-2`}
-            style={{ backgroundImage: `url('${IMAGES.hero}')` }}
+            className="absolute inset-0 -z-2"
             role="img"
-            aria-label="Aerial view of a CoBuilt residential estate"
-          />
+            aria-label="Rotating photography of CoBuilt developments"
+          >
+            {HERO_SLIDES.map((src, index) => (
+              <div
+                key={src}
+                className={`${media} absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                  index === heroSlide ? 'opacity-100' : 'opacity-0'
+                }`}
+                style={{ backgroundImage: `url('${src}')` }}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
           {/* Even on a phone, where the text runs the full width; fading to the right from sm up. */}
           <div
             className="pointer-events-none absolute inset-0 -z-1 bg-[linear-gradient(180deg,rgb(20_20_20/82%)_0%,rgb(20_20_20/90%)_100%)] sm:bg-[linear-gradient(92deg,rgb(20_20_20/93%)_0%,rgb(20_20_20/76%)_46%,rgb(20_20_20/30%)_100%)]"
@@ -325,20 +352,12 @@ export default function HomePage() {
           />
 
           <div
-            className={`${container} grid grid-cols-1 items-center gap-7 pt-11 pb-9 sm:gap-8 sm:py-16 lg:grid-cols-[52px_1fr_280px] lg:gap-10`}
+            className={`${container} grid grid-cols-1 items-center gap-7 pt-11 pb-9 sm:gap-8 sm:py-16 lg:grid-cols-[1fr_280px] lg:gap-10`}
           >
-            <div className="hidden flex-col items-center gap-4.5 lg:flex" aria-hidden="true">
-              <span className="block h-12 w-px bg-white/30" />
-              <span className="text-[0.625rem] uppercase tracking-[0.24em] text-zinc-200 [writing-mode:vertical-rl]">
-                Follow us
-              </span>
-              <span className="block h-12 w-px bg-white/30" />
-            </div>
-
-            <div className="flex flex-col gap-4.5 sm:gap-6">
+            <div className="flex flex-col gap-4.5 text-left sm:gap-6 lg:max-w-170">
               <p className={eyebrowOnDark}>Building Trust Through Every Brick</p>
               <h1 className="text-[length:clamp(2rem,9.5vw,2.5rem)] leading-[1.05] text-white sm:text-[length:clamp(2.25rem,5vw,3.75rem)] sm:leading-[1.02] [&_em]:text-orange-on-dark">
-                Creating sustainable developments. Delivering <em>lasting value</em>.
+                Every family deserves a home that feels like <em>coming home</em>.
               </h1>
               <p className="max-w-135 text-base leading-[1.65] text-zinc-100 sm:text-[1.0625rem] sm:leading-[1.7]">
                 CoBuilt Investment Partners delivers high-quality residential, commercial, mixed-use
@@ -362,11 +381,21 @@ export default function HomePage() {
                   Register your interest
                 </a>
               </div>
-              {/* Carousel indicators with no carousel behind them; on a phone they only cost height. */}
-              <div className="hidden gap-2 pt-2 sm:flex" aria-hidden="true">
-                <span className="block h-[3px] w-7 bg-orange" />
-                <span className="block h-[3px] w-7 bg-white/50" />
-                <span className="block h-[3px] w-7 bg-white/50" />
+              {/* Live carousel indicators, also the manual controls. */}
+              <div className="hidden gap-2 pt-2 sm:flex" role="tablist" aria-label="Hero photos">
+                {HERO_SLIDES.map((src, index) => (
+                  <button
+                    key={src}
+                    type="button"
+                    className={`block h-[3px] w-7 cursor-pointer ${
+                      index === heroSlide ? 'bg-orange' : 'bg-white/50'
+                    }`}
+                    role="tab"
+                    aria-selected={index === heroSlide}
+                    aria-label={`Show hero photo ${index + 1}`}
+                    onClick={() => setHeroSlide(index)}
+                  />
+                ))}
               </div>
             </div>
 

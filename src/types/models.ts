@@ -32,6 +32,8 @@ export interface ProjectRow {
   sector_id: string | null;
   status: ProjectStatus;
   featured_image_url: string | null;
+  brochure_url: string | null;
+  timeline_video_urls: string[];
   gallery_ids: string[];
   service_ids: string[];
   tag_ids: string[];

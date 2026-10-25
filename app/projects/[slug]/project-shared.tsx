@@ -88,6 +88,19 @@ export function httpsUrl(value: string | null): string | null {
 }
 
 /**
+ * A YouTube link, or null. Only watch, short and youtu.be links on YouTube's own
+ * hosts pass: the URL ends up in an `href`, and the record is not the place to
+ * link an editor's typo, or something that merely contains "youtube".
+ */
+export function youtubeUrl(value: string | null): string | null {
+  const url = httpsUrl(value);
+  if (!url) return null;
+  const { hostname } = new URL(url);
+  const host = hostname.replace(/^(www|m)\./, '');
+  return host === 'youtube.com' || host === 'youtu.be' ? url : null;
+}
+
+/**
  * Image URLs are editor- and CMS-supplied and land inside a CSS `url('…')`.
  * An apostrophe would close the string early — at best breaking the tile, at
  * worst letting the rest of the URL be read as further declarations.

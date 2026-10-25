@@ -31,8 +31,9 @@ Where a page touches investment, it carries the regulatory notice: *"This is an
 information request only… An Investor Portal will be introduced once all
 required regulatory approvals and licences are in place."*
 
-**The nine-item global navigation, in this order:** Home, About, Leadership,
-Services, Projects, Passport™, Media, Careers, Contact. The header also carries
+**The header navigation, in this order:** Home, About, Leadership,
+Services, Projects, Passport™. Media, Careers and Contact are deliberately
+left out of the header (Careers stays in the footer). The header also carries
 a "Discuss your project" button and a search entry point.
 
 **Tagline:** "Building Trust Through Every Brick". It is not editable copy.

@@ -89,6 +89,10 @@ export interface PassportProject {
   location: string | null;
   sector: string | null;
   featuredImageUrl: string | null;
+  /** Vetted https only. */
+  brochureUrl: string | null;
+  /** YouTube links only, vetted on the server. */
+  timelineVideoUrls: string[];
   passport: { enabled: boolean; startDate: string | null; completionTarget: string | null };
 }
 
@@ -246,6 +250,18 @@ export default function PassportRecord({ project, entries, summary }: PassportRe
               <a className={btnOutlineOnDark} href={`/projects/${project.slug}`}>
                 View the development
               </a>
+              {project.brochureUrl ? (
+                <a
+                  className={btnOutlineOnDark}
+                  href={project.brochureUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                >
+                  Download brochure
+                  <span className="sr-only"> for {project.title} (opens in a new tab)</span>
+                </a>
+              ) : null}
             </>
           }
           meta={
@@ -325,6 +341,36 @@ export default function PassportRecord({ project, entries, summary }: PassportRe
             </dl>
           </div>
         </section>
+
+        {project.timelineVideoUrls.length > 0 ? (
+          <section className="border-b border-line bg-white py-8 md:py-10" aria-labelledby="timeline-videos-title">
+            <div className={`${container} flex flex-col gap-4`}>
+              <h2 id="timeline-videos-title" className={titleSm}>
+                Watch the timeline
+              </h2>
+              <ul className="flex flex-wrap gap-2">
+                {project.timelineVideoUrls.map((url, index) => (
+                  <li key={url}>
+                    <a
+                      className="inline-flex min-h-target items-center gap-2.5 border border-zinc-500 px-3.5 text-[0.844rem] text-zinc-700 hover:border-ink hover:text-ink"
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span aria-hidden="true" className="text-rust">
+                        ▶
+                      </span>
+                      {project.timelineVideoUrls.length === 1
+                        ? 'Timeline video on YouTube'
+                        : `Timeline video ${index + 1} on YouTube`}
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        ) : null}
 
         {summary.total > 0 ? (
           <section className="border-b border-line bg-zinc-100 py-8 md:py-10" aria-label="Milestone progress">

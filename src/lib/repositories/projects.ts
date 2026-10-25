@@ -19,7 +19,7 @@ import { slugify, uniqueSlug } from '../slug';
 const SELECT_COLUMNS = `
   p.id, p.title, p.slug, p.description, p.long_description,
   p.project_type_id, p.location_id, p.sector_id, p.status,
-  p.featured_image_url, p.gallery_ids, p.service_ids, p.tag_ids,
+  p.featured_image_url, p.brochure_url, p.timeline_video_urls, p.gallery_ids, p.service_ids, p.tag_ids,
   p.passport_enabled, p.passport_start_date, p.passport_completion_target,
   p.investment_amount, p.expected_roi, p.investor_highlights,
   p.investor_highlights_approved,
@@ -177,7 +177,7 @@ export async function create(
     `INSERT INTO projects (
        title, slug, description, long_description,
        project_type_id, location_id, sector_id, status,
-       featured_image_url, gallery_ids, service_ids, tag_ids,
+       featured_image_url, brochure_url, timeline_video_urls, gallery_ids, service_ids, tag_ids,
        passport_enabled, passport_start_date, passport_completion_target,
        investment_amount, expected_roi, investor_highlights,
        meta_title, meta_description, open_graph_image_url, canonical_url,
@@ -185,11 +185,11 @@ export async function create(
      ) VALUES (
        $1, $2, $3, $4,
        $5, $6, $7, $8,
-       $9, $10, $11, $12,
-       $13, $14, $15,
-       $16, $17, $18,
-       $19, $20, $21, $22,
-       $23, $24
+       $9, $10, $11, $12, $13, $14,
+       $15, $16, $17,
+       $18, $19, $20,
+       $21, $22, $23, $24,
+       $25, $26
      ) RETURNING id`,
     [
       input.title,
@@ -201,6 +201,8 @@ export async function create(
       input.sectorId ?? null,
       input.status,
       input.featuredImageUrl ?? null,
+      input.brochureUrl ?? null,
+      input.timelineVideoUrls ?? [],
       input.galleryIds ?? [],
       input.serviceIds ?? [],
       input.tagIds ?? [],
@@ -236,6 +238,8 @@ const UPDATABLE_COLUMNS: Record<keyof UpdateProjectBody, string> = {
   sectorId: 'sector_id',
   status: 'status',
   featuredImageUrl: 'featured_image_url',
+  brochureUrl: 'brochure_url',
+  timelineVideoUrls: 'timeline_video_urls',
   galleryIds: 'gallery_ids',
   serviceIds: 'service_ids',
   tagIds: 'tag_ids',

@@ -3,9 +3,8 @@
  *
  * Navigation hrefs are root-absolute (`/projects`, not `projects`) so the same
  * header works on the landing page and on the standalone pages beneath it.
- * Every one of the nine resolves to a page of its own: the six that pointed at
- * a homepage anchor (About, Leadership, Services, Passport™, Media, Contact)
- * now have one. See docs/decisions.md §2.13.
+ * Every header link resolves to a page of its own; the pages that once pointed
+ * at a homepage anchor now exist. See docs/decisions.md §2.13.
  */
 
 export const PHONE = '+234 700 262 8458';
@@ -25,7 +24,10 @@ export interface NavItem {
   href: string;
 }
 
-/** The nine-item global navigation the standards document mandates. */
+/**
+ * The header navigation. Media, Careers and Contact are left out of the header;
+ * Contact stays reachable through the "Discuss your project" button.
+ */
 export const NAV: NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
@@ -33,9 +35,6 @@ export const NAV: NavItem[] = [
   { label: 'Services', href: '/services' },
   { label: 'Projects', href: '/projects' },
   { label: 'Passport™', href: '/passport' },
-  { label: 'Media', href: '/news' },
-  { label: 'Careers', href: '/careers' },
-  { label: 'Contact', href: '/contact' },
 ];
 
 export interface FooterItem {

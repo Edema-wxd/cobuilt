@@ -8,8 +8,8 @@ const utilityLink = 'hover:text-orange-on-dark';
 
 /**
  * Below `lg` the nav is a disclosure panel under the header; from `lg` up it
- * sits inline. The panel scrolls inside itself, since nine links outgrow a
- * landscape phone.
+ * sits inline. The panel scrolls inside itself, since the links plus the CTA
+ * can outgrow a landscape phone.
  */
 const navBase =
   'items-center font-semibold uppercase tracking-[0.11em] text-ink-mid lg:flex lg:gap-3.5 lg:text-[0.625rem] xl:gap-5 xl:text-[0.688rem]';
