@@ -138,7 +138,7 @@ projects" and "Register your interest" — are genuine on-page destinations. The
 nav's six anchor items are pages; see `docs/decisions.md` §2.15 for what each
 one is built from and which links were pointed elsewhere rather than invented.
 
-What is left in Tier 1 is search (§3.5) and the tour viewer (§3.7).
+What is left in Tier 1 is the tour viewer (§3.7); search (§3.5) is built, minus autocomplete.
 
 #### 3.1 Project Passport™ — `/projects/[slug]/passport` — **built**
 
@@ -223,7 +223,7 @@ quotes are **not** yet designed, because nothing in `content` distinguishes
 them; that is a CMS question (§5.1) before it is a design one. See
 `docs/decisions.md` §2.15.
 
-#### 3.5 Search — `/search`
+#### 3.5 Search — `/search` — **built** (no autocomplete dropdown yet)
 
 The header's search entry currently goes nowhere. The API returns results across
 **projects, news and FAQs**, each with type, title, excerpt, URL and published
