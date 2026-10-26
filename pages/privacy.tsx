@@ -219,10 +219,6 @@ const sections: LegalSection[] = [
             something on the site fails. These can include an IP address.
           </li>
           <li>
-            <strong>Google Fonts</strong>, which supplies the typefaces on this site. Your browser
-            requests them from Google, which receives your IP address and browser details.
-          </li>
-          <li>
             <strong>Meta</strong>, if you contact us on WhatsApp. Meta&apos;s own privacy policy
             also applies to that conversation.
           </li>
