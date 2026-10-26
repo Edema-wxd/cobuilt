@@ -15,6 +15,8 @@ export default tseslint.config(
       'node_modules/**',
       '.next/**',
       'coverage/**',
+      // Third-party decoders served as-is (Draco for the 3D tour viewer).
+      'public/vendor/**',
       'next-env.d.ts',
       // Claude Design handoff bundle: HTML/JS prototypes kept for reference,
       // not project source. They sit outside tsconfig, so type-aware rules
