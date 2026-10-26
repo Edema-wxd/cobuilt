@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import './loadEnv';
 import { pool, query, queryOne } from '../src/lib/db';
 import { hashPassword } from '../src/lib/auth/password';
 import { slugify } from '../src/lib/slug';

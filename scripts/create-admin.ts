@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import './loadEnv';
 import { parseArgs } from 'node:util';
 import { ZodError } from 'zod';
 import { createAdmin } from '../src/lib/auth/bootstrap';
