@@ -47,14 +47,10 @@ cp .env.example .env.production      # fill in — see below
 npm run db:migrate
 npm run build
 
-# 3. Bootstrap the first admin. ALLOW_PUBLIC_REGISTRATION opens unauthenticated
-#    account creation, so it is enabled for exactly this one call and disabled
-#    again immediately.
-ALLOW_PUBLIC_REGISTRATION=true npm start &
-curl -X POST localhost:3000/api/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"admin@cobuilt.com","password":"<generated>","fullName":"...","role":"admin"}'
-kill %1
+# 3. Create the first admin directly in the database. With ADMIN_PASSWORD
+#    unset, a random password is generated and printed once. Further accounts
+#    are created by an admin through POST /api/auth/register.
+npm run user:create-admin -- --email admin@cobuilt.com --name "Full Name"
 
 # 4. Search indexes (only if Meilisearch is configured)
 npm run search:reindex

@@ -42,7 +42,6 @@ const schema = z.object({
   JWT_REFRESH_TTL_SECONDS: z.coerce.number().int().positive().default(7 * 24 * 60 * 60),
   JWT_ISSUER: z.string().default('cobuilt-api'),
   JWT_AUDIENCE: z.string().default('cobuilt-web'),
-  ALLOW_PUBLIC_REGISTRATION: bool(false),
 
   // --- Web ---------------------------------------------------------------
   ALLOWED_ORIGINS: csv(['https://cobuilt.com', 'https://www.cobuilt.com']),
@@ -95,6 +94,7 @@ const schema = z.object({
   RETENTION_FORM_SUBMISSION_DAYS: z.coerce.number().int().positive().default(90),
   RETENTION_INVESTOR_INQUIRY_DAYS: z.coerce.number().int().positive().default(730),
   RETENTION_PAGE_VIEW_DAYS: z.coerce.number().int().positive().default(30),
+  RETENTION_MESSAGE_DAYS: z.coerce.number().int().positive().default(90),
 });
 
 export type Env = z.infer<typeof schema>;

@@ -8,6 +8,7 @@ import * as projectsRepo from '../repositories/projects';
 import * as newsRepo from '../repositories/news';
 import * as formsRepo from '../repositories/forms';
 import * as analyticsRepo from '../repositories/analytics';
+import * as conversationsRepo from '../repositories/conversations';
 import { purgeExpiredRefreshTokens } from '../auth/refreshTokens';
 import { indexProject, indexNews, removeDocument, reindexAll } from '../search';
 
@@ -96,16 +97,20 @@ export async function processMaintenanceJob(job: Job<MaintenanceJobData>): Promi
     return;
   }
 
-  const [submissions, pageViews, refreshTokens] = await Promise.all([
+  const [submissions, pageViews, refreshTokens, messages] = await Promise.all([
     formsRepo.purgeExpired(),
     analyticsRepo.purgeExpiredPageViews(),
     purgeExpiredRefreshTokens(),
+    conversationsRepo.purgeExpired(),
   ]);
 
   logger.info('Retention purge complete', {
     submissionsAnonymised: submissions,
     pageViewsDeleted: pageViews,
     refreshTokensDeleted: refreshTokens,
+    whatsappMessagesDeleted: messages.whatsapp,
+    chatEventsDeleted: messages.chat,
     formRetentionDays: env.RETENTION_FORM_SUBMISSION_DAYS,
+    messageRetentionDays: env.RETENTION_MESSAGE_DAYS,
   });
 }

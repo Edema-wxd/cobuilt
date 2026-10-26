@@ -8,6 +8,7 @@ import {
 } from '../src/lib/queues/processors';
 import { logger } from '../src/lib/logger';
 import { pool } from '../src/lib/db';
+import { flushErrorReports, reportError } from '../src/lib/monitoring';
 
 /**
  * Background worker (§14: app server 3).
@@ -37,6 +38,10 @@ for (const worker of workers) {
       attempt: job?.attemptsMade,
       error: error.message,
     });
+    // Retries are expected; only a job that has run out of them is an incident.
+    if (!job || job.attemptsMade >= (job.opts.attempts ?? 1)) {
+      reportError(error, { queue: worker.name, jobName: job?.name, jobId: job?.id });
+    }
   });
 }
 
@@ -69,6 +74,7 @@ async function shutdown(signal: string): Promise<void> {
   await Promise.all(workers.map((worker) => worker.close()));
   await connection.quit();
   await pool.end();
+  await flushErrorReports();
 
   process.exit(0);
 }
@@ -78,7 +84,9 @@ process.on('SIGINT', () => void shutdown('SIGINT'));
 
 scheduleRecurringJobs()
   .then(() => logger.info('Worker started', { queues: workers.map((w) => w.name) }))
-  .catch((error: Error) => {
+  .catch(async (error: Error) => {
     logger.error('Failed to schedule recurring jobs', { error: error.message });
+    reportError(error, { source: 'worker-startup' });
+    await flushErrorReports();
     process.exit(1);
   });

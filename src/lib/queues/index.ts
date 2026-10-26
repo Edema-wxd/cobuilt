@@ -2,6 +2,7 @@ import { Queue, type JobsOptions } from 'bullmq';
 import Redis from 'ioredis';
 import { env, isProduction, isTest } from '../env';
 import { logger } from '../logger';
+import { reportError } from '../monitoring';
 
 /**
  * Background job queues (§14: the third app server runs the workers).
@@ -144,6 +145,7 @@ export async function enqueue<T extends object>(
       jobName,
       error: error instanceof Error ? error.message : String(error),
     });
+    reportError(error, { queue: name, jobName });
     return false;
   }
 }

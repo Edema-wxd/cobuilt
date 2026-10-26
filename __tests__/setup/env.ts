@@ -12,3 +12,4 @@ process.env.REDIS_URL = 'redis://127.0.0.1:6379/15';
 process.env.DATABASE_URL ??= 'postgresql://postgres@localhost:5432/cobuilt_test';
 delete process.env.MEILISEARCH_URL;
 delete process.env.AKISMET_API_KEY;
+delete process.env.SENTRY_DSN;

@@ -6,7 +6,9 @@ import '@fontsource-variable/source-serif-4/opsz.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '../styles/globals.css';
+import { usePageViews } from '@/lib/client/pageViews';
 
 export default function App({ Component, pageProps }: AppProps) {
+  usePageViews();
   return <Component {...pageProps} />;
 }

@@ -21,6 +21,7 @@ import {
 import { applyCors } from './cors';
 import { assertCsrf } from './csrf';
 import { getClientIp, getUserAgent } from './request';
+import { pathOnly, reportError } from '../monitoring';
 
 /**
  * The single request pipeline every API route runs through.
@@ -147,7 +148,7 @@ export function createRoute(
       logger.http('request', {
         requestId,
         method: req.method,
-        path: req.url,
+        path: pathOnly(req.url),
         status: res.statusCode,
         durationMs: Date.now() - startedAt,
       });
@@ -308,10 +309,11 @@ function respondWithError(
   logger.error('Unhandled route error', {
     requestId,
     method: req.method,
-    path: req.url,
+    path: pathOnly(req.url),
     error: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,
   });
+  reportError(error, { requestId, method: req.method, path: pathOnly(req.url) });
 
   res.status(500).json({
     error: {

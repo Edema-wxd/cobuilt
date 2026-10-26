@@ -101,11 +101,15 @@ const sections: LegalSection[] = [
               fields: [
                 [
                   'What',
-                  'The page viewed, the page that linked to it, your browser details, a random identifier for the visit, and your IP address with its final part removed before it is stored.',
+                  'The page viewed, the page that linked to it (without any query string), your browser details, a random identifier for the visit, and your IP address with its final part removed before it is stored.',
                 ],
                 ['Why', 'To see which pages are read and how the site is performing.'],
                 ['Basis', 'Our legitimate interest in running a usable website.'],
                 ['Kept', '30 days, then deleted.'],
+                [
+                  'Opt out',
+                  'Turn on Do Not Track or Global Privacy Control in your browser and no visits are recorded.',
+                ],
               ],
             },
             {
@@ -117,7 +121,7 @@ const sections: LegalSection[] = [
                 ],
                 ['Why', 'To reply to you.'],
                 ['Basis', 'Your consent, by contacting us on that channel.'],
-                ['Kept', 'For as long as we need it to deal with your conversation.'],
+                ['Kept', '90 days after each message is received, then deleted.'],
               ],
             },
             {
@@ -174,6 +178,12 @@ const sections: LegalSection[] = [
           because there is nothing to consent to.
         </p>
         <p>
+          To count a visit once rather than once per page, we keep a random identifier in your
+          browser&apos;s session storage. It is not linked to your name or email, and your
+          browser discards it when you close the tab. If your browser sends a Do Not Track or
+          Global Privacy Control signal, we do not create it at all.
+        </p>
+        <p>
           People who sign in to the admin area receive two cookies that are strictly necessary for
           that purpose and are never used for tracking:
         </p>
@@ -216,7 +226,8 @@ const sections: LegalSection[] = [
           </li>
           <li>
             <strong>An error-monitoring service</strong>, which receives technical details when
-            something on the site fails. These can include an IP address.
+            something on the site fails, such as the error and the page address. It is not sent
+            form contents, cookies or IP addresses.
           </li>
           <li>
             <strong>Meta</strong>, if you contact us on WhatsApp. Meta&apos;s own privacy policy
@@ -290,8 +301,9 @@ const sections: LegalSection[] = [
         </ul>
         <h3>How to use them</h3>
         <p>
-          Email {email} from the address the request concerns. If you write from a different
-          address, we may ask you to confirm your identity before acting. We do not charge for
+          Email {email} from the address the request concerns. If you contacted us on WhatsApp,
+          include the phone number you used. If you write from a different address, we may ask you
+          to confirm your identity before acting. We do not charge for
           requests, and we respond within 30 days.
         </p>
         <p>
