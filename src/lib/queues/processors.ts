@@ -87,7 +87,12 @@ export async function processSearchJob(job: Job<SearchJobData>): Promise<void> {
  * the search index (§6).
  */
 export async function processMaintenanceJob(job: Job<MaintenanceJobData>): Promise<void> {
-  if (job.data.action === 'rebuild-search-index') {
+  await runMaintenance(job.data.action);
+}
+
+/** The maintenance work itself, also run directly by the nightly cron route. */
+export async function runMaintenance(action: MaintenanceJobData['action']): Promise<void> {
+  if (action === 'rebuild-search-index') {
     for (const index of ['projects', 'news', 'faqs'] as const) {
       const count = await reindexAll(index);
       logger.info('Search index rebuilt', { index, count });

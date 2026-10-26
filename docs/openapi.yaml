@@ -73,6 +73,20 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Health' }
 
+  /api/cron/nightly:
+    get:
+      tags: [System]
+      summary: Nightly maintenance (Vercel Cron)
+      description: |
+        Invoked by Vercel Cron at 02:00 UTC with `Authorization: Bearer
+        $CRON_SECRET`. Retries queued jobs whose backoff has elapsed, runs the
+        NDPA retention purge and rebuilds the search index.
+      security: []
+      responses:
+        '200': { description: Maintenance ran; per-queue counts in the body }
+        '401': { description: Missing or wrong cron secret }
+        '503': { description: CRON_SECRET is not configured }
+
   /api/projects:
     get:
       tags: [Projects]

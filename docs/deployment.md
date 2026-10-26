@@ -1,5 +1,40 @@
 # Deployment guide
 
+## Vercel (current production)
+
+www.cobuiltpartners.com runs on Vercel, deployed by its Git integration on every
+push to `main`. The database and identity are Neon (Postgres + Neon Auth). The
+self-hosted topology further down is the original §14 target and still works.
+
+Set these for the Production environment (Project → Settings → Environment
+Variables), then redeploy — `NEXT_PUBLIC_*` values are inlined at build time:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | Neon **pooled** URL (`-pooler` host) |
+| `DATABASE_SSL` | `true` |
+| `DATABASE_POOL_MAX` | `3`–`5`; each function instance holds its own pool |
+| `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL` | From `neon env pull` |
+| `NEXT_PUBLIC_NEON_AUTH_URL` | Same as `NEON_AUTH_BASE_URL` |
+| `ALLOWED_ORIGINS` | `https://www.cobuiltpartners.com` |
+| `NEXT_PUBLIC_WEBSITE_URL` | `https://www.cobuiltpartners.com` |
+| `REDIS_URL` | Hosted Redis (`rediss://…`, e.g. Upstash) |
+| `CRON_SECRET` | 16+ random characters (`openssl rand -hex 32`) |
+
+Migrations are not run by Vercel. Apply them before deploying code that needs
+them: `DATABASE_URL=<unpooled URL> DATABASE_SSL=true npm run db:migrate`.
+
+**Background jobs.** There is no long-running worker on Vercel. A request that
+enqueues a job (emails, search updates) processes it after responding, through
+`waitUntil` (`src/lib/queues/drain.ts`). Vercel Cron calls `/api/cron/nightly`
+at 02:00 UTC (`vercel.json`) for the NDPA retention purge, the search reindex
+and any retries whose backoff has elapsed — so a job that fails is retried at
+the next request on that queue or overnight, not within seconds. Vercel sends
+`CRON_SECRET` as a bearer token; without it set the route refuses to run.
+`npm run worker` remains for hosts that can keep a process up.
+
+## Self-hosted (§14)
+
 Target infrastructure per §14: a Nigerian Tier III data centre for data
 residency (§11), with Cloudflare in front for CDN and DDoS protection.
 

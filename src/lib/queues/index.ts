@@ -137,6 +137,12 @@ export async function enqueue<T extends object>(
 
   try {
     await withTimeout(getQueue(name).add(jobName, data, options), ENQUEUE_TIMEOUT_MS);
+    // On Vercel there is no long-running worker: the function that enqueued the
+    // job processes it after the response is sent (see ./drain.ts).
+    if (process.env.VERCEL) {
+      const { drainAfterResponse } = await import('./drain');
+      drainAfterResponse(name);
+    }
     return true;
   } catch (error) {
     logger.error('Failed to enqueue job', {
