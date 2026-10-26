@@ -230,3 +230,20 @@ View the timeline: ${url}`,
     ),
   };
 }
+
+export function operationsAlert(input: {
+  severity: string;
+  title: string;
+  detail: string;
+}): EmailMessage {
+  const subject = `[CoBuilt ${input.severity.toUpperCase()}] ${input.title}`;
+  return {
+    to: '',
+    subject,
+    text: `${input.title}\n\n${input.detail}`,
+    html: layout(
+      subject,
+      `<pre style="white-space:pre-wrap;font-size:14px;">${escape(input.detail)}</pre>`,
+    ),
+  };
+}

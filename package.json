@@ -17,9 +17,12 @@
     "db:migrate": "tsx scripts/migrate.ts up",
     "db:migrate:status": "tsx scripts/migrate.ts status",
     "db:seed": "tsx scripts/seed.ts",
+    "db:backup": "tsx scripts/backup.ts",
+    "db:restore-check": "tsx scripts/restore-check.ts",
     "user:create-admin": "tsx scripts/create-admin.ts",
     "search:reindex": "tsx scripts/reindex.ts",
     "worker": "tsx scripts/worker.ts",
+    "ops:check": "tsx scripts/ops-check.ts",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {

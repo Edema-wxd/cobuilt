@@ -1,0 +1,16 @@
+# Scheduled database backups. Install on the worker host (app-3):
+#
+#   sudo install -m 644 ops/cron/cobuilt /etc/cron.d/cobuilt
+#
+# Replace `cobuilt` in the user column with the account that owns /srv/cobuilt,
+# and make PATH include the directory holding node and npm (`which npm`).
+# Times are the server's clock; the schedule below assumes UTC.
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# Nightly at 01:30, before the 02:00 retention purge.
+30 1 * * * cobuilt cd /srv/cobuilt && mkdir -p logs && npm run -s db:backup >> logs/backup.log 2>&1
+
+# Sundays at 04:00: restore the newest backup into the scratch database.
+0 4 * * 0 cobuilt cd /srv/cobuilt && mkdir -p logs && npm run -s db:restore-check >> logs/backup.log 2>&1

@@ -89,6 +89,22 @@ const schema = z.object({
 
   // --- Observability -----------------------------------------------------
   SENTRY_DSN: z.string().optional(),
+  // The worker polls these /api/health URLs and alerts on failure. List each
+  // app server directly as well as the public URL, so one bad node is caught.
+  HEALTHCHECK_URLS: csv([]),
+  HEALTHCHECK_INTERVAL_SECONDS: z.coerce.number().int().min(10).default(60),
+  ALERT_EMAIL: z.string().optional(),
+  // Slack-compatible incoming webhook: receives { "text": "..." }.
+  ALERT_WEBHOOK_URL: z.string().url().optional(),
+  ALERT_REPEAT_HOURS: z.coerce.number().positive().default(4),
+
+  // --- Backups ------------------------------------------------------------
+  // Unset disables both the backup command and the worker's freshness check.
+  BACKUP_DIR: z.string().optional(),
+  BACKUP_RETENTION_DAYS: z.coerce.number().int().positive().default(7),
+  BACKUP_MAX_AGE_HOURS: z.coerce.number().positive().default(26),
+  // A scratch database the weekly restore check may wipe. Never the live one.
+  RESTORE_CHECK_DATABASE_URL: z.string().optional(),
 
   // --- Retention (days), NDPA §11 ---------------------------------------
   RETENTION_FORM_SUBMISSION_DAYS: z.coerce.number().int().positive().default(90),

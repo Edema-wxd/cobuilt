@@ -40,6 +40,10 @@ Verify the install: `curl localhost:3000/api/health`.
 | `npm run db:migrate:status` | Show applied and pending migrations |
 | `npm run db:seed` | Seed development data |
 | `npm run search:reindex` | Rebuild every Meilisearch index from PostgreSQL |
+| `npm run user:create-admin` | Create an admin account directly in the database |
+| `npm run db:backup` | Back up the database to `BACKUP_DIR` (run nightly by cron) |
+| `npm run db:restore-check` | Prove the newest backup restores (run weekly by cron) |
+| `npm run ops:check` | Run every monitoring check once; `-- --test-alert` sends a test alert |
 
 ## Layout
 

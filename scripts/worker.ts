@@ -10,6 +10,7 @@ import {
 import { logger } from '../src/lib/logger';
 import { pool } from '../src/lib/db';
 import { flushErrorReports, reportError } from '../src/lib/monitoring';
+import { configuredChecks, startHealthMonitor } from '../src/lib/ops/healthMonitor';
 
 /**
  * Background worker (§14: app server 3).
@@ -67,8 +68,13 @@ async function scheduleRecurringJobs(): Promise<void> {
   );
 }
 
+const checks = configuredChecks();
+const monitor = startHealthMonitor(checks);
+logger.info('Health monitor started', { checks: checks.map((check) => check.name) });
+
 async function shutdown(signal: string): Promise<void> {
   logger.info('Worker shutting down', { signal });
+  monitor.stop();
 
   // Closing each worker lets in-flight jobs finish rather than orphaning them
   // in an active state until their lock expires.

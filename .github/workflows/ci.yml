@@ -59,6 +59,11 @@ jobs:
       - name: Verify migrations apply to an empty database
         run: npm run db:migrate
 
+      # The backup tests use the runner's pg_dump and pg_restore; fail loudly
+      # rather than let them skip if the image ever stops shipping them.
+      - name: Check PostgreSQL client tools
+        run: pg_dump --version && pg_restore --version
+
       - name: Test
         run: npm test
 

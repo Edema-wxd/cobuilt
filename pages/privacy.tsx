@@ -149,6 +149,12 @@ const sections: LegalSection[] = [
           browser details are erased from the record. What remains is only the fact that an enquiry
           was received on a given date, which we use to count enquiries over time.
         </p>
+        <p>
+          We back up our database every night and keep each backup for seven days, so data that
+          has been anonymised or deleted can remain in a backup for up to seven more days before
+          it is gone for good. Backups are held in Nigeria, readable only by the system that makes
+          them, and are only ever used to recover from a failure.
+        </p>
       </>
     ),
   },
