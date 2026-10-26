@@ -184,6 +184,14 @@ export function serializeTour(row: TourRow) {
   };
 }
 
+export function serializeTourForAdmin(row: TourRow) {
+  return {
+    ...serializeTour(row),
+    published: row.published,
+    processingError: row.processing_error,
+  };
+}
+
 export function serializeNews(row: NewsRow) {
   return {
     id: row.id,

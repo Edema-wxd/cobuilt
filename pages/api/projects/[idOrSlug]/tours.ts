@@ -4,7 +4,7 @@ import { RATE_LIMITS } from '@/lib/rateLimit';
 import { notFound } from '@/lib/http/errors';
 import * as projects from '@/lib/repositories/projects';
 import * as tours from '@/lib/repositories/tours';
-import { serializeTour } from '@/lib/serializers';
+import { serializeTour, serializeTourForAdmin } from '@/lib/serializers';
 
 /** GET /api/projects/[idOrSlug]/tours — 3D tours for a project (§7). */
 
@@ -34,7 +34,8 @@ export default createRoute({
           // A tour whose asset is still processing would render as a broken
           // viewer, so it is withheld from the public list.
           .filter((tour) => isStaff || tour.processing_status === 'ready')
-          .map(serializeTour),
+          // Staff see drafts too, so they also need to see which ones are drafts.
+          .map(isStaff ? serializeTourForAdmin : serializeTour),
       };
     },
   },

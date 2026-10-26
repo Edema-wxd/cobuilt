@@ -7,7 +7,7 @@ import * as projects from '@/lib/repositories/projects';
 import * as tours from '@/lib/repositories/tours';
 import * as audit from '@/lib/repositories/audit';
 import { AUDIT_ACTIONS } from '@/lib/repositories/audit';
-import { serializeTour } from '@/lib/serializers';
+import { serializeTourForAdmin } from '@/lib/serializers';
 import { httpUrl } from '@/lib/schemas/common';
 
 /**
@@ -93,7 +93,7 @@ export default createRoute({
         ipAddress: ip,
       });
 
-      return created(serializeTour(tour));
+      return created(serializeTourForAdmin(tour));
     },
   },
 });

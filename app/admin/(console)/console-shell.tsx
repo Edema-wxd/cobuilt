@@ -27,6 +27,7 @@ const NAV: NavEntry[] = [
   { label: 'Overview', href: '/admin', needs: [] },
   { label: 'Submissions', href: '/admin/submissions', needs: ['forms:read'] },
   { label: 'Projects', href: '/admin/projects', needs: ['projects:approve_investor_content'] },
+  { label: '3D tours', href: '/admin/tours', needs: ['tours:write'] },
   { label: 'Users', href: '/admin/users', needs: ['users:read'] },
   { label: 'Audit log', href: '/admin/audit', needs: ['audit:read'] },
 ];
