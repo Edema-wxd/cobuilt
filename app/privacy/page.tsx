@@ -14,9 +14,10 @@ import * as prose from '../../components/prose';
 
 const RETENTION: Array<[string, string, string]> = [
   ['Newsletter and interest registrations', 'Email address, name, the category you selected', 'Until you unsubscribe'],
-  ['General enquiries', 'Name, email, phone, your message', '90 days'],
-  ['Investor enquiries', 'Name, email, phone, company, your message', '2 years (730 days)'],
-  ['Page analytics', 'Page path, referrer, truncated IP, browser type', '30 days'],
+  ['General enquiries', 'Name, email, phone, your message, IP address and browser details', '90 days, then anonymised'],
+  ['Investor enquiries', 'Name, email, phone, company, your message, IP address and browser details', '2 years (730 days), then anonymised'],
+  ['Page analytics', 'Page path, referrer, truncated IP, browser type', '30 days, then deleted'],
+  ['WhatsApp and live chat', 'Phone number or chat name, email, your messages', 'As long as needed to deal with the conversation'],
   ['Account records', 'Email, name, role, sign-in history', 'While the account is open'],
 ];
 
@@ -65,7 +66,14 @@ export default function Privacy() {
             <strong>When you contact us</strong> — your name, email address, phone number if you
             give one, and the content of your message, so that we can answer it. The lawful basis
             is our legitimate interest in responding to enquiries, and for investor enquiries, in
-            taking steps at your request before any contract.
+            taking steps at your request before any contract. The form also records your full IP
+            address and browser details, which we use only to detect spam and abuse.
+          </li>
+          <li>
+            <strong>When you message us on WhatsApp or live chat</strong> — your phone number or
+            chat name, your email if you give it, the messages you send and their delivery status,
+            so that we can reply. The lawful basis is your consent, given by contacting us on that
+            channel.
           </li>
           <li>
             <strong>When you browse</strong> — the page visited, where you arrived from, your
@@ -84,8 +92,13 @@ export default function Privacy() {
       <section className={prose.section}>
         <h2 className={prose.sectionTitle}>How long we keep it</h2>
         <p className={prose.p}>
-          Records are deleted automatically once their retention window closes. Nothing is kept
-          indefinitely except where law requires it.
+          Where a period is fixed, a scheduled job enforces it automatically once the window
+          closes. Nothing is kept indefinitely except where law requires it.
+        </p>
+        <p className={prose.p}>
+          <strong>Anonymised</strong> means your name, email, phone number, message, IP address and
+          browser details are erased from the record. What remains is only the fact that an enquiry
+          was received on a given date, which we use to count enquiries over time.
         </p>
         <div className={prose.tableWrap}>
           <table className={prose.table}>
@@ -113,10 +126,41 @@ export default function Privacy() {
         <h2 className={prose.sectionTitle}>Who else sees your data</h2>
         <p className={prose.p}>
           We share personal data only with the service providers needed to run the site, each under
-          contract and each processing only on our instructions: our hosting provider, our
-          transactional email provider, and our content and search infrastructure. We do not sell
-          personal data or share it with advertisers.
+          contract and each processing only on our instructions, and only what each needs. We do
+          not sell personal data or share it with advertisers. Those providers are:
         </p>
+        <ul className={prose.list}>
+          <li>
+            <strong>Our hosting, database and file storage providers</strong>, which store the
+            records described above.
+          </li>
+          <li>
+            <strong>Cloudflare</strong>, which delivers and protects the website and handles the IP
+            address of every visit.
+          </li>
+          <li>
+            <strong>Our email delivery provider</strong>, which sends confirmation emails, replies
+            and updates, and handles your email address and the content of those emails.
+          </li>
+          <li>
+            <strong>A spam-filtering service</strong> (Akismet, operated by Automattic Inc.), which
+            may receive the name, email, message, IP address and browser details from a form
+            submission to judge whether it is spam. A submission marked as spam is kept for a person
+            on our team to review, not discarded.
+          </li>
+          <li>
+            <strong>An error-monitoring service</strong>, which receives technical details when
+            something on the site fails. These can include an IP address.
+          </li>
+          <li>
+            <strong>Google Fonts</strong>, which supplies the typefaces on this site. Your browser
+            requests them from Google, which receives your IP address and browser details.
+          </li>
+          <li>
+            <strong>Meta</strong>, if you contact us on WhatsApp. Meta&rsquo;s own privacy policy
+            also applies to that conversation.
+          </li>
+        </ul>
         <p className={prose.p}>
           Some of these providers operate outside Nigeria. Where personal data is transferred
           abroad, we rely on the adequacy and contractual safeguards the NDPA permits.
@@ -160,6 +204,20 @@ export default function Privacy() {
           are hashed, never stored in readable form. Administrative access is limited by role and
           recorded in an audit log. Contact details shown to staff in internal tools are masked by
           default.
+        </p>
+        <p className={prose.p}>
+          No system is perfectly secure. If a breach affects your personal data, we will notify the
+          Nigeria Data Protection Commission within 72 hours of becoming aware of it, and tell you
+          without delay where the breach is likely to put your rights at high risk.
+        </p>
+      </section>
+
+      <section className={prose.section}>
+        <h2 className={prose.sectionTitle}>Children</h2>
+        <p className={prose.p}>
+          This site is intended for adults. We do not knowingly collect personal data from anyone
+          under 18. If you believe a child has sent us their details, contact us and we will delete
+          them.
         </p>
       </section>
 
