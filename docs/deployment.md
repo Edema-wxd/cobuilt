@@ -84,9 +84,11 @@ suggests HashiCorp Vault for production.
 
 ## Ongoing deployments
 
-`.github/workflows/deploy.yml` runs on a push to `main`, after CI passes.
-Deployments are serialised — two overlapping deploys would leave the app servers
-on different builds.
+`.github/workflows/deploy.yml` runs on a push to `main`. Its first job is the
+full CI workflow (typecheck, lint, migrations against an empty database, tests,
+build); the deploy job runs only if that passes, and the servers check out that
+exact commit rather than the current tip of `main`. Deployments are serialised:
+two overlapping deploys would leave the app servers on different builds.
 
 Order matters: migrations run **once, before** any app server restarts, so the
 two web nodes never serve traffic against different schema versions. Because of

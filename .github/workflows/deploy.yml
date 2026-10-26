@@ -5,32 +5,23 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# A second deploy starting while one is mid-flight would leave the app servers
-# on different builds, so runs are serialised.
-concurrency:
-  group: production-deploy
-  cancel-in-progress: false
-
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   deploy:
+    needs: ci
+    # A manual run started from another branch must not reach production.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
-    # CI must be green on this commit before it reaches production.
-    needs: []
+    # A second deploy starting while one is mid-flight would leave the app
+    # servers on different builds, so deploys are serialised. CI is not.
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
-
       - name: Configure SSH
         run: |
           install -m 700 -d ~/.ssh
@@ -40,10 +31,12 @@ jobs:
 
       - name: Run migrations
         # Migrations run once, before any app server restarts, so the two
-        # servers never serve traffic against different schema versions.
+        # servers never serve traffic against different schema versions. The
+        # server checks out the exact commit CI verified, not whatever main
+        # has moved on to since.
         run: |
           ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            'cd /srv/cobuilt && git fetch --all && git reset --hard origin/main && npm ci && npm run db:migrate'
+            'cd /srv/cobuilt && git fetch origin && git reset --hard ${{ github.sha }} && npm ci && npm run db:migrate'
 
       - name: Build and restart app servers
         run: |
@@ -60,5 +53,5 @@ jobs:
             echo "Attempt $attempt failed; retrying in 10s"
             sleep 10
           done
-          echo "Health check never passed — investigate before the next deploy"
+          echo "Health check never passed, investigate before the next deploy"
           exit 1
