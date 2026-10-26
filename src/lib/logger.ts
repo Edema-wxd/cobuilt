@@ -34,7 +34,14 @@ function redact(value: unknown, depth = 0): unknown {
   return out;
 }
 
-const redactFormat = winston.format((info) => redact(info) as winston.Logform.TransformableInfo);
+// Redacts in place: winston routes each entry by symbol keys (level, message)
+// that a copied object would lose, and every transport would then drop it.
+const redactFormat = winston.format((info) => {
+  for (const key of Object.keys(info)) {
+    info[key] = SENSITIVE_KEYS.has(key) ? REDACTED : redact(info[key], 1);
+  }
+  return info;
+});
 
 export const logger = winston.createLogger({
   level: env.LOG_LEVEL,
