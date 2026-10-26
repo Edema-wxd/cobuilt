@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { createRoute, created } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
-import { badRequest, notFound } from '@/lib/http/errors';
-import { headObject, publicUrlFor } from '@/lib/storage/s3';
+import { badRequest, notFound, serviceUnavailable } from '@/lib/http/errors';
+import { isStorageConfigured, lookupFile } from '@/lib/storage/uploadthing';
 import * as projects from '@/lib/repositories/projects';
 import * as tours from '@/lib/repositories/tours';
 import * as audit from '@/lib/repositories/audit';
@@ -14,7 +14,7 @@ import { httpUrl } from '@/lib/schemas/common';
  * POST /api/admin/tours — registers a tour after its asset is uploaded (§7).
  *
  * A Three.js tour is only accepted once the object is confirmed present in
- * storage, so a presigned URL that was issued but never used cannot leave a
+ * storage, so an upload that was started but never finished cannot leave a
  * tour record pointing at nothing.
  */
 const body = z
@@ -57,19 +57,21 @@ export default createRoute({
       let tourUrl = input.tourUrl ?? null;
 
       if (input.tourType === 'threejs_model') {
-        const object = await headObject(input.modelKey);
-        if (!object.exists) {
-          throw badRequest('No uploaded object found for that key; complete the upload first');
+        if (!isStorageConfigured()) throw serviceUnavailable('Object storage is not configured');
+
+        const file = await lookupFile(input.modelKey);
+        if (!file.exists) {
+          throw badRequest('No uploaded file found for that key; complete the upload first');
         }
-        fileSizeBytes = object.sizeBytes;
-        tourUrl ??= publicUrlFor(input.modelKey);
+        fileSizeBytes = file.sizeBytes;
+        tourUrl ??= file.url;
       }
 
       const tour = await tours.create({
         projectId: input.projectId,
         tourName: input.tourName,
         tourType: input.tourType,
-        modelFileS3Key: input.modelKey ?? null,
+        modelFileKey: input.modelKey ?? null,
         fileSizeBytes,
         thumbnailUrl: input.thumbnailUrl ?? null,
         tourUrl,

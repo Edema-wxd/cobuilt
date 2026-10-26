@@ -4,7 +4,8 @@
  */
 // @next/env types NODE_ENV as read-only; jest still needs it set here.
 (process.env as Record<string, string>).NODE_ENV = 'test';
-process.env.JWT_SECRET = 'test-secret-that-is-at-least-32-characters-long';
+process.env.NEON_AUTH_BASE_URL = 'https://auth.cobuilt.test/neondb/auth';
+process.env.NEON_AUTH_JWKS_URL = 'https://auth.cobuilt.test/neondb/auth/.well-known/jwks.json';
 process.env.MAIL_PROVIDER = 'log';
 process.env.LOG_LEVEL = 'error';
 process.env.ALLOWED_ORIGINS = 'https://cobuilt.com,https://www.cobuilt.com';

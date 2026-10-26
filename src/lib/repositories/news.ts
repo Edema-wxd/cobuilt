@@ -9,7 +9,7 @@ import { slugify, uniqueSlug } from '../slug';
 const COLUMNS = `
   n.id, n.title, n.slug, n.content, n.excerpt, n.author_id, n.category,
   n.featured_image_url, n.published_at, n.created_at, n.updated_at, n.deleted_at,
-  n.meta_title, n.meta_description, n.tags,
+  n.meta_title, n.meta_description, n.tags, n.cms_source, n.cms_synced_at,
   u.full_name AS author_name
 `;
 

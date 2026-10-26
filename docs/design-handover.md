@@ -138,7 +138,7 @@ projects" and "Register your interest" — are genuine on-page destinations. The
 nav's six anchor items are pages; see `docs/decisions.md` §2.15 for what each
 one is built from and which links were pointed elsewhere rather than invented.
 
-What is left in Tier 1 is the tour viewer (§3.7); search (§3.5) is built, minus autocomplete.
+Tier 1 is complete: the tour viewer (§3.7) and search autocomplete (§3.5) are built.
 
 #### 3.1 Project Passport™ — `/projects/[slug]/passport` — **built**
 
@@ -182,7 +182,7 @@ How the design questions this section posed were resolved:
 
 Implemented at `pages/projects/[slug].tsx`, from the "CoBuilt Project Detail"
 mockup. Both investor states are built, the tour entry and its fallback are
-built, and the viewer itself is still open (3.7). See docs/decisions.md §2.10.
+built, and so is the viewer itself (3.7). See docs/decisions.md §2.10.
 
 Available: title, description, long description, status, project type, location,
 sector, featured image, gallery, related services, tags, passport start date and
@@ -223,7 +223,7 @@ quotes are **not** yet designed, because nothing in `content` distinguishes
 them; that is a CMS question (§5.1) before it is a design one. See
 `docs/decisions.md` §2.15.
 
-#### 3.5 Search — `/search` — **built** (no autocomplete dropdown yet)
+#### 3.5 Search — `/search` — **built**, with autocomplete
 
 The header's search entry currently goes nowhere. The API returns results across
 **projects, news and FAQs**, each with type, title, excerpt, URL and published
@@ -246,19 +246,32 @@ The form's success state replaces the form rather than sitting under it, so a
 sent enquiry cannot be resubmitted by habit; the failure states distinguish a
 rate limit, a 5xx and a rejected field.
 
-Still open: **no map**. There is no map integration in the build and the
-handover left whether to add one undecided, so the address and hours are given
-in text.
+**Map: built, waiting on a location.** A click-to-load OpenStreetMap panel sits
+under the address. Nothing is requested from the map server until the visitor
+asks. It stays hidden until CoBuilt confirms the office's coordinates, because
+the published address does not geocode. See docs/decisions.md §2.17.
 
-#### 3.7 3D virtual tours
+#### 3.7 3D virtual tours — **built**
 
 Phase 1 scope names virtual tours explicitly, and the API supports three
 formats: a Three.js model, a Matterport embed, and a custom viewer. Each project
 can carry several, one of them featured.
 
-Design needed for: how a tour is entered from a project page, the viewer chrome
-(fullscreen, exit, tour switching), the loading state for a heavy model, and the
-fallback when a tour fails or the device cannot handle it.
+How each open question was resolved (docs/decisions.md §2.16):
+
+- **Entry**: "Enter the virtual tour" in the project hero jumps to the tours
+  band. The featured tour is preselected, and "Enter the tour" sits over its
+  thumbnail with the download size.
+- **Chrome**: a bar naming the tour, with Fullscreen (only where the browser
+  supports it) and Exit tour. Escape exits too. The tour list beside the viewer
+  switches tours. A model adds "Reset view" and a one-line controls hint.
+- **Heavy model**: a real progress bar ("Downloading · 34% of 48 MB"), then
+  "Preparing the model…", with Cancel throughout. On a low-memory device or
+  with data saver on, a large model asks first: "This is a large model", with
+  Load anyway, View gallery and Back.
+- **Fallback**: four distinct explanations (no 3D support, download failed,
+  unreadable file, device out of graphics memory). Each offers the gallery and
+  Back, and the download failure also offers Try again.
 
 ### Tier 2 — mandated by the navigation
 
@@ -300,21 +313,29 @@ nothing at all.
 Complete APIs, no interface at all. Lower priority for public launch, but the
 admin console is what makes the site maintainable without a developer.
 
-- **Accounts:** sign in, register, forgot password, reset password, and an
-  account page. The account page must carry NDPA rights — data export and
-  account deletion both exist as endpoints and are promised in the privacy
-  policy.
-- **Admin console:** dashboard, form submissions inbox (with spam flagging and
-  masked contact details), users and roles, 3D tour uploads, investor-content
-  approval, audit log, and analytics. Thirteen endpoints, no screens. This can
-  be plainer than the public site, but it should still be recognisably CoBuilt.
+- **Accounts** — **built.** Sign in (`/admin/sign-in`), forgot and reset
+  password (`/admin/forgot-password`, `/admin/reset-password` — the target of
+  the reset email), and `/admin/account`, which carries the NDPA rights the
+  privacy policy promises: data export and account deletion. The account page
+  opens for every role, including those with no console permission. Phase 1
+  has no public sign-up, so admins create accounts at `/admin/users/new`;
+  `/admin/register` says accounts are by invitation, and only shows a form
+  while `ALLOW_PUBLIC_REGISTRATION` is set to bootstrap the first admin.
+- **Admin console — `/admin` — built.** Overview with analytics, submissions
+  inbox (spam flagging, masked contact details), projects (list, create, edit,
+  delete), Passport™ milestones per project, news (list, create, edit, delete),
+  3D tours (upload, edit, delete), investor-content approval, users and roles,
+  and the audit log. Editors send only the fields that changed, and any change
+  to an investor figure withdraws its approval after a confirmation. A record
+  mirrored from the CMS carries a notice that the CMS will overwrite console
+  edits. Gallery albums are still attached only from the CMS.
 
 ### Small gaps worth folding in
 
 - **404 and 500 pages** — visitors currently get the unstyled Next.js default.
   More routes now call `notFound()` — an unknown service slug, an unknown
   article — so this is more visible than it was.
-- **Social preview images** — nothing exists for link sharing.
+- **Social preview images** — **built.** A branded card per page, and an item's own photography wins where it has some. See docs/decisions.md §2.18.
 - **A video library page** — the footer links to one; the home page has a still.
 
 ---

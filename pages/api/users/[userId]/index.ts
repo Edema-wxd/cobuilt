@@ -7,7 +7,6 @@ import * as forms from '@/lib/repositories/forms';
 import * as newsletter from '@/lib/repositories/newsletter';
 import * as audit from '@/lib/repositories/audit';
 import { AUDIT_ACTIONS } from '@/lib/repositories/audit';
-import { revokeAllForUser } from '@/lib/auth/refreshTokens';
 import { serializeUser } from '@/lib/serializers';
 
 /**
@@ -50,13 +49,15 @@ export default createRoute({
       if (!user) throw notFound('User not found');
 
       const email = user.email;
+      // Erase the sign-in identity (password hash, sessions) from Neon Auth
+      // first: softDelete clears the link that finds it.
+      await users.removeIdentity(query.userId);
       const deleted = await users.softDelete(query.userId);
       if (!deleted) throw notFound('User not found');
 
       const [submissionsAnonymised, newsletterRemoved] = await Promise.all([
         forms.anonymiseByEmail(email),
         newsletter.deleteByEmail(email),
-        revokeAllForUser(query.userId),
       ]);
 
       await audit.record({

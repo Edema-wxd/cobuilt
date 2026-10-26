@@ -37,11 +37,10 @@ const schema = z.object({
   MEILISEARCH_KEY: z.string().optional(),
 
   // --- Auth --------------------------------------------------------------
-  JWT_SECRET: z.string().min(32).default('dev-only-insecure-secret-change-me-0123456789'),
-  JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(15 * 60),
-  JWT_REFRESH_TTL_SECONDS: z.coerce.number().int().positive().default(7 * 24 * 60 * 60),
-  JWT_ISSUER: z.string().default('cobuilt-api'),
-  JWT_AUDIENCE: z.string().default('cobuilt-web'),
+  // Identity is Neon Auth. The API verifies its EdDSA access tokens against the
+  // branch JWKS; the admin console talks to the auth URL from the browser.
+  NEON_AUTH_BASE_URL: z.string().url().optional(),
+  NEON_AUTH_JWKS_URL: z.string().url().optional(),
   ALLOW_PUBLIC_REGISTRATION: bool(false),
 
   // --- Web ---------------------------------------------------------------
@@ -62,15 +61,8 @@ const schema = z.object({
   MAILGUN_DOMAIN: z.string().optional(),
 
   // --- Storage -----------------------------------------------------------
-  S3_BUCKET: z.string().default('cobuilt-tours'),
-  S3_REGION: z.string().default('us-east-1'),
-  // Set for any S3-compatible service (DigitalOcean Spaces, a Nigerian
-  // Tier III object store). Left unset, the AWS default endpoint is used.
-  S3_ENDPOINT: z.string().optional(),
-  S3_FORCE_PATH_STYLE: bool(false),
-  S3_PUBLIC_BASE_URL: z.string().optional(),
-  AWS_ACCESS_KEY_ID: z.string().optional(),
-  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  // UploadThing credential; UTApi and the file router read it from the environment.
+  UPLOADTHING_TOKEN: z.string().optional(),
   MAX_TOUR_UPLOAD_BYTES: z.coerce.number().int().positive().default(50 * 1024 * 1024),
 
   // --- CMS ---------------------------------------------------------------
@@ -145,13 +137,15 @@ function load(): Env {
 }
 
 /**
- * Variables with development defaults that must never reach production on
- * those defaults — a fallback JWT secret in production is a total auth bypass.
+ * Variables that must be set explicitly in production: the data stores would
+ * otherwise fall back to development defaults, and without the Neon Auth
+ * endpoints no request can be authenticated.
  */
 const requiredInProduction = [
   'DATABASE_URL',
   'REDIS_URL',
-  'JWT_SECRET',
+  'NEON_AUTH_BASE_URL',
+  'NEON_AUTH_JWKS_URL',
   'ALLOWED_ORIGINS',
 ] as const;
 

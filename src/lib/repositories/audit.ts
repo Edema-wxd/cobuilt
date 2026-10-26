@@ -106,6 +106,7 @@ export const AUDIT_ACTIONS = {
   MILESTONE_UPDATED: 'passport.milestone.updated',
   MILESTONE_DELETED: 'passport.milestone.deleted',
   TOUR_CREATED: 'tour.created',
+  TOUR_UPDATED: 'tour.updated',
   TOUR_DELETED: 'tour.deleted',
   NEWS_CREATED: 'news.created',
   NEWS_UPDATED: 'news.updated',

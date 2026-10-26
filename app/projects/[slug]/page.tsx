@@ -52,7 +52,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       ...(shareImage ? { images: [shareImage] } : {}),
     },
-    twitter: { card: shareImage ? 'summary_large_image' : 'summary' },
+    // Always large: a page without its own image has a generated card
+    // (opengraph-image.tsx beside it).
+    twitter: { card: 'summary_large_image' },
   };
 }
 

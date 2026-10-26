@@ -1,7 +1,7 @@
 import { createMocks, type RequestOptions } from 'node-mocks-http';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { signAccessToken } from '@/lib/auth/jwt';
-import { effectivePermissions, type Role } from '@/lib/auth/rbac';
+import type { Role } from '@/lib/auth/rbac';
+import { testToken } from './auth';
 
 /**
  * Test helpers.
@@ -18,12 +18,10 @@ export function bearerFor(input: {
   email?: string;
   role: Role;
 }): string {
-  const role = input.role;
-  return signAccessToken({
+  return testToken({
     userId: input.userId ?? '00000000-0000-4000-8000-000000000001',
-    email: input.email ?? `${role}@cobuilt.test`,
-    role,
-    permissions: [...effectivePermissions(role)],
+    email: input.email ?? `${input.role}@cobuilt.test`,
+    role: input.role,
   });
 }
 

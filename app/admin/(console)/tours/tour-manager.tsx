@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { genUploader } from 'uploadthing/client';
 import type { TourType } from '@/types/models';
+import type { UploadRouter } from '@/lib/storage/uploadthing';
 import type { serializeProjectForAdmin, serializeTourForAdmin } from '@/lib/serializers';
 import { field, fieldLabel, input } from '../../../../components/sections';
-import { ApiFailure, api } from '../../auth-client';
+import { ApiFailure, api, authHeaders } from '../../auth-client';
 import { useSession } from '../console-shell';
 import {
   PageHeader,
@@ -29,24 +31,18 @@ import {
 
 /**
  * 3D tours per project — `GET /api/projects/[idOrSlug]/tours` (drafts
- * included for staff), `POST /api/admin/tours/presign`, `POST /api/admin/tours`
- * and `DELETE /api/admin/tours/[tourId]`.
+ * included for staff), `POST /api/admin/tours`, and `PATCH` and `DELETE`
+ * on `/api/admin/tours/[tourId]`.
  *
- * A Three.js model goes straight from the browser to object storage on the
- * presigned URL and is registered afterwards (docs/decisions.md §2.2), so the
- * bucket must allow a cross-origin PUT from the console's origin.
+ * A Three.js model goes straight from the browser to UploadThing, authorised
+ * by the console's bearer token, and is registered afterwards
+ * (docs/decisions.md §2.2). Replacing a model on edit takes the same route.
  *
- * There is no update endpoint yet: a tour is corrected by deleting it and
- * adding it again, and only an admin can delete.
+ * A tour's format is fixed once it exists; only an admin can delete.
  */
 
 type AdminProject = ReturnType<typeof serializeProjectForAdmin>;
 type AdminTour = ReturnType<typeof serializeTourForAdmin>;
-
-interface PresignedUpload {
-  uploadUrl: string;
-  key: string;
-}
 
 const TYPE_LABELS: Record<TourType, string> = {
   threejs_model: 'Three.js model',
@@ -60,19 +56,10 @@ const TYPE_HINTS: Record<TourType, string> = {
   custom_viewer: 'Link to a hosted viewer page. Only https links open on the site.',
 };
 
-/**
- * Browsers report an empty or generic type for model files, so the type the
- * upload is signed for is taken from the extension instead.
- */
-const MODEL_TYPES: Record<string, string> = {
-  glb: 'model/gltf-binary',
-  gltf: 'model/gltf+json',
-  zip: 'application/zip',
-};
+const MODEL_EXTENSIONS = ['glb', 'gltf', 'zip'];
 
-function modelContentType(file: File): string | null {
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
-  return MODEL_TYPES[extension] ?? null;
+function isModelFile(file: File): boolean {
+  return MODEL_EXTENSIONS.includes(file.name.split('.').pop()?.toLowerCase() ?? '');
 }
 
 function formatBytes(bytes: number | null): string {
@@ -81,36 +68,69 @@ function formatBytes(bytes: number | null): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+/** A trimmed value, or null for an empty field so an edit can clear it. */
+function cleared(value: string): string | null {
+  return value.trim() ? value.trim() : null;
+}
+
+type TourUpdate = {
+  tourName: string;
+  modelKey: string | undefined;
+  tourUrl: string | null | undefined;
+  embedCode: string | null | undefined;
+  thumbnailUrl: string | null;
+  description: string | null;
+  featured: boolean;
+  published: boolean;
+};
+
+/**
+ * Only the fields that differ from the stored tour, so the audit log records
+ * what was actually changed rather than every field on the form.
+ */
+function changedFields(tour: AdminTour, next: TourUpdate): Partial<TourUpdate> {
+  const current: Record<keyof TourUpdate, unknown> = {
+    tourName: tour.name,
+    modelKey: undefined,
+    tourUrl: tour.tourUrl,
+    embedCode: tour.embedCode,
+    thumbnailUrl: tour.thumbnailUrl,
+    description: tour.description,
+    featured: tour.featured,
+    published: tour.published,
+  };
+  const changes: Partial<Record<keyof TourUpdate, unknown>> = {};
+  for (const field of Object.keys(next) as Array<keyof TourUpdate>) {
+    if (next[field] !== undefined && next[field] !== current[field]) changes[field] = next[field];
+  }
+  return changes as Partial<TourUpdate>;
+}
+
 function failureText(failure: unknown): string {
   return failure instanceof ApiFailure ? failure.message : 'No connection to the server.';
 }
 
-/**
- * PUTs the file to storage. XHR rather than fetch because fetch reports no
- * upload progress, and a 50 MB model on a slow line needs to show it moving.
- */
-function uploadToStorage(
-  url: string,
+const { uploadFiles } = genUploader<UploadRouter>({ package: 'uploadthing' });
+
+/** Uploads the model to UploadThing and returns the stored file's key. */
+async function uploadToStorage(
   file: File,
-  contentType: string,
   onProgress: (fraction: number) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open('PUT', url);
-    request.setRequestHeader('Content-Type', contentType);
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(event.loaded / event.total);
-    };
-    request.onload = () =>
-      request.status >= 200 && request.status < 300
-        ? resolve()
-        : reject(new ApiFailure(request.status, `Storage refused the upload (${request.status}).`));
-    // A CORS rejection from the bucket also lands here, with no status to show.
-    request.onerror = () =>
-      reject(new ApiFailure(0, 'The upload to storage failed. Check your connection, then try again.'));
-    request.send(file);
-  });
+): Promise<string> {
+  try {
+    const [uploaded] = await uploadFiles('tourModel', {
+      files: [file],
+      headers: await authHeaders(),
+      onUploadProgress: ({ progress }) => onProgress(progress / 100),
+    });
+    if (!uploaded) throw new Error('No file was returned.');
+    return uploaded.key;
+  } catch (failure) {
+    if (failure instanceof ApiFailure) throw failure;
+    // UploadThing errors carry the middleware's own message (role, size, type).
+    const message = failure instanceof Error ? failure.message : '';
+    throw new ApiFailure(0, message || 'The upload failed. Check your connection, then try again.');
+  }
 }
 
 export default function TourManager() {
@@ -210,6 +230,7 @@ function ProjectTours({ project }: { project: AdminProject }) {
   );
   // DELETE is admin-only even though editors hold tours:write.
   const canDelete = user.role === 'admin' && can('tours:write');
+  const [editing, setEditing] = useState<AdminTour | null>(null);
 
   return (
     <div className="flex flex-col gap-6">
@@ -236,11 +257,9 @@ function ProjectTours({ project }: { project: AdminProject }) {
                   <th className={th} scope="col">Size</th>
                   <th className={th} scope="col">Views</th>
                   <th className={th} scope="col">Added</th>
-                  {canDelete ? (
-                    <th className={th} scope="col">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  ) : null}
+                  <th className={th} scope="col">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -248,13 +267,16 @@ function ProjectTours({ project }: { project: AdminProject }) {
                   <TourRow
                     key={tour.id}
                     tour={tour}
+                    isEditing={editing?.id === tour.id}
                     canDelete={canDelete}
-                    onDeleted={() =>
+                    onEdit={() => setEditing(tour)}
+                    onDeleted={() => {
+                      if (editing?.id === tour.id) setEditing(null);
                       list.setData((current) => ({
                         ...current,
                         results: current.results.filter((r) => r.id !== tour.id),
-                      }))
-                    }
+                      }));
+                    }}
                   />
                 ))}
               </tbody>
@@ -269,18 +291,33 @@ function ProjectTours({ project }: { project: AdminProject }) {
         ) : null}
       </section>
 
-      <AddTourForm projectId={project.id} onAdded={list.reload} />
+      {/* Keyed so switching between tours, or back to adding, starts from that tour's values. */}
+      <TourForm
+        key={editing?.id ?? 'new'}
+        projectId={project.id}
+        tour={editing}
+        onSaved={() => {
+          setEditing(null);
+          // Reloaded rather than patched in place: featuring a tour reorders the list.
+          list.reload();
+        }}
+        onCancel={() => setEditing(null)}
+      />
     </div>
   );
 }
 
 function TourRow({
   tour,
+  isEditing,
   canDelete,
+  onEdit,
   onDeleted,
 }: {
   tour: AdminTour;
+  isEditing: boolean;
   canDelete: boolean;
+  onEdit: () => void;
   onDeleted: () => void;
 }) {
   const [deleting, setDeleting] = useState(false);
@@ -306,7 +343,7 @@ function TourRow({
   const failed = tour.processingStatus === 'failed';
 
   return (
-    <tr>
+    <tr className={isEditing ? 'bg-zinc-100' : undefined}>
       <td className={`${td} max-w-sm`}>
         <span className="font-semibold text-ink">{tour.name}</span>
         <span className={`block ${muted}`}>
@@ -343,45 +380,74 @@ function TourRow({
       <td className={`${td} whitespace-nowrap tabular-nums`}>{formatBytes(tour.fileSizeBytes)}</td>
       <td className={`${td} tabular-nums`}>{formatNumber(tour.viewCount)}</td>
       <td className={`${td} whitespace-nowrap`}>{formatDateTime(tour.uploadedAt)}</td>
-      {canDelete ? (
-        <td className={`${td} text-right`}>
-          <button className={btnSmallDanger} type="button" disabled={deleting} onClick={() => void remove()}>
-            {deleting ? 'Deleting…' : 'Delete'}
+      <td className={`${td} text-right`}>
+        <div className="flex justify-end gap-2">
+          <button
+            className={btnSmall}
+            type="button"
+            disabled={deleting || isEditing}
+            onClick={onEdit}
+            aria-label={`Edit ${tour.name}`}
+          >
+            {isEditing ? 'Editing' : 'Edit'}
           </button>
-          {error ? (
-            <p className="mt-1.5 text-[0.75rem] text-msg-bad" role="alert">
-              {error}
-            </p>
+          {canDelete ? (
+            <button className={btnSmallDanger} type="button" disabled={deleting} onClick={() => void remove()}>
+              {deleting ? 'Deleting…' : 'Delete'}
+            </button>
           ) : null}
-        </td>
-      ) : null}
+        </div>
+        {error ? (
+          <p className="mt-1.5 text-[0.75rem] text-msg-bad" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </td>
     </tr>
   );
 }
 
 type Stage =
   | { step: 'idle' }
-  | { step: 'presigning' }
   | { step: 'uploading'; fraction: number }
   | { step: 'registering' };
 
-function AddTourForm({ projectId, onAdded }: { projectId: string; onAdded: () => void }) {
-  const [type, setType] = useState<TourType>('threejs_model');
-  const [name, setName] = useState('');
+/** Adds a tour, or edits `tour` when one is given. */
+function TourForm({
+  projectId,
+  tour,
+  onSaved,
+  onCancel,
+}: {
+  projectId: string;
+  tour: AdminTour | null;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [type, setType] = useState<TourType>(tour?.type ?? 'threejs_model');
+  const [name, setName] = useState(tour?.name ?? '');
   const [file, setFile] = useState<File | null>(null);
-  const [tourUrl, setTourUrl] = useState('');
-  const [embedCode, setEmbedCode] = useState('');
-  const [thumbnailUrl, setThumbnailUrl] = useState('');
-  const [description, setDescription] = useState('');
-  const [featured, setFeatured] = useState(false);
-  const [published, setPublished] = useState(true);
+  // A Three.js tour's URL is its stored file, not something entered here.
+  const [tourUrl, setTourUrl] = useState(tour?.type === 'threejs_model' ? '' : (tour?.tourUrl ?? ''));
+  const [embedCode, setEmbedCode] = useState(tour?.embedCode ?? '');
+  const [thumbnailUrl, setThumbnailUrl] = useState(tour?.thumbnailUrl ?? '');
+  const [description, setDescription] = useState(tour?.description ?? '');
+  const [featured, setFeatured] = useState(tour?.featured ?? false);
+  const [published, setPublished] = useState(tour?.published ?? true);
   const [stage, setStage] = useState<Stage>({ step: 'idle' });
   const [message, setMessage] = useState<{ text: string; bad: boolean } | null>(null);
   // Bumped after a successful add so the file input, which cannot be
   // controlled, is cleared along with the other fields.
   const [formKey, setFormKey] = useState(0);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const busy = stage.step !== 'idle';
+
+  // Opening an edit moves focus to the form, which also scrolls it into view
+  // from a row further up the page.
+  useEffect(() => {
+    if (tour) nameRef.current?.focus();
+  }, [tour]);
 
   function reset(): void {
     setName('');
@@ -402,27 +468,39 @@ function AddTourForm({ projectId, onAdded }: { projectId: string; onAdded: () =>
     let modelKey: string | undefined;
 
     try {
-      if (type === 'threejs_model') {
+      // A new tour of this format needs a file; an edit keeps its file unless one is chosen.
+      if (type === 'threejs_model' && (file || !tour)) {
         if (!file) throw new ApiFailure(0, 'Choose a model file to upload.');
-        const contentType = modelContentType(file);
-        if (!contentType) throw new ApiFailure(0, 'The model must be a .glb, .gltf or .zip file.');
-
-        setStage({ step: 'presigning' });
-        const upload = await api<PresignedUpload>('/api/admin/tours/presign', {
-          method: 'POST',
-          json: { projectId, contentType, contentLength: file.size },
-        });
+        if (!isModelFile(file)) throw new ApiFailure(0, 'The model must be a .glb, .gltf or .zip file.');
 
         setStage({ step: 'uploading', fraction: 0 });
-        await uploadToStorage(upload.uploadUrl, file, contentType, (fraction) =>
+        modelKey = await uploadToStorage(file, (fraction) =>
           setStage({ step: 'uploading', fraction }),
         );
-        modelKey = upload.key;
       }
 
       setStage({ step: 'registering' });
+
+      if (tour) {
+        await api<AdminTour>(`/api/admin/tours/${tour.id}`, {
+          method: 'PATCH',
+          json: changedFields(tour, {
+            tourName: name.trim(),
+            modelKey,
+            tourUrl: type === 'threejs_model' ? undefined : cleared(tourUrl),
+            embedCode: type === 'matterport_embed' ? cleared(embedCode) : undefined,
+            thumbnailUrl: cleared(thumbnailUrl),
+            description: cleared(description),
+            featured,
+            published,
+          }),
+        });
+        onSaved();
+        return;
+      }
+
       // Empty optional fields are left out: the API validates any URL it is given.
-      const optional = (value: string) => (value.trim() ? value.trim() : undefined);
+      const optional = (value: string) => cleared(value) ?? undefined;
       await api<AdminTour>('/api/admin/tours', {
         method: 'POST',
         json: {
@@ -441,7 +519,7 @@ function AddTourForm({ projectId, onAdded }: { projectId: string; onAdded: () =>
 
       reset();
       setMessage({ text: `Added “${name.trim()}”.`, bad: false });
-      onAdded();
+      onSaved();
     } catch (failure) {
       setMessage({ text: failureText(failure), bad: true });
     } finally {
@@ -450,18 +528,18 @@ function AddTourForm({ projectId, onAdded }: { projectId: string; onAdded: () =>
   }
 
   const submitLabel =
-    stage.step === 'presigning'
-      ? 'Preparing upload…'
-      : stage.step === 'uploading'
-        ? `Uploading ${Math.round(stage.fraction * 100)}%`
-        : stage.step === 'registering'
-          ? 'Saving…'
+    stage.step === 'uploading'
+      ? `Uploading ${Math.round(stage.fraction * 100)}%`
+      : stage.step === 'registering'
+        ? 'Saving…'
+        : tour
+          ? 'Save changes'
           : 'Add tour';
 
   return (
     <section className={panel}>
       <div className={panelHead}>
-        <h2 className={panelTitle}>Add a tour</h2>
+        <h2 className={panelTitle}>{tour ? `Edit “${tour.name}”` : 'Add a tour'}</h2>
       </div>
 
       <form key={formKey} className="flex max-w-2xl flex-col gap-5 px-5 py-5" onSubmit={(event) => void submit(event)}>
@@ -470,6 +548,7 @@ function AddTourForm({ projectId, onAdded }: { projectId: string; onAdded: () =>
             Name
           </label>
           <input
+            ref={nameRef}
             id="tour-name"
             className={input}
             required
@@ -489,7 +568,8 @@ function AddTourForm({ projectId, onAdded }: { projectId: string; onAdded: () =>
             id="tour-type"
             className={`${input} select-chevron cursor-pointer pr-10`}
             value={type}
-            disabled={busy}
+            // A different format is a different tour: the API fixes it at creation.
+            disabled={busy || tour !== null}
             onChange={(event) => setType(event.target.value as TourType)}
             aria-describedby="tour-type-hint"
           >
@@ -500,25 +580,37 @@ function AddTourForm({ projectId, onAdded }: { projectId: string; onAdded: () =>
             ))}
           </select>
           <p id="tour-type-hint" className={muted}>
-            {TYPE_HINTS[type]}
+            {tour
+              ? 'The format cannot be changed. To use another, add a new tour and delete this one.'
+              : TYPE_HINTS[type]}
           </p>
         </div>
 
         {type === 'threejs_model' ? (
           <div className={field}>
             <label className={fieldLabel} htmlFor="tour-file">
-              Model file
+              {tour ? 'Replace model file' : 'Model file'}
+              {tour ? (
+                <span className="font-normal tracking-normal normal-case text-zinc-500"> (optional)</span>
+              ) : null}
             </label>
             <input
               id="tour-file"
               className="min-h-target text-[0.875rem] text-ink file:mr-3 file:min-h-target file:cursor-pointer file:border file:border-zinc-300 file:bg-white file:px-4 file:text-[0.688rem] file:font-semibold file:tracking-[0.14em] file:text-ink file:uppercase"
               type="file"
               accept=".glb,.gltf,.zip"
-              required
+              required={!tour}
               disabled={busy}
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              aria-describedby={tour ? 'tour-file-hint' : undefined}
             />
             {file ? <p className={muted}>{formatBytes(file.size)}</p> : null}
+            {tour ? (
+              <p id="tour-file-hint" className={muted}>
+                Current file: {formatBytes(tour.fileSizeBytes)}. A new file replaces it, and the old one is
+                deleted from storage.
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className={field}>
@@ -631,6 +723,11 @@ function AddTourForm({ projectId, onAdded }: { projectId: string; onAdded: () =>
           <button className={btnSmallOrange} type="submit" disabled={busy}>
             {submitLabel}
           </button>
+          {tour ? (
+            <button className={btnSmall} type="button" disabled={busy} onClick={onCancel}>
+              Cancel
+            </button>
+          ) : null}
           {message ? (
             <p
               className={`text-[0.813rem] ${message.bad ? 'text-msg-bad' : 'text-msg-ok'}`}

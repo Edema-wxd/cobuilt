@@ -7,10 +7,13 @@ info:
     Backend API for the CoBuilt corporate website (Var-2026-003, Phase 1).
 
     ## Authentication
-    Access tokens are JWTs valid for 15 minutes, sent as `Authorization: Bearer
-    <token>`. Refresh tokens are opaque, HTTP-only cookies, rotated on every
-    use. Cookie-authenticated writes also require `X-CSRF-Token` matching the
-    readable CSRF cookie.
+    Identity is Neon Auth (Managed Better Auth): sign-up, sign-in, email
+    verification and password reset are served by the Neon Auth endpoint, not by
+    this API. Its access token — an EdDSA JWT valid for 15 minutes — is sent as
+    `Authorization: Bearer <token>`. The API verifies it against the branch
+    JWKS and resolves it to the account in `users`, which supplies the role and
+    permissions; a verified Neon Auth user with no matching account is refused
+    with 403.
 
     ## Errors
     Every error shares one shape:
@@ -577,61 +580,6 @@ paths:
       responses:
         '200': { description: Unsubscribed }
 
-  /api/auth/login:
-    post:
-      tags: [Authentication]
-      summary: Sign in
-      description: |
-        Returns an access token and sets the refresh and CSRF cookies. Rate
-        limited per email address as well as per IP.
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email, password]
-              properties:
-                email:    { type: string, format: email }
-                password: { type: string }
-      responses:
-        '200':
-          description: Signed in
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/AuthSession' }
-        '401': { description: Invalid email or password }
-        '403': { description: Account deactivated }
-        '429': { $ref: '#/components/responses/RateLimited' }
-
-  /api/auth/refresh:
-    post:
-      tags: [Authentication]
-      summary: Exchange the refresh cookie for a new access token
-      description: |
-        The refresh token rotates on every use. Presenting one that was already
-        exchanged is treated as theft and revokes every session for that user.
-      security: []
-      responses:
-        '200':
-          description: New access token issued
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/AuthSession' }
-        '401': { description: Refresh token missing, expired or revoked }
-
-  /api/auth/logout:
-    post:
-      tags: [Authentication]
-      summary: Sign out
-      description: |
-        Revokes this refresh token and clears the cookies. The access token
-        remains valid until it expires — at most 15 minutes.
-      security: []
-      responses:
-        '200': { description: Signed out }
-
   /api/auth/me:
     get:
       tags: [Authentication]
@@ -651,67 +599,27 @@ paths:
   /api/auth/register:
     post:
       tags: [Authentication]
-      summary: Create an admin-surface account
+      summary: Invite someone by email
       description: |
-        Not public sign-up. Requires an authenticated admin unless
-        `ALLOW_PUBLIC_REGISTRATION` is enabled, which exists only to bootstrap
-        the first admin in a fresh environment.
+        Admin only. Creates the application account (role and permissions) with
+        no credentials. The person then signs up in Neon Auth with the same
+        address; once Neon Auth has verified it, the two are linked on their
+        first authenticated request.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [email, password, fullName]
+              required: [email, fullName]
               properties:
                 email:    { type: string, format: email }
-                password: { type: string, minLength: 12 }
                 fullName: { type: string }
                 role:     { $ref: '#/components/schemas/Role' }
       responses:
         '201': { description: Created }
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
-
-  /api/auth/forgot-password:
-    post:
-      tags: [Authentication]
-      summary: Request a password reset
-      description: |
-        Always responds 200 with the same body, whether or not the address is
-        registered, so it cannot be used to enumerate accounts.
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email]
-              properties:
-                email: { type: string, format: email }
-      responses:
-        '200': { description: A reset link has been sent if the account exists }
-
-  /api/auth/reset-password:
-    post:
-      tags: [Authentication]
-      summary: Set a new password with a reset token
-      description: Revokes every existing session on success.
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [token, password]
-              properties:
-                token:    { type: string }
-                password: { type: string, minLength: 12 }
-      responses:
-        '200': { description: Password changed }
-        '400': { description: Invalid or expired link }
 
   /api/admin/analytics:
     get:
@@ -726,6 +634,29 @@ paths:
           content:
             application/json:
               schema: { type: object }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/taxonomy:
+    get:
+      tags: [Admin]
+      summary: Taxonomy options for the project editor
+      description: |
+        Every project type, location, sector, service and tag with its id.
+        Requires `admin` or `editor` with `projects:write`. Unlike
+        `/api/search/facets`, this lists values no live project uses yet.
+      responses:
+        '200':
+          description: Taxonomy lists, each sorted by name
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projectTypes: { type: array, items: { $ref: '#/components/schemas/TaxonomyLabel' } }
+                  locations:    { type: array, items: { $ref: '#/components/schemas/TaxonomyLabel' } }
+                  sectors:      { type: array, items: { $ref: '#/components/schemas/TaxonomyLabel' } }
+                  services:     { type: array, items: { $ref: '#/components/schemas/TaxonomyLabel' } }
+                  tags:         { type: array, items: { $ref: '#/components/schemas/TaxonomyLabel' } }
         '403': { $ref: '#/components/responses/Forbidden' }
 
   /api/admin/audit-log:
@@ -879,50 +810,35 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/admin/tours/presign:
+  /api/uploadthing:
+    get:
+      tags: [Virtual Tours]
+      summary: UploadThing upload endpoint
+      description: |
+        Used by the UploadThing client, not called directly. `POST` requests an
+        upload URL for the `tourModel` route and is authorised by the console's
+        bearer token and the `tours:write` permission; UploadThing also calls it
+        back when an upload completes. The request and response shapes are
+        UploadThing's own.
+      responses:
+        '200': { description: Route configuration }
     post:
       tags: [Virtual Tours]
-      summary: Get a direct-to-storage upload URL
-      description: |
-        The browser PUTs the model to `uploadUrl`, then registers it with
-        `POST /api/admin/tours`. `contentLength` is signed into the URL, so the
-        declared size cannot be understated.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [projectId, contentType, contentLength]
-              properties:
-                projectId:     { type: string, format: uuid }
-                contentType:   { type: string, enum: ['model/gltf-binary', 'model/gltf+json', 'application/octet-stream', 'application/zip'] }
-                contentLength: { type: integer }
+      summary: Request an upload, or receive UploadThing's completion callback
       responses:
-        '200':
-          description: Presigned upload
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  uploadUrl:         { type: string }
-                  key:               { type: string }
-                  publicUrl:         { type: string }
-                  expiresInSeconds:  { type: integer }
-                  maxBytes:          { type: integer }
-        '400': { description: Unsupported content type, or file over the size limit }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '503': { description: Object storage is not configured }
+        '200': { description: Upload URLs issued }
+        '400': { description: Rejected — wrong file type, over the size limit, or not authorised }
 
   /api/admin/tours:
     post:
       tags: [Virtual Tours]
       summary: Register an uploaded tour
       description: |
-        A `threejs_model` tour is accepted only once its object is confirmed
-        present in storage, so a presigned URL that was never used cannot leave
-        a tour record pointing at nothing.
+        The model is uploaded first, from the browser straight to UploadThing
+        (`/api/uploadthing`, authorised by the same bearer token). A
+        `threejs_model` tour is accepted only once that file is confirmed
+        present in storage, so an upload that never finished cannot leave a
+        tour record pointing at nothing.
       requestBody:
         required: true
         content:
@@ -934,10 +850,37 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Tour' }
-        '400': { description: No uploaded object found for that key }
+        '400': { description: No uploaded file found for that key }
+        '503': { description: Object storage is not configured }
         '422': { $ref: '#/components/responses/ValidationFailed' }
 
   /api/admin/tours/{tourId}:
+    patch:
+      tags: [Virtual Tours]
+      summary: Update a tour
+      description: |
+        Every field is optional and `null` clears one. The format cannot be
+        changed. A `threejs_model` tour takes a new `modelKey` (from a fresh
+        upload) to replace its file — the old file is deleted — and rejects
+        `tourUrl` and `embedCode`; the other formats reject `modelKey`. Clearing
+        the last payload a format needs is a 422.
+      parameters:
+        - { name: tourId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TourUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tour' }
+        '400': { description: No uploaded file found for that key }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
     delete:
       tags: [Virtual Tours]
       summary: Delete a tour and its stored asset
@@ -1086,7 +1029,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 15-minute access token from `/api/auth/login` or `/api/auth/refresh`.
+      description: 15-minute Neon Auth access token (`authClient.token()`).
 
   parameters:
     Page:
@@ -1401,13 +1344,33 @@ components:
         projectId:    { type: string, format: uuid }
         tourName:     { type: string }
         tourType:     { type: string, enum: [threejs_model, matterport_embed, custom_viewer] }
-        modelKey:     { type: string, description: Required for threejs_model — the key from /presign }
+        modelKey:     { type: string, description: Required for threejs_model — the UploadThing file key returned by the upload }
         tourUrl:      { type: string, description: Required for custom_viewer }
         embedCode:    { type: string, description: Required for matterport_embed unless tourUrl is given }
         thumbnailUrl: { type: string }
         description:  { type: string }
         featured:     { type: boolean, default: false }
         published:    { type: boolean, default: true }
+
+    TaxonomyLabel:
+      type: object
+      properties:
+        id:   { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+
+    TourUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        tourName:     { type: string }
+        modelKey:     { type: string, description: threejs_model only — the UploadThing key of a replacement file }
+        tourUrl:      { type: string, nullable: true, description: Not accepted for threejs_model }
+        embedCode:    { type: string, nullable: true, description: matterport_embed only }
+        thumbnailUrl: { type: string, nullable: true }
+        description:  { type: string, nullable: true }
+        featured:     { type: boolean }
+        published:    { type: boolean }
 
     NewsSummary:
       type: object
@@ -1517,16 +1480,6 @@ components:
         twoFactorEnabled:  { type: boolean }
         createdAt:         { type: string, format: date-time }
         lastLogin:         { type: string, format: date-time, nullable: true }
-
-    AuthSession:
-      type: object
-      properties:
-        accessToken: { type: string }
-        expiresIn:   { type: integer, description: Seconds — 900 }
-        tokenType:   { type: string, enum: [Bearer] }
-        csrfToken:   { type: string, description: Echo this in X-CSRF-Token on cookie-authenticated writes }
-        user:        { $ref: '#/components/schemas/User' }
-        permissions: { type: array, items: { type: string } }
 
 security:
   - bearerAuth: []

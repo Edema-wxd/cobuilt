@@ -5,6 +5,10 @@
     "moduleResolution": "node",
     "isolatedModules": false,
     "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@neondatabase/auth/*": ["./__tests__/setup/neon-auth-stub.ts"]
+    },
     "types": ["node", "jest"]
   }
 }

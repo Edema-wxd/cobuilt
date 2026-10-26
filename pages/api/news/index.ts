@@ -7,7 +7,7 @@ import { createNewsBody, listNewsQuery } from '@/lib/schemas/news';
 import * as news from '@/lib/repositories/news';
 import * as audit from '@/lib/repositories/audit';
 import { AUDIT_ACTIONS } from '@/lib/repositories/audit';
-import { serializeNews, serializeNewsSummary } from '@/lib/serializers';
+import { serializeNewsForAdmin, serializeNewsSummary, serializeNewsSummaryForAdmin } from '@/lib/serializers';
 import { enqueueSearch } from '@/lib/queues';
 
 /**
@@ -39,7 +39,10 @@ export default createRoute({
         ? await load()
         : await remember(key('news:list', { ...query, includeUnpublished: false }), TTL.news, load);
 
-      return { ...page, results: page.results.map(serializeNewsSummary) };
+      return {
+        ...page,
+        results: page.results.map(canSeeDrafts ? serializeNewsSummaryForAdmin : serializeNewsSummary),
+      };
     },
   },
 
@@ -73,7 +76,7 @@ export default createRoute({
         enqueueSearch({ action: 'upsert', index: 'news', id: article.id }),
       ]);
 
-      return created(serializeNews(article));
+      return created(serializeNewsForAdmin(article));
     },
   },
 });

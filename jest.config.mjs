@@ -7,8 +7,10 @@ export default {
   testMatch: ['<rootDir>/__tests__/**/*.test.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@neondatabase/auth(/.*)?$': '<rootDir>/__tests__/setup/neon-auth-stub.ts',
   },
   setupFiles: ['<rootDir>/__tests__/setup/env.ts'],
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setup/auth.ts'],
   // The integration suites share one PostgreSQL database and truncate between
   // tests, so they must not run concurrently with each other.
   maxWorkers: 1,

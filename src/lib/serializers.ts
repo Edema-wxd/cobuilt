@@ -138,7 +138,16 @@ export function serializeProjectForAdmin(row: ProjectRow) {
     createdBy: row.created_by,
     deletedAt: toIso(row.deleted_at),
     isPublished: row.published_at !== null && new Date(row.published_at).getTime() <= Date.now(),
+    cms: cmsOrigin(row),
   };
+}
+
+/**
+ * Where a mirrored row came from. A console edit to one is overwritten the
+ * next time it is published in the CMS, so the console says so.
+ */
+function cmsOrigin(row: { cms_source: string | null; cms_synced_at: Date | null }) {
+  return row.cms_source ? { source: row.cms_source, syncedAt: toIso(row.cms_synced_at) } : null;
 }
 
 export function serializeMilestone(row: MilestoneRow) {
@@ -175,7 +184,7 @@ export function serializeTour(row: TourRow) {
     thumbnailUrl: row.thumbnail_url,
     tourUrl: row.tour_url,
     embedCode: row.embed_code,
-    modelKey: row.model_file_s3_key,
+    modelKey: row.model_file_key,
     fileSizeBytes: toNumber(row.file_size_bytes),
     featured: row.featured,
     viewCount: row.view_count,
@@ -212,6 +221,22 @@ export function serializeNews(row: NewsRow) {
 /** List view omits the article body, which can be hundreds of kilobytes. */
 export function serializeNewsSummary(row: NewsRow) {
   const { content, ...summary } = serializeNews(row);
+  void content;
+  return summary;
+}
+
+/** Admin view: drafts carry their author and CMS origin, and say whether they are live. */
+export function serializeNewsForAdmin(row: NewsRow) {
+  return {
+    ...serializeNews(row),
+    authorId: row.author_id,
+    isPublished: row.published_at !== null && new Date(row.published_at).getTime() <= Date.now(),
+    cms: cmsOrigin(row),
+  };
+}
+
+export function serializeNewsSummaryForAdmin(row: NewsRow) {
+  const { content, ...summary } = serializeNewsForAdmin(row);
   void content;
   return summary;
 }

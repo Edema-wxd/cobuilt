@@ -15,7 +15,7 @@ residency (§11), with Cloudflare in front for CDN and DDoS protection.
                               └─────┬─────┘               │
                     ┌───────────────┼───────────────┬─────┘
               PostgreSQL 16      Redis          Meilisearch      Object storage
-             (primary+replica)  (sentinel)      (optional)      (S3-compatible)
+             (primary+replica)  (sentinel)      (optional)      (UploadThing)
 ```
 
 `app-1` and `app-2` serve HTTP. `app-3` runs `npm run worker` only — email
@@ -30,7 +30,7 @@ a web node is possible but couples job load to request latency.
 | PostgreSQL | 14+ (16 recommended) | Needs `pg_trgm` and `pgcrypto` |
 | Redis | 7 | Cache, rate limiting, job queues |
 | Meilisearch | 1.x | Optional — see [decisions](decisions.md#26-search-degrades-to-postgresql) |
-| Object storage | S3-compatible | AWS S3, DigitalOcean Spaces, or a local equivalent |
+| Object storage | UploadThing | Hosted; set `UPLOADTHING_TOKEN` |
 | pm2 | latest | Process supervision |
 
 ## First deployment
@@ -47,14 +47,18 @@ cp .env.example .env.production      # fill in — see below
 npm run db:migrate
 npm run build
 
-# 3. Bootstrap the first admin. ALLOW_PUBLIC_REGISTRATION opens unauthenticated
-#    account creation, so it is enabled for exactly this one call and disabled
-#    again immediately.
-ALLOW_PUBLIC_REGISTRATION=true npm start &
-curl -X POST localhost:3000/api/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"admin@cobuilt.com","password":"<generated>","fullName":"...","role":"admin"}'
-kill %1
+# 3. Bootstrap the first admin. Identity is Neon Auth (`neon deploy` provisions it
+#    and writes NEON_AUTH_BASE_URL / NEON_AUTH_JWKS_URL). Two ways to get the
+#    first administrator:
+#      a. Insert the account, then have its owner sign up with that address at
+#         /admin/register (they confirm it with the emailed code):
+#           INSERT INTO users (email, full_name, role)
+#           VALUES ('admin@cobuilt.com', '...', 'admin');
+#      b. Start once with ALLOW_PUBLIC_REGISTRATION=true, sign up at
+#         /admin/register (the first verified sign-up becomes admin), then
+#         restart with it unset.
+#    Add the site's origin as a Neon Auth trusted domain first:
+#      neon neon-auth domain add https://<site origin>
 
 # 4. Search indexes (only if Meilisearch is configured)
 npm run search:reindex
@@ -68,12 +72,15 @@ pm2 save && pm2 startup
 ## Required configuration
 
 The app refuses to boot in production without `DATABASE_URL`, `REDIS_URL`,
-`JWT_SECRET` and `ALLOWED_ORIGINS`. Every variable is declared in
+`NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL` and `ALLOWED_ORIGINS`. Every variable is declared in
 `src/lib/env.ts`; `.env.example` is the annotated template.
 
-Generate the JWT secret with `openssl rand -hex 32` — a 32-byte random value,
-never a passphrase. It must be identical across app servers, or a token issued
-by one will be rejected by the other.
+`NEXT_PUBLIC_NEON_AUTH_URL` (the same value as `NEON_AUTH_BASE_URL`) is read by
+the admin console in the browser, so it must be set when `npm run build` runs.
+
+Neon Auth sends its emails (verification and reset codes) from a shared sender
+while getting started. Before real users depend on it, configure custom SMTP:
+https://neon.com/docs/auth/production-checklist
 
 `ALLOWED_ORIGINS` is an exact-match list. The CORS layer echoes the request
 origin only when it appears there; the wildcard is never used, because
@@ -126,7 +133,7 @@ server {
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 
     # Tour models are up to 50 MB, but they are uploaded directly to object
-    # storage with a presigned URL. Nothing that transits Nginx is large.
+    # storage (UploadThing). Nothing that transits Nginx is large.
     client_max_body_size 2m;
 
     location / {
@@ -175,8 +182,8 @@ Restore into a scratch database and run the application against it at least
 quarterly. An untested backup is not a backup.
 
 Redis holds cache and queue state only — losing it costs in-flight jobs and a
-cold cache, not data. Object storage needs its own versioning or replication:
-tour assets are not in `pg_dump`.
+cold cache, not data. Tour assets live in UploadThing, not in `pg_dump`; keep
+the originals of every uploaded model.
 
 ## Health checks
 

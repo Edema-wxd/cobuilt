@@ -1,6 +1,5 @@
 #!/usr/bin/env tsx
 import { pool, query, queryOne } from '../src/lib/db';
-import { hashPassword } from '../src/lib/auth/password';
 import { slugify } from '../src/lib/slug';
 
 /**
@@ -8,11 +7,10 @@ import { slugify } from '../src/lib/slug';
  *
  * Idempotent: every insert is ON CONFLICT DO NOTHING or keyed on a slug, so
  * running it repeatedly against a development database is safe. It refuses to
- * run in production — the admin password below is a known value.
+ * run in production.
  */
 
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'admin@cobuilt.local';
-const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMeBeforeUse!';
 
 async function seedTaxonomy(): Promise<void> {
   const projectTypes = ['Residential', 'Commercial', 'Mixed Use', 'Infrastructure'];
@@ -68,12 +66,13 @@ async function seedAdmin(): Promise<string> {
   if (existing) return existing.id;
 
   const row = await queryOne<{ id: string }>(
-    `INSERT INTO users (email, password_hash, full_name, role, email_verified)
-     VALUES ($1, $2, $3, 'admin', TRUE) RETURNING id`,
-    [ADMIN_EMAIL, await hashPassword(ADMIN_PASSWORD), 'Seed Administrator'],
+    `INSERT INTO users (email, full_name, role) VALUES ($1, $2, 'admin') RETURNING id`,
+    [ADMIN_EMAIL, 'Seed Administrator'],
   );
 
-  console.log(`  admin user: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+  console.log(
+    `  admin account: ${ADMIN_EMAIL} — sign up with this address at /admin/register to claim it`,
+  );
   return row!.id;
 }
 

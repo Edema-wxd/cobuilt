@@ -1,6 +1,5 @@
 import { randomBytes } from 'node:crypto';
 import type { NextApiRequest } from 'next';
-import { CSRF_COOKIE, readCookie } from '../auth/refreshTokens';
 import { safeCompare } from '../auth/password';
 import { forbidden } from './errors';
 import { header } from './request';
@@ -13,6 +12,22 @@ import { env } from '../env';
  * carrying a bearer token are not CSRF-able: a browser will not attach an
  * Authorization header on its own.
  */
+
+export const CSRF_COOKIE = 'cobuilt_csrf';
+
+function readCookie(req: NextApiRequest, name: string): string | null {
+  const header = req.headers.cookie;
+  if (!header) return null;
+
+  for (const part of header.split(';')) {
+    const index = part.indexOf('=');
+    if (index === -1) continue;
+    if (part.slice(0, index).trim() === name) {
+      return decodeURIComponent(part.slice(index + 1).trim());
+    }
+  }
+  return null;
+}
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 

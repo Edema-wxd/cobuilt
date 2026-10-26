@@ -6,7 +6,6 @@ import { badRequest, notFound } from '@/lib/http/errors';
 import * as users from '@/lib/repositories/users';
 import * as audit from '@/lib/repositories/audit';
 import { AUDIT_ACTIONS } from '@/lib/repositories/audit';
-import { revokeAllForUser } from '@/lib/auth/refreshTokens';
 import { serializeUser } from '@/lib/serializers';
 
 /** POST /api/admin/users/[userId]/role — change a user's role or permissions. */
@@ -38,11 +37,6 @@ export default createRoute({
         changes: { from: before.role, to: body.role, permissions: body.permissions ?? null },
         ipAddress: ip,
       });
-
-      // Access tokens carry the old role until they expire; revoking the
-      // refresh tokens ensures the change takes effect within 15 minutes and
-      // the user cannot silently extend the old privileges.
-      await revokeAllForUser(query.userId);
 
       return serializeUser(updated!);
     },

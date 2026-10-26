@@ -19,6 +19,14 @@ export const ADDRESS_LINES = [
   'Mon–Fri, 08:00–17:00 WAT',
 ];
 
+/**
+ * Where the contact page's map puts its marker. Null until CoBuilt supplies
+ * a confirmed position for the office: the address above does not geocode,
+ * and a pin in the wrong place sends visitors to the wrong building. While it
+ * is null the map is simply not shown. See docs/decisions.md §2.17.
+ */
+export const OFFICE_LOCATION: { lat: number; lng: number } | null = null;
+
 export interface NavItem {
   label: string;
   href: string;

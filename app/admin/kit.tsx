@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import type { Role } from '@/lib/auth/rbac';
 import { ApiFailure, api } from './auth-client';
 import { eyebrow } from '../../components/ui';
 
@@ -33,6 +34,14 @@ export const filterSelect =
   'select-chevron min-h-target cursor-pointer border border-zinc-400 bg-white pr-10 pl-3 text-base text-ink sm:text-[0.875rem]';
 export const filterInput =
   'min-h-target border border-zinc-400 bg-white px-3 text-base text-ink placeholder:text-zinc-500 sm:text-[0.875rem]';
+
+/** What each role opens, shown wherever a role is chosen. */
+export const ROLE_NOTES: Record<Role, string> = {
+  admin: 'Everything, including users and legal sign-off',
+  editor: 'Projects, news, tours; reads submissions',
+  viewer: 'Read-only dashboard and analytics',
+  investor: 'Phase 2 — no console access',
+};
 
 const dateTime = new Intl.DateTimeFormat('en-GB', {
   dateStyle: 'medium',

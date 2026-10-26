@@ -25,6 +25,7 @@ const SELECT_COLUMNS = `
   p.investor_highlights_approved,
   p.meta_title, p.meta_description, p.open_graph_image_url, p.canonical_url,
   p.published_at, p.created_at, p.updated_at, p.deleted_at, p.created_by,
+  p.cms_source, p.cms_synced_at,
   pt.name AS project_type_name,
   l.name  AS location_name,
   s.name  AS sector_name
@@ -270,8 +271,13 @@ export async function update(
     assignments.push(`${column} = $${params.length}`);
   }
 
-  // Editing the investor payload invalidates any prior legal sign-off (§10).
-  if (input.investorHighlights !== undefined) {
+  // Editing any investor figure invalidates a prior legal sign-off (§10): the
+  // approval covers the amount and ROI as much as the highlights.
+  if (
+    input.investmentAmount !== undefined ||
+    input.expectedRoi !== undefined ||
+    input.investorHighlights !== undefined
+  ) {
     assignments.push(
       'investor_highlights_approved = FALSE',
       'investor_highlights_approved_by = NULL',
@@ -380,6 +386,29 @@ export interface TaxonomyLabel {
   id: string;
   name: string;
   slug: string;
+}
+
+/** Every taxonomy record a project can reference, for the console's pickers. */
+export async function taxonomyOptions(): Promise<{
+  projectTypes: TaxonomyLabel[];
+  locations: TaxonomyLabel[];
+  sectors: TaxonomyLabel[];
+  services: TaxonomyLabel[];
+  tags: TaxonomyLabel[];
+}> {
+  // Table names come from this fixed list, never from input.
+  const all = (table: string) =>
+    query<TaxonomyLabel>(`SELECT id, name, slug FROM ${table} ORDER BY name`).then((r) => r.rows);
+
+  const [projectTypes, locations, sectors, services, tags] = await Promise.all([
+    all('project_types'),
+    all('locations'),
+    all('sectors'),
+    all('services'),
+    all('tags'),
+  ]);
+
+  return { projectTypes, locations, sectors, services, tags };
 }
 
 /** Whitelisted, because the table name is interpolated into the SQL. */

@@ -27,29 +27,28 @@ not define. They are added in the migrations:
 | `newsletter_subscribers` | §8, newsletter subscription |
 | `whatsapp_messages` | §9, WhatsApp webhook |
 | `audit_log` | §3, `GET /api/admin/audit-log` |
-| `refresh_tokens` | §3/§4, implied by "logout invalidates token" |
 
 `projects.investor_highlights_approved` is likewise read by §10's approval gate
 but absent from §2's `projects` table; it is added, along with who approved it
 and when.
 
-### 1.3 A stateless JWT cannot be invalidated
+### 1.3 Identity is Neon Auth (supersedes the original JWT design)
 
-§3 specifies `POST /api/auth/logout` to "invalidate token", and §4 specifies
-stateless JWTs. These cannot both hold: nothing recalls a signed token before it
-expires.
+§3 and §4 specified self-issued stateless JWTs plus refresh tokens in
+`refresh_tokens`. Identity now belongs to Neon Auth (Managed Better Auth):
+credentials, email verification, password reset and sessions live in the
+`neon_auth` schema, and its 15-minute EdDSA access tokens are verified here
+against the branch JWKS. `refresh_tokens` and the password columns' use were
+removed (migration 0014).
 
-Resolution: access tokens stay stateless and short-lived (15 minutes, as
-specified). Refresh tokens become opaque random strings, stored hashed in
-`refresh_tokens`, single-use and rotated on every refresh. Logout revokes the
-refresh token, so the session ends within one access-token lifetime at worst.
-Rotation also gives token-theft detection: a token that was exchanged and is
-then replayed revokes every session for that user.
-
-A token revoked by *logout* is treated differently from one replayed after
-*rotation*. A stale browser tab retrying a logged-out token is ordinary and
-must not sign the user out of their other devices; only a replayed, already
-exchanged token indicates theft.
+Authorisation stays in this application. A Neon Auth user is joined to a row in
+`users` — which holds role, per-user permissions and `is_active` — on first
+sign-in, and only when Neon Auth reports the address as verified: linking on an
+unverified address would let anyone who signs up with an administrator's email
+take the account over. A signed-in Neon Auth user with no `users` row is refused.
+Because role and `is_active` are read from `users` on every request, a role
+change or deactivation takes effect at once instead of when a token expires.
+Neon Auth's "Require email verification" is switched on for the same reason.
 
 ### 1.4 `express-rate-limit` does not compose with Next.js API routes
 
@@ -108,13 +107,14 @@ This keeps the website up during a CMS outage, keeps `search_vector`, faceting
 and the Passport join in one queryable place, and preserves the editor
 experience §5 asks for. See [`cms-sync.md`](cms-sync.md).
 
-### 2.2 Tour uploads are presigned, not proxied
+### 2.2 Tour uploads go direct to storage, not through the API
 
 §7's sample posts the file body to an API route. A Next.js route has a 4 MB
 default body limit and would hold a worker for the duration of a 50 MB upload.
-The browser instead requests a presigned URL, PUTs directly to storage, then
-registers the tour — which is only accepted once the object is confirmed
-present.
+The browser instead uploads directly to UploadThing, the sole object store,
+through its file router (`pages/api/uploadthing.ts`), whose middleware checks
+the console's bearer token and the `tours:write` permission. It then registers
+the tour — which is only accepted once the file is confirmed present.
 
 ### 2.3 Soft deletes for content
 
@@ -430,6 +430,94 @@ utility strip go to the contact page and the video library, because the
 company's accounts are unconfirmed and a guessed URL is worse than a local one;
 WhatsApp Business goes to `wa.me` on the office number. Governance, Downloads
 and FAQs stay unlinked in the footer, as they were.
+
+### 2.16 The Three.js tour viewer asks before it downloads, and says why it failed
+
+`threejs_model` tours open in the page (`app/projects/[slug]/model-viewer.tsx`)
+in the same viewer chrome the Matterport and custom embeds already used:
+"Enter the tour", Fullscreen, Exit tour, Escape, and the tour list beside it
+for switching. What a model adds is weight, so the design is about what
+happens before and around the download.
+
+**Three.js is not in the page bundle.** It and its loaders are imported inside
+the viewer's effect, fetched only when someone enters a model tour and in
+parallel with the model. A chunk that fails to load is reported as a failed
+download, not thrown at the page's error boundary.
+
+**The device is assessed first** (`tour-model.ts`, `assessDevice`). No WebGL
+means no download at all and an explanation. A model over 25 MB, or of unknown
+size, on a device reporting 2 GB of memory or less, or with the browser's data
+saver on, gets a "This is a large model" prompt naming the size, with "Load
+anyway" beside the gallery. Everything else just loads. `deviceMemory` exists
+only in Chromium; its absence is not taken as evidence of a weak device.
+
+**The model is downloaded with `fetch`, not the loader's own request**, so
+progress is real (a percentage of Content-Length, or of the size the admin
+recorded) and Cancel, Exit and switching tours actually stop the transfer.
+
+**The file is identified by its bytes.** Storage URLs carry no extension, and
+the admin console accepts .glb, .gltf and .zip. A zip is unpacked in the
+browser (fflate) and its scene's buffers and textures are handed to the loader
+as blob URLs. Draco and Meshopt compression are both supported: the Meshopt
+decoder is bundled, and the Draco decoder is served from
+`public/vendor/draco/`, copied from `three/examples/jsm/libs/draco/gltf`. Recopy
+it when upgrading three.
+
+**Failures are told apart, because the way out differs:**
+
+| Failure | Cause | Offered |
+|---|---|---|
+| No WebGL | Browser or device can't do 3D | Gallery, Back |
+| Network | Download failed or the file is unreachable | **Try again**, Gallery, Back |
+| Format | Not a model, an empty one, or an extension the loader rejects | Gallery, Back |
+| Render | WebGL wouldn't start, or the GPU dropped the context mid-tour | Gallery, Back |
+
+The model URL passes the same https check as embed URLs before it reaches the
+browser (`load-project.ts`). The bucket must send CORS headers allowing the
+site's origin, because the download is a cross-origin `fetch`. UploadThing's
+file URLs are expected to do so, but this has not been tested against a live
+file.
+
+Fullscreen is offered only where `document.fullscreenEnabled` says it works,
+which excludes iPhone Safari. The viewer itself is keyboard-operable: focus it
+and the arrow keys pan, and "Reset view" restores the opening angle.
+
+### 2.17 The contact map loads on request, and waits for a confirmed location
+
+The handover left the map undecided (§3.6). It is built
+(`app/contact/office-map.tsx`) on two conditions.
+
+**It is click-to-load.** An embedded map is a request to a third party as soon
+as it renders, which hands over the visitor's IP address before they have
+chosen anything. The page shows a still panel with "Show the map", and the
+frame exists only after that click. OpenStreetMap rather than Google Maps,
+because the OSM embed sets no cookies and so needs no cookie category. "Get
+directions" opens the visitor's own maps app and needs no embed at all.
+
+**It is hidden until `OFFICE_LOCATION` in `components/site.ts` is set.** The
+published address, 27 Apex Drive, TechZone District, Victoria Heights, does
+not geocode, and a pin in the wrong place sends people to the wrong building.
+CoBuilt needs to supply the office's coordinates. Setting them is the whole
+change.
+
+### 2.18 Every page has a social preview image
+
+`components/og.tsx` draws a branded 1200×630 card with Next.js's `ImageResponse`.
+`app/opengraph-image.tsx` is the site default. Project, Passport™, article and
+service pages have their own beside them, carrying the item's title and one
+line of fact: status, milestone progress or publication date.
+
+**An item's own photography wins.** Where a project or article has an Open
+Graph or featured image, its `generateMetadata` names that, and Next.js drops
+the generated card, because `openGraph.images` set at the same level beats the
+file. Twitter cards are now always `summary_large_image`, since there is always
+an image.
+
+The root layout sets `metadataBase` from `NEXT_PUBLIC_WEBSITE_URL`. Without it,
+relative image URLs (`/images/…`) were emitted as relative `og:image` values,
+which link previews ignore. The cards use the renderer's built-in sans rather
+than Geist, because fetching a font at build time would break the offline
+build.
 
 ## 3. Still open
 

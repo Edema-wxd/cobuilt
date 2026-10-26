@@ -1,16 +1,9 @@
 import { describeWithDatabase, resetDatabase, truncateAll } from '../setup/database';
-import { pool, query, queryOne } from '@/lib/db';
+import { pool, queryOne } from '@/lib/db';
+import { env } from '@/lib/env';
 import * as users from '@/lib/repositories/users';
 import * as forms from '@/lib/repositories/forms';
-import {
-  findRefreshToken,
-  issueRefreshToken,
-  purgeExpiredRefreshTokens,
-  revokeAllForUser,
-  revokeRefreshToken,
-  rotateRefreshToken,
-} from '@/lib/auth/refreshTokens';
-import { verifyPassword } from '@/lib/auth/password';
+import { resolveAccount, type NeonIdentity } from '@/lib/auth/session';
 
 describeWithDatabase('authentication flows', () => {
   let userId: string;
@@ -23,7 +16,6 @@ describeWithDatabase('authentication flows', () => {
     await truncateAll();
     const user = await users.create({
       email: 'editor@cobuilt.test',
-      password: 'a-sufficiently-long-password',
       fullName: 'Test Editor',
       role: 'editor',
     });
@@ -34,166 +26,76 @@ describeWithDatabase('authentication flows', () => {
     await pool.end();
   });
 
-  const issue = () => issueRefreshToken({ userId, userAgent: 'jest', ipAddress: '102.89.44.0' });
+  const identity = (overrides: Partial<NeonIdentity> = {}): NeonIdentity => ({
+    id: '9d1c1f6e-0f43-4a0e-9a57-0c8b3b2f6a11',
+    email: 'editor@cobuilt.test',
+    emailVerified: true,
+    name: 'Test Editor',
+    ...overrides,
+  });
 
-  describe('refresh token rotation', () => {
-    it('exchanges a valid token for a new one and revokes the old', async () => {
-      const first = await issue();
-      const rotated = await rotateRefreshToken({ token: first.token, userAgent: 'jest', ipAddress: null });
+  describe('linking a Neon Auth identity', () => {
+    it('links an invited account on the first verified sign-in', async () => {
+      const account = await resolveAccount(identity());
 
-      expect(rotated).not.toBeNull();
-      expect(rotated!.userId).toBe(userId);
-      expect(rotated!.token).not.toBe(first.token);
-
-      const old = await findRefreshToken(first.token);
-      expect(old!.revoked_at).not.toBeNull();
-      expect(old!.replaced_by).not.toBeNull();
+      expect(account.id).toBe(userId);
+      expect(account.role).toBe('editor');
+      expect(account.auth_user_id).toBe(identity().id);
+      expect(account.email_verified).toBe(true);
     });
 
-    it('rejects a token that has already been rotated', async () => {
-      const first = await issue();
-      await rotateRefreshToken({ token: first.token, userAgent: null, ipAddress: null });
-
-      expect(
-        await rotateRefreshToken({ token: first.token, userAgent: null, ipAddress: null }),
-      ).toBeNull();
+    it('matches the invited address case-insensitively', async () => {
+      const account = await resolveAccount(identity({ email: 'Editor@CoBuilt.test' }));
+      expect(account.id).toBe(userId);
     });
 
-    it('revokes the whole family when a rotated token is replayed', async () => {
-      // A replay means the token was captured; every live session for that
-      // user has to die, not just the replayed one.
-      const first = await issue();
-      const second = await rotateRefreshToken({ token: first.token, userAgent: null, ipAddress: null });
-      const otherDevice = await issue();
-
-      await rotateRefreshToken({ token: first.token, userAgent: null, ipAddress: null });
-
-      expect(
-        await rotateRefreshToken({ token: second!.token, userAgent: null, ipAddress: null }),
-      ).toBeNull();
-      expect(
-        await rotateRefreshToken({ token: otherDevice.token, userAgent: null, ipAddress: null }),
-      ).toBeNull();
+    it('finds the account by identity once linked, even if the email changes', async () => {
+      await resolveAccount(identity());
+      const again = await resolveAccount(identity({ email: 'renamed@cobuilt.test' }));
+      expect(again.id).toBe(userId);
     });
 
-    it('rejects an unknown token', async () => {
-      expect(
-        await rotateRefreshToken({ token: 'f'.repeat(64), userAgent: null, ipAddress: null }),
-      ).toBeNull();
-    });
+    it('refuses to link an unverified address', async () => {
+      await expect(resolveAccount(identity({ emailVerified: false }))).rejects.toThrow(/verify/i);
 
-    it('rejects an expired token', async () => {
-      const token = await issue();
-      await query(
-        `UPDATE refresh_tokens SET expires_at = NOW() - INTERVAL '1 hour' WHERE user_id = $1`,
+      const row = await queryOne<{ auth_user_id: string | null }>(
+        `SELECT auth_user_id FROM users WHERE id = $1`,
         [userId],
       );
-
-      expect(
-        await rotateRefreshToken({ token: token.token, userAgent: null, ipAddress: null }),
-      ).toBeNull();
+      expect(row!.auth_user_id).toBeNull();
     });
 
-    it('stores only a hash, never the token itself', async () => {
-      const token = await issue();
-      const row = await queryOne<{ token_hash: string }>(
-        `SELECT token_hash FROM refresh_tokens WHERE user_id = $1`,
-        [userId],
+    it('refuses an identity that is not linked to an account', async () => {
+      await expect(resolveAccount(identity({ email: 'stranger@example.com' }))).rejects.toThrow(
+        /no cobuilt account/i,
       );
-
-      expect(row!.token_hash).not.toBe(token.token);
-      expect(row!.token_hash).toHaveLength(64);
     });
 
-    it('logout revokes one session, not the others', async () => {
-      const laptop = await issue();
-      const phone = await issue();
-
-      await revokeRefreshToken(laptop.token);
-
-      expect(await rotateRefreshToken({ token: laptop.token, userAgent: null, ipAddress: null })).toBeNull();
-      expect(await rotateRefreshToken({ token: phone.token, userAgent: null, ipAddress: null })).not.toBeNull();
-    });
-
-    it('does not end other sessions when a logged-out token is retried', async () => {
-      // A stale browser tab retrying a logged-out token is ordinary; only a
-      // token that was exchanged and then replayed indicates theft.
-      const laptop = await issue();
-      const phone = await issue();
-
-      await revokeRefreshToken(laptop.token);
-      await rotateRefreshToken({ token: laptop.token, userAgent: null, ipAddress: null });
-
-      expect(
-        await rotateRefreshToken({ token: phone.token, userAgent: null, ipAddress: null }),
-      ).not.toBeNull();
-    });
-
-    it('revokeAllForUser ends every session', async () => {
-      const laptop = await issue();
-      const phone = await issue();
-
-      await revokeAllForUser(userId);
-
-      expect(await rotateRefreshToken({ token: laptop.token, userAgent: null, ipAddress: null })).toBeNull();
-      expect(await rotateRefreshToken({ token: phone.token, userAgent: null, ipAddress: null })).toBeNull();
-    });
-
-    it('purges rows that can no longer authenticate anyone', async () => {
-      await issue();
-      await query(
-        `UPDATE refresh_tokens SET expires_at = NOW() - INTERVAL '60 days' WHERE user_id = $1`,
-        [userId],
-      );
-
-      expect(await purgeExpiredRefreshTokens()).toBe(1);
+    it('does not let a second identity take over an already-linked account', async () => {
+      await resolveAccount(identity());
+      await expect(
+        resolveAccount(identity({ id: '5b7a2d84-6f1e-4c53-8d0a-3a9e1f7c2b90' })),
+      ).rejects.toThrow(/no cobuilt account/i);
     });
   });
 
-  describe('password reset', () => {
-    it('issues a token and sets the new password', async () => {
-      const reset = await users.createPasswordReset('editor@cobuilt.test');
-      expect(reset).not.toBeNull();
+  describe('bootstrap sign-up (ALLOW_PUBLIC_REGISTRATION)', () => {
+    const mutable = env as { ALLOW_PUBLIC_REGISTRATION: boolean };
+    afterEach(() => {
+      mutable.ALLOW_PUBLIC_REGISTRATION = false;
+    });
 
-      const updated = await users.consumePasswordReset(reset!.token, 'a-brand-new-password');
-      expect(updated).not.toBeNull();
+    it('makes the first account an administrator and later ones viewers', async () => {
+      await truncateAll();
+      mutable.ALLOW_PUBLIC_REGISTRATION = true;
 
-      const user = await queryOne<{ password_hash: string }>(
-        `SELECT password_hash FROM users WHERE id = $1`,
-        [userId],
+      const first = await resolveAccount(identity({ email: 'first@cobuilt.test' }));
+      expect(first.role).toBe('admin');
+
+      const second = await resolveAccount(
+        identity({ id: '5b7a2d84-6f1e-4c53-8d0a-3a9e1f7c2b90', email: 'second@cobuilt.test' }),
       );
-      await expect(verifyPassword('a-brand-new-password', user!.password_hash)).resolves.toBe(true);
-    });
-
-    it('rejects a reused reset token', async () => {
-      const reset = await users.createPasswordReset('editor@cobuilt.test');
-      await users.consumePasswordReset(reset!.token, 'a-brand-new-password');
-
-      expect(await users.consumePasswordReset(reset!.token, 'another-password-here')).toBeNull();
-    });
-
-    it('rejects an expired reset token', async () => {
-      const reset = await users.createPasswordReset('editor@cobuilt.test');
-      await query(
-        `UPDATE users SET password_reset_expires_at = NOW() - INTERVAL '1 minute' WHERE id = $1`,
-        [userId],
-      );
-
-      expect(await users.consumePasswordReset(reset!.token, 'another-password-here')).toBeNull();
-    });
-
-    it('returns null for an unknown address instead of signalling it', async () => {
-      expect(await users.createPasswordReset('nobody@cobuilt.test')).toBeNull();
-    });
-
-    it('stores only a hash of the reset token', async () => {
-      const reset = await users.createPasswordReset('editor@cobuilt.test');
-      const row = await queryOne<{ password_reset_token_hash: string }>(
-        `SELECT password_reset_token_hash FROM users WHERE id = $1`,
-        [userId],
-      );
-
-      expect(row!.password_reset_token_hash).not.toBe(reset!.token);
+      expect(second.role).toBe('viewer');
     });
   });
 
@@ -218,7 +120,6 @@ describeWithDatabase('authentication flows', () => {
       await expect(
         users.create({
           email: 'editor@cobuilt.test',
-          password: 'a-sufficiently-long-password',
           fullName: 'Returning Editor',
           role: 'viewer',
         }),
@@ -237,7 +138,6 @@ describeWithDatabase('authentication flows', () => {
     it('counts users by role for the dashboard', async () => {
       await users.create({
         email: 'admin@cobuilt.test',
-        password: 'a-sufficiently-long-password',
         fullName: 'Test Admin',
         role: 'admin',
       });

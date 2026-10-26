@@ -102,17 +102,20 @@ investment 10/hour per IP). If they are being evaded:
 ### Suspected credential compromise
 
 ```sql
--- End every session for one user. They must sign in again; their access token
--- stops working within 15 minutes.
-UPDATE refresh_tokens SET revoked_at = NOW()
- WHERE user_id = '<uuid>' AND revoked_at IS NULL;
-
--- Deactivate the account outright.
+-- Deactivate the account. Effective on its next request: the API reads
+-- is_active from this table on every call, whatever token it presents.
 UPDATE users SET is_active = FALSE WHERE id = '<uuid>';
 ```
 
-To end **every** session for everyone, rotate `JWT_SECRET` and restart. That
-invalidates all access tokens immediately.
+To also end the person's Neon Auth sessions and remove their credentials, delete
+the identity (the account in `users` keeps its history and is unlinked):
+
+```bash
+neon neon-auth user delete <auth_user_id>      # users.auth_user_id
+```
+
+To sign everyone out at once, deactivate accounts as above, or rotate the
+signing key from the Neon Auth console.
 
 Check the audit log for what the account did:
 
@@ -120,10 +123,6 @@ Check the audit log for what the account did:
 SELECT created_at, action, entity_type, entity_id, ip_address
   FROM audit_log WHERE actor_id = '<uuid>' ORDER BY created_at DESC LIMIT 100;
 ```
-
-The application logs a warning when it detects a replayed refresh token
-(`Refresh token reuse detected`) — that line means a token was captured, and is
-worth investigating rather than dismissing.
 
 ---
 
@@ -197,16 +196,6 @@ POST /api/admin/projects/<projectId>/investor-approval
 
 Editing `investorHighlights` afterwards revokes the approval automatically —
 re-approval is required after any change. Both actions are audited.
-
-### Rotating the JWT secret
-
-Signs everyone out immediately, so schedule it outside business hours.
-
-```bash
-openssl rand -hex 32                    # new value
-# update the secret store, then on every app server:
-pm2 restart cobuilt-web --update-env
-```
 
 ### Adding an admin user
 

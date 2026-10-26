@@ -122,6 +122,8 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
             // A model's `tourUrl` is the .glb file itself, not a page, so it is
             // never an embed; anything else must be https before it is framed.
             embedUrl: type === 'threejs_model' ? null : httpsUrl(tourUrl),
+            // The same https check for the file the Three.js viewer downloads.
+            modelUrl: type === 'threejs_model' ? httpsUrl(tourUrl) : null,
             fileSizeBytes,
             featured,
           })),

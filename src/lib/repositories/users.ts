@@ -2,7 +2,6 @@ import { query, queryOne } from '../db';
 import type { Paginated, UserRow } from '@/types/models';
 import { paginate } from '@/types/models';
 import type { Role } from '../auth/rbac';
-import { hashPassword, generateToken, hashToken } from '../auth/password';
 
 /** User account persistence. */
 
@@ -13,7 +12,7 @@ const PUBLIC_COLUMNS = `
 
 export async function findByEmail(email: string): Promise<UserRow | null> {
   return queryOne<UserRow>(
-    `SELECT ${PUBLIC_COLUMNS}, password_hash FROM users
+    `SELECT ${PUBLIC_COLUMNS} FROM users
       WHERE lower(email) = lower($1) AND deleted_at IS NULL`,
     [email],
   );
@@ -26,19 +25,21 @@ export async function findById(id: string): Promise<UserRow | null> {
   );
 }
 
+/**
+ * Creates the application account for a person an administrator is inviting.
+ * There is no password: they set one by signing up in Neon Auth with this
+ * address, and the account is linked then (see lib/auth/session.ts).
+ */
 export async function create(input: {
   email: string;
-  password: string;
   fullName: string;
   role?: Role;
 }): Promise<UserRow> {
-  const passwordHash = await hashPassword(input.password);
-
   const row = await queryOne<UserRow>(
-    `INSERT INTO users (email, password_hash, full_name, role)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO users (email, full_name, role)
+     VALUES ($1, $2, $3)
      RETURNING ${PUBLIC_COLUMNS}`,
-    [input.email, passwordHash, input.fullName, input.role ?? 'viewer'],
+    [input.email, input.fullName, input.role ?? 'viewer'],
   );
 
   return row!;
@@ -109,47 +110,16 @@ export async function setActive(id: string, isActive: boolean): Promise<UserRow 
 }
 
 /**
- * Issues a password reset token. Returns null when the address is unknown; the
- * route still responds 200 so the endpoint cannot be used to enumerate
- * accounts.
+ * Deletes the person's Neon Auth identity — credentials, sessions and linked
+ * accounts cascade with it — and unlinks the application account.
  */
-export async function createPasswordReset(
-  email: string,
-  ttlMinutes = 60,
-): Promise<{ token: string; user: UserRow } | null> {
-  const user = await findByEmail(email);
-  if (!user || !user.is_active) return null;
-
-  const { token, hash } = generateToken();
-  const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
-
+export async function removeIdentity(id: string): Promise<void> {
   await query(
-    `UPDATE users SET password_reset_token_hash = $2, password_reset_expires_at = $3
-      WHERE id = $1`,
-    [user.id, hash, expiresAt],
+    `DELETE FROM neon_auth."user"
+      WHERE id = (SELECT auth_user_id FROM users WHERE id = $1)`,
+    [id],
   );
-
-  return { token, user };
-}
-
-/** Consumes a reset token and sets the new password. Returns the user, or null. */
-export async function consumePasswordReset(
-  token: string,
-  newPassword: string,
-): Promise<UserRow | null> {
-  const passwordHash = await hashPassword(newPassword);
-
-  return queryOne<UserRow>(
-    `UPDATE users
-        SET password_hash = $2,
-            password_reset_token_hash = NULL,
-            password_reset_expires_at = NULL
-      WHERE password_reset_token_hash = $1
-        AND password_reset_expires_at > NOW()
-        AND deleted_at IS NULL
-      RETURNING ${PUBLIC_COLUMNS}`,
-    [hashToken(token), passwordHash],
-  );
+  await query(`UPDATE users SET auth_user_id = NULL WHERE id = $1`, [id]);
 }
 
 /** Soft delete plus deactivation, per the NDPA erasure flow (§11). */

@@ -26,11 +26,23 @@ interface NavEntry {
 const NAV: NavEntry[] = [
   { label: 'Overview', href: '/admin', needs: [] },
   { label: 'Submissions', href: '/admin/submissions', needs: ['forms:read'] },
-  { label: 'Projects', href: '/admin/projects', needs: ['projects:approve_investor_content'] },
+  { label: 'Projects', href: '/admin/projects', needs: ['projects:write'] },
+  { label: 'News', href: '/admin/news', needs: ['news:write'] },
   { label: '3D tours', href: '/admin/tours', needs: ['tours:write'] },
+  {
+    label: 'Investor approval',
+    href: '/admin/investor-approval',
+    needs: ['projects:approve_investor_content'],
+  },
   { label: 'Users', href: '/admin/users', needs: ['users:read'] },
   { label: 'Audit log', href: '/admin/audit', needs: ['audit:read'] },
 ];
+
+/**
+ * Open to every signed-in role, console permission or not: export and erasure
+ * are the person's NDPA rights, not something a role grants.
+ */
+const ACCOUNT: NavEntry = { label: 'Your account', href: '/admin/account', needs: [] };
 
 /** The permissions that open some part of the console. An investor holds none. */
 const CONSOLE_PERMISSIONS = new Set(NAV.flatMap((entry) => entry.needs).concat('analytics:read'));
@@ -89,7 +101,10 @@ export default function ConsoleShell({ children }: { children: ReactNode }) {
 
   const can = (permission: Permission) => session.permissions.has(permission);
   const hasAccess = [...session.permissions].some((p) => CONSOLE_PERMISSIONS.has(p));
-  const entries = NAV.filter((entry) => entry.needs.length === 0 || entry.needs.some(can));
+  const entries = hasAccess
+    ? [...NAV.filter((entry) => entry.needs.length === 0 || entry.needs.some(can)), ACCOUNT]
+    : [ACCOUNT];
+  const onAccount = pathname.startsWith(ACCOUNT.href);
 
   async function leave(): Promise<void> {
     await signOut();
@@ -109,29 +124,25 @@ export default function ConsoleShell({ children }: { children: ReactNode }) {
 
           <nav aria-label="Console">
             <ul className="flex flex-wrap gap-x-1 gap-y-1 md:flex-col">
-              {hasAccess
-                ? entries.map((entry) => {
-                    const active =
-                      entry.href === '/admin'
-                        ? pathname === '/admin'
-                        : pathname.startsWith(entry.href);
-                    return (
-                      <li key={entry.href}>
-                        <Link
-                          className={`flex min-h-target items-center border-l-3 px-3 text-[0.813rem] transition-colors duration-150 ${
-                            active
-                              ? 'border-orange bg-ink-mid font-semibold text-white'
-                              : 'border-transparent text-zinc-300 hover:bg-ink-mid hover:text-white'
-                          }`}
-                          href={entry.href}
-                          aria-current={active ? 'page' : undefined}
-                        >
-                          {entry.label}
-                        </Link>
-                      </li>
-                    );
-                  })
-                : null}
+              {entries.map((entry) => {
+                const active =
+                  entry.href === '/admin' ? pathname === '/admin' : pathname.startsWith(entry.href);
+                return (
+                  <li key={entry.href}>
+                    <Link
+                      className={`flex min-h-target items-center border-l-3 px-3 text-[0.813rem] transition-colors duration-150 ${
+                        active
+                          ? 'border-orange bg-ink-mid font-semibold text-white'
+                          : 'border-transparent text-zinc-300 hover:bg-ink-mid hover:text-white'
+                      }`}
+                      href={entry.href}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {entry.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
 
@@ -155,7 +166,7 @@ export default function ConsoleShell({ children }: { children: ReactNode }) {
         </aside>
 
         <main className="min-w-0 flex-1 px-gutter py-8 md:px-10 md:py-10">
-          {hasAccess ? (
+          {hasAccess || onAccount ? (
             children
           ) : (
             <div className="max-w-xl border border-zinc-300 bg-white p-6">
@@ -163,6 +174,13 @@ export default function ConsoleShell({ children }: { children: ReactNode }) {
               <p className="mt-3 text-[0.938rem] leading-[1.7] text-zinc-600">
                 Your account ({session.user.email}) is signed in, but its role carries no admin
                 permissions. Ask an administrator if you need access.
+              </p>
+              <p className="mt-3 text-[0.938rem] leading-[1.7] text-zinc-600">
+                You can still download your data or delete your account from{' '}
+                <Link className="text-rust underline hover:text-rust-hover" href={ACCOUNT.href}>
+                  your account page
+                </Link>
+                .
               </p>
             </div>
           )}

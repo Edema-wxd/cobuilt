@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ROLES, type Role } from '@/lib/auth/rbac';
 import { ApiFailure, api, type AdminUser } from '../../auth-client';
 import { useSession } from '../console-shell';
 import {
   PageHeader,
   Pager,
+  ROLE_NOTES,
   StateBox,
   btnSmallOrange,
   filterSelect,
@@ -29,13 +31,6 @@ import {
  * from a table row is too easy to get wrong unseen.
  */
 
-const ROLE_NOTES: Record<Role, string> = {
-  admin: 'Everything, including users and legal sign-off',
-  editor: 'Projects, news, tours; reads submissions',
-  viewer: 'Read-only dashboard and analytics',
-  investor: 'Phase 2 — no console access',
-};
-
 export default function UsersTable() {
   const { user: me, can } = useSession();
   const [role, setRole] = useState('');
@@ -53,7 +48,7 @@ export default function UsersTable() {
           : 'Your role can see accounts but not change them.'}
       </PageHeader>
 
-      <div className="mb-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <label className="sr-only" htmlFor="users-role">
           Role
         </label>
@@ -73,6 +68,11 @@ export default function UsersTable() {
             </option>
           ))}
         </select>
+        {me.role === 'admin' ? (
+          <Link className={btnSmallOrange} href="/admin/users/new">
+            New account
+          </Link>
+        ) : null}
       </div>
 
       <section className={panel} aria-busy={list.loading}>

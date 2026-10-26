@@ -5,7 +5,7 @@ API, Project Passport™ milestones, 3D virtual tours and the informational
 investor page.
 
 **Reference:** Var-2026-003 · **Phase:** 1 · **Stack:** Next.js API routes,
-PostgreSQL 14+, Redis, Meilisearch (optional), S3-compatible object storage.
+PostgreSQL 14+, Redis, Meilisearch (optional), UploadThing for object storage.
 
 ---
 
@@ -13,7 +13,7 @@ PostgreSQL 14+, Redis, Meilisearch (optional), S3-compatible object storage.
 
 ```bash
 npm install
-cp .env.example .env.local          # then set DATABASE_URL and JWT_SECRET
+cp .env.example .env.local          # then set DATABASE_URL and the NEON_AUTH_* values
 npm run db:migrate                  # apply schema migrations
 npm run db:seed                     # development data (refuses to run in production)
 npm run dev                         # http://localhost:3000
@@ -81,7 +81,7 @@ pages/api/           Route handlers — thin; policy and I/O live in src/lib
 styles/              Global tokens and the landing page's CSS module
 src/lib/
   http/route.ts      The request pipeline every endpoint runs through
-  auth/              JWT, refresh-token rotation, RBAC, password hashing
+  auth/              Neon Auth token verification, account linking, RBAC
   repositories/      All SQL. Nothing else in the codebase writes queries
   schemas/           Zod request schemas
   search/            Meilisearch with a PostgreSQL full-text fallback
@@ -118,20 +118,25 @@ its whole policy is readable in one place.
 
 ## Authentication
 
-Access tokens are stateless JWTs valid for 15 minutes. Refresh tokens are
-opaque, single-use, stored hashed in PostgreSQL and rotated on every use; a
-token that was exchanged and is then replayed revokes every session for that
-user. Logout revokes one session only.
+Identity is [Neon Auth](https://neon.com/docs/auth/overview) (Managed Better
+Auth): sign-up, passwords, email verification (six-digit code) and password
+reset are handled by Neon Auth, and its users live in the `neon_auth` schema on
+the same database branch. The admin console signs in against the Neon Auth URL
+and sends Neon's 15-minute EdDSA access token as `Authorization: Bearer
+<token>`. The API verifies it against `NEON_AUTH_JWKS_URL` and resolves it to an
+account in `users`, which holds the role and permissions
+(`src/lib/auth/session.ts`).
 
 ```
-POST /api/auth/login      → { accessToken, csrfToken }  + HTTP-only refresh cookie
-POST /api/auth/refresh    → new access token, rotates the refresh cookie
-POST /api/auth/logout     → revokes that refresh token
+POST /api/auth/register   admin only: invite someone by email (creates the account, no password)
+GET  /api/auth/me         current user and effective permissions
 ```
 
-Send `Authorization: Bearer <accessToken>` on API calls. Cookie-authenticated
-writes additionally need `X-CSRF-Token` matching the readable CSRF cookie
-(double-submit).
+An invited person signs up at `/admin/register` with the invited address and
+confirms it with the emailed code. The account is linked to their Neon Auth
+user on their first request, and only once Neon Auth reports the address as
+verified. A verified Neon Auth user with no matching account is refused with
+403, so open sign-up on Neon Auth grants nothing by itself.
 
 Roles are `admin`, `editor`, `viewer` and `investor` (Phase 2, no Phase 1
 permissions). Per-user grants and revocations live in `users.permissions`;
@@ -149,7 +154,7 @@ Only PostgreSQL is a hard dependency. Everything else fails soft, and
 | Redis | Cache misses fall through to PostgreSQL; rate limiting is bypassed (Cloudflare's edge limits still apply) |
 | Meilisearch | Search and autocomplete fall back to PostgreSQL full-text; responses report `"engine": "postgres"` |
 | CMS | No effect on reads — request handlers read PostgreSQL, never the CMS |
-| Object storage | Tour uploads fail; existing tours keep serving from the CDN |
+| Object storage | Tour uploads fail; existing tours keep serving from UploadThing |
 | Mail / queues | The submission is already committed; the notification is retried by the queue |
 
 ## Data protection (NDPA)

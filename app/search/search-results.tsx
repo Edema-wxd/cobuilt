@@ -6,12 +6,14 @@ import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
 import { bodyCopy, titleMd } from '../../components/sections';
 import { btnOrange, btnOutline, container, eyebrow } from '../../components/ui';
+import SearchBox from './search-box';
 
 /**
  * Site search — `/search`.
  *
  * Results span projects, news and FAQs. The type is a filter in the query
- * string, so a search is shareable and the back button works. The API also
+ * string, so a search is shareable and the back button works. The field
+ * suggests titles as you type (`search-box.tsx`). The API also
  * reports which engine answered; that is diagnostic and deliberately not shown.
  */
 
@@ -173,16 +175,7 @@ export default function SearchResults() {
               <label className="sr-only" htmlFor="site-q">
                 Search the site
               </label>
-              <input
-                id="site-q"
-                className={control}
-                type="search"
-                name="q"
-                placeholder="Project, article or question"
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                maxLength={200}
-              />
+              <SearchBox id="site-q" className={control} value={draft} onChange={setDraft} />
               <button type="submit" className={`${btnOrange} sm:flex-none`}>
                 Search
               </button>

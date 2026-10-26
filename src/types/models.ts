@@ -53,6 +53,9 @@ export interface ProjectRow {
   updated_at: Date;
   deleted_at: Date | null;
   created_by: string | null;
+  /** Set when the row is mirrored from the CMS (docs/cms-sync.md). */
+  cms_source: string | null;
+  cms_synced_at: Date | null;
   // Joined taxonomy labels
   project_type_name?: string | null;
   location_name?: string | null;
@@ -85,7 +88,7 @@ export interface TourRow {
   project_id: string;
   tour_name: string;
   tour_type: TourType;
-  model_file_s3_key: string | null;
+  model_file_key: string | null;
   file_size_bytes: string | null;
   thumbnail_url: string | null;
   tour_url: string | null;
@@ -117,12 +120,16 @@ export interface NewsRow {
   meta_title: string | null;
   meta_description: string | null;
   tags: string[];
+  /** Set when the row is mirrored from the CMS (docs/cms-sync.md). */
+  cms_source: string | null;
+  cms_synced_at: Date | null;
 }
 
 export interface UserRow {
   id: string;
   email: string;
-  password_hash: string;
+  password_hash?: string | null;
+  auth_user_id?: string | null;
   full_name: string | null;
   role: Role;
   permissions: unknown;

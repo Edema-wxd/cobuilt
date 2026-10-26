@@ -72,7 +72,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       ...(article.publishedAt ? { publishedTime: article.publishedAt } : {}),
       ...(article.featuredImageUrl ? { images: [article.featuredImageUrl] } : {}),
     },
-    twitter: { card: article.featuredImageUrl ? 'summary_large_image' : 'summary' },
+    // Always large: a page without its own image has a generated card
+    // (opengraph-image.tsx beside it).
+    twitter: { card: 'summary_large_image' },
   };
 }
 

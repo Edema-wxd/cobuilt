@@ -2,7 +2,15 @@ import type { Metadata } from 'next';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
 import ContactForm from './contact-form';
-import { ADDRESS_LINES, EMAIL, PHONE, PHONE_HREF, WHATSAPP_HREF } from '../../components/site';
+import OfficeMap from './office-map';
+import {
+  ADDRESS_LINES,
+  EMAIL,
+  OFFICE_LOCATION,
+  PHONE,
+  PHONE_HREF,
+  WHATSAPP_HREF,
+} from '../../components/site';
 import {
   bodyCopy,
   cardBody,
@@ -25,9 +33,10 @@ import { container, eyebrow, eyebrowOnLine } from '../../components/ui';
  * (`/api/forms/inquiry`) and the channels — office, phone, email, WhatsApp
  * Business — while the landing band keeps the newsletter.
  *
- * No map: there is no map integration in the build, and the handover leaves
- * whether to add one open (§3.6). The address and hours are given in text,
- * which is what a visitor needs to find the office anyway.
+ * The address and hours are given in text, which is what a visitor needs to
+ * find the office anyway. The map beneath them is click-to-load and appears
+ * only once `OFFICE_LOCATION` holds a confirmed position (docs/decisions.md
+ * §2.17).
  */
 
 export const metadata: Metadata = {
@@ -154,6 +163,13 @@ export default function Contact() {
                 Site visits to a development under construction are arranged separately and require
                 a safety induction.
               </p>
+              {OFFICE_LOCATION ? (
+                <OfficeMap
+                  lat={OFFICE_LOCATION.lat}
+                  lng={OFFICE_LOCATION.lng}
+                  label={`CoBuilt office, ${ADDRESS_LINES.slice(0, 2).join(', ')}`}
+                />
+              ) : null}
             </div>
 
             <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">

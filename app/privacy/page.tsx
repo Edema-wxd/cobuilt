@@ -8,8 +8,8 @@ import * as prose from '../../components/prose';
  *
  * The retention periods and rights described here mirror what the system
  * actually does — the windows come from RETENTION_* in src/lib/env.ts, the
- * export and erasure routes exist under /api/users/[userId]. If either side
- * changes, both have to change together.
+ * export and erasure routes exist under /api/users/[userId] and are offered
+ * at /admin/account. If either side changes, both have to change together.
  */
 
 const RETENTION: Array<[string, string, string]> = [
@@ -32,7 +32,7 @@ export default function Privacy() {
       eyebrow="Legal"
       title="Privacy Policy"
       standfirst="How CoBuilt Investment Partners collects, uses and retains personal data, and the rights you hold over it under the Nigeria Data Protection Act."
-      updated="16 September 2026"
+      updated="26 October 2026"
     >
       <section className={prose.section}>
         <h2 className={prose.sectionTitle}>Who we are</h2>
@@ -141,7 +141,13 @@ export default function Privacy() {
           </li>
         </ul>
         <p className={prose.p}>
-          Write to <a href={`mailto:${EMAIL}`}>{EMAIL}</a> and we will respond within 30 days. If
+          If you hold an account, you can exercise two of these yourself, at any time: download a
+          machine-readable copy of your data, and delete your account, from{' '}
+          <a href="/admin/account">your account page</a>.
+        </p>
+        <p className={prose.p}>
+          For anything else, write to <a href={`mailto:${EMAIL}`}>{EMAIL}</a> and we will respond
+          within 30 days. If
           you are not satisfied with our response, you may complain to the Nigeria Data Protection
           Commission.
         </p>

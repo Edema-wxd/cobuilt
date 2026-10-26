@@ -9,7 +9,7 @@ import { updateNewsBody } from '@/lib/schemas/news';
 import * as news from '@/lib/repositories/news';
 import * as audit from '@/lib/repositories/audit';
 import { AUDIT_ACTIONS } from '@/lib/repositories/audit';
-import { serializeNews, serializeNewsSummary } from '@/lib/serializers';
+import { serializeNews, serializeNewsForAdmin, serializeNewsSummary } from '@/lib/serializers';
 import { enqueueSearch } from '@/lib/queues';
 
 /**
@@ -53,7 +53,7 @@ export default createRoute({
       if (!data) throw notFound('Article not found');
 
       return {
-        ...serializeNews(data.article),
+        ...(canSeeDrafts ? serializeNewsForAdmin(data.article) : serializeNews(data.article)),
         related: data.related.map(serializeNewsSummary),
       };
     },
@@ -96,7 +96,7 @@ export default createRoute({
         enqueueSearch({ action: 'upsert', index: 'news', id: existing.id }),
       ]);
 
-      return serializeNews(updated);
+      return serializeNewsForAdmin(updated);
     },
   },
 

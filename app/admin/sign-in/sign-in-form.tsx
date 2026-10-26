@@ -1,33 +1,68 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { field, fieldLabel, input } from '../../../components/sections';
-import { eyebrow } from '../../../components/ui';
-import { ApiFailure, safeReturnPath, signIn } from '../auth-client';
+import {
+  ApiFailure,
+  VerificationRequired,
+  safeReturnPath,
+  sendVerificationCode,
+  signIn,
+  verifyEmail,
+} from '../auth-client';
+import { CardHead, card, errorText, hint, link, okText, submitButton } from '../auth-frame';
 
-/** `POST /api/auth/login`, shaped to `loginBody` in src/lib/schemas/auth.ts. */
+/** What the page that sent the user here wants them told. */
+const NOTICES: Record<string, string> = {
+  reset: 'Your password has been changed. Sign in with the new one.',
+  deleted: 'Your account and its personal data have been deleted.',
+};
+
+/**
+ * Signs in with Neon Auth. An address that was never verified is asked for the
+ * emailed code first; Neon Auth sends it as the sign-in is refused.
+ */
 export default function SignInForm() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState('');
+  const [notice, setNotice] = useState('');
+  const [needsCode, setNeedsCode] = useState(false);
+  const [code, setCode] = useState('');
+
+  useEffect(() => {
+    // Read here rather than through useSearchParams, which would need a
+    // Suspense boundary for a value read once.
+    const from = new URLSearchParams(window.location.search).get('done');
+    setNotice(from ? (NOTICES[from] ?? '') : '');
+  }, []);
+
+  function enter(): void {
+    const next = new URLSearchParams(window.location.search).get('next');
+    router.replace(safeReturnPath(next));
+  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setSending(true);
     setMessage('');
+    setNotice('');
 
     try {
-      await signIn(email, password);
-      // Read here rather than through useSearchParams, which would need a
-      // Suspense boundary for a value only this handler uses.
-      const next = new URLSearchParams(window.location.search).get('next');
-      router.replace(safeReturnPath(next));
+      if (needsCode) await verifyEmail(email, code.trim());
+      else await signIn(email, password);
+      enter();
     } catch (failure) {
       setSending(false);
-      setPassword('');
+      if (failure instanceof VerificationRequired) {
+        setNeedsCode(true);
+        setNotice(`Your email address is not verified yet. We sent a code to ${email}.`);
+        return;
+      }
+      if (!needsCode) setPassword('');
       setMessage(
         failure instanceof ApiFailure
           ? failure.message
@@ -36,17 +71,30 @@ export default function SignInForm() {
     }
   }
 
+  async function resend(): Promise<void> {
+    setMessage('');
+    try {
+      await sendVerificationCode(email);
+      setNotice(`A new code is on its way to ${email}.`);
+    } catch (failure) {
+      setMessage(failure instanceof ApiFailure ? failure.message : 'Could not send the code.');
+    }
+  }
+
   return (
     <form
-      className="flex flex-col gap-5 border border-zinc-300 bg-white p-6 sm:p-8"
+      className={card}
       onSubmit={(event) => {
         void submit(event);
       }}
     >
-      <div className="flex flex-col gap-2">
-        <p className={eyebrow}>Admin console</p>
-        <h1 className="text-[1.75rem] text-ink">Sign in</h1>
-      </div>
+      <CardHead label="CoBuilt account" title="Sign in" />
+
+      {notice ? (
+        <p className={okText} role="status">
+          {notice}
+        </p>
+      ) : null}
 
       <div className={field}>
         <label className={fieldLabel} htmlFor="signin-email">
@@ -63,6 +111,34 @@ export default function SignInForm() {
         />
       </div>
 
+      {needsCode ? (
+        <div className={field}>
+          <label className={fieldLabel} htmlFor="signin-code">
+            Verification code
+          </label>
+          <input
+            id="signin-code"
+            className={input}
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+          />
+          <p className={hint}>
+            <button
+              className={link}
+              type="button"
+              onClick={() => {
+                void resend();
+              }}
+            >
+              Send the code again
+            </button>
+          </p>
+        </div>
+      ) : (
       <div className={field}>
         <label className={fieldLabel} htmlFor="signin-password">
           Password
@@ -76,19 +152,20 @@ export default function SignInForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
+        <p className={hint}>
+          <a className={link} href="/admin/forgot-password">
+            Forgot your password?
+          </a>
+        </p>
       </div>
+      )}
 
-      {/* Charcoal, not white: white on #FF6600 is 2.94:1. */}
-      <button
-        className="inline-flex min-h-12.5 w-full cursor-pointer items-center justify-center border border-transparent bg-orange px-7 text-[0.719rem] font-semibold tracking-[0.16em] text-ink uppercase transition-colors duration-150 enabled:hover:bg-orange-lift disabled:cursor-not-allowed disabled:opacity-60"
-        type="submit"
-        disabled={sending}
-      >
-        {sending ? 'Signing in…' : 'Sign in'}
+      <button className={submitButton} type="submit" disabled={sending}>
+        {sending ? 'Signing in…' : needsCode ? 'Verify and sign in' : 'Sign in'}
       </button>
 
       {message ? (
-        <p className="text-[0.781rem] font-medium text-msg-bad" role="alert">
+        <p className={errorText} role="alert">
           {message}
         </p>
       ) : null}

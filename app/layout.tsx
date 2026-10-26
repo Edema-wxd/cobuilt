@@ -10,7 +10,21 @@ import '../styles/globals.css';
  * `styles/globals.css` fall back to system faces.
  */
 
+/**
+ * The absolute origin for Open Graph and canonical URLs. A share preview needs
+ * an absolute image URL, and without this Next.js would build it against
+ * localhost.
+ */
+function siteOrigin(): URL {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://cobuilt.com');
+  } catch {
+    return new URL('https://cobuilt.com');
+  }
+}
+
 export const metadata: Metadata = {
+  metadataBase: siteOrigin(),
   // Every page sets a bare title ("Cookie Policy") and this appends the house
   // suffix, so the pattern lives in one place. The home and project pages
   // carry their own full titles and set `absolute` to opt out.

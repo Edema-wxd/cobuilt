@@ -3,9 +3,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { ZodError, type ZodType } from 'zod';
 import { logger } from '../logger';
 import { isProduction } from '../env';
-import { bearerToken, verifyAccessToken } from '../auth/jwt';
+import { bearerToken } from '../auth/jwt';
+import { authenticateBearer, type AuthContext } from '../auth/session';
 import {
-  effectivePermissions,
   type Permission,
   type Role,
 } from '../auth/rbac';
@@ -33,12 +33,7 @@ import { getClientIp, getUserAgent } from './request';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-export interface AuthContext {
-  userId: string;
-  email: string;
-  role: Role;
-  permissions: Set<Permission>;
-}
+export type { AuthContext };
 
 export interface RouteContext<TBody = unknown, TQuery = unknown> {
   req: NextApiRequest;
@@ -113,7 +108,7 @@ export function createRoute(
 
       await enforceRateLimit(config, req, res, ip);
 
-      const auth = authenticate(config, req);
+      const auth = await authenticate(config, req);
       authorise(config, auth);
 
       // Cookie-authenticated writes are CSRF-able; bearer-token ones are not.
@@ -180,10 +175,10 @@ async function enforceRateLimit(
   if (!result.allowed) throw rateLimited(result.resetSeconds);
 }
 
-function authenticate(
+async function authenticate(
   config: AnyMethodConfig,
   req: NextApiRequest,
-): AuthContext | null {
+): Promise<AuthContext | null> {
   const needsAuth = config.auth === 'required' || Boolean(config.roles) || Boolean(config.permission);
   const token = bearerToken(req.headers.authorization);
 
@@ -192,24 +187,14 @@ function authenticate(
     return null;
   }
 
-  let payload;
   try {
-    payload = verifyAccessToken(token);
+    return await authenticateBearer(token);
   } catch (error) {
     // An invalid token on an optional-auth route is treated as anonymous
     // rather than an error, so a stale token cannot break public pages.
-    if (needsAuth || config.auth === 'required') throw error;
+    if (needsAuth) throw error;
     return null;
   }
-
-  return {
-    userId: payload.sub,
-    email: payload.email,
-    role: payload.role,
-    // Recomputed from the role rather than trusted from the token: a role's
-    // permission set can change between issuing a token and using it.
-    permissions: effectivePermissions(payload.role, { grant: payload.permissions }),
-  };
 }
 
 function authorise(config: AnyMethodConfig, auth: AuthContext | null): void {

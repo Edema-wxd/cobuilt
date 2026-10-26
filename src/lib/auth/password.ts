@@ -1,30 +1,7 @@
-import bcrypt from 'bcryptjs';
 import { timingSafeEqual, randomBytes, createHash } from 'node:crypto';
 
-const BCRYPT_ROUNDS = 12;
-
-export async function hashPassword(plain: string): Promise<string> {
-  return bcrypt.hash(plain, BCRYPT_ROUNDS);
-}
-
-export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(plain, hash);
-}
-
 /**
- * A bcrypt hash of a value that is never a real password, used to burn the
- * same CPU time when an account does not exist. Without it, login response
- * time reveals which email addresses are registered.
- */
-const DUMMY_HASH = bcrypt.hashSync('cobuilt-timing-equaliser', BCRYPT_ROUNDS);
-
-export async function burnPasswordComparison(): Promise<void> {
-  await bcrypt.compare('cobuilt-timing-equaliser', DUMMY_HASH);
-}
-
-/**
- * Generates a single-use credential (password reset, email verification,
- * newsletter confirmation, refresh token).
+ * Generates a single-use credential (email verification, newsletter confirmation).
  *
  * The caller sends `token` to the user and stores only `hash`; a database dump
  * therefore yields nothing usable. SHA-256 rather than bcrypt is correct here:

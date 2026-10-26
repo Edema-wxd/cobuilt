@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import InvestorApproval from './investor-approval';
+import ProjectList from './project-list';
 
 export const metadata: Metadata = { title: 'Projects' };
 
 export default function ProjectsPage() {
-  return <InvestorApproval />;
+  return <ProjectList />;
 }

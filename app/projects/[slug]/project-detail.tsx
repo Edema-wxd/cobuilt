@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import SiteLayout from '../../../components/SiteLayout';
+import ModelViewer from './model-viewer';
+import type { ModelFailure, ModelProgress } from './model-viewer';
+import { assessDevice, browserHints } from './tour-model';
 import { passportHref } from '../../../components/site';
 import {
   AccentedTitle,
@@ -75,6 +78,8 @@ interface Tour {
    * server so no unchecked, editor-supplied URL reaches the browser at all.
    */
   embedUrl: string | null;
+  /** The .glb, .gltf or .zip a `threejs_model` loads — https only, vetted the same way. */
+  modelUrl: string | null;
   fileSizeBytes: number | null;
   featured: boolean;
 }
@@ -133,19 +138,45 @@ export interface ProjectDetailProps {
 }
 
 /**
- * Whether this page can open a given tour.
+ * How this page opens a given tour.
  *
- * `threejs_model` always carries a `tour_url` — the admin route fills it with
- * the public URL of the .glb itself — so presence of a URL says nothing about
- * whether it can be framed. Only the type does: a model needs a WebGL viewer
- * this site does not have, while a Matterport or custom viewer is a web page.
- * A `matterport_embed` may also carry only `embed_code`, which is CMS-authored
- * HTML this page will not inject, and so cannot be opened either.
+ * A `threejs_model` is drawn in the page by `model-viewer.tsx`; a Matterport
+ * or custom viewer is a web page, and is framed. A `matterport_embed` may
+ * carry only `embed_code`, which is CMS-authored HTML this page will not
+ * inject, and so cannot be opened at all.
  */
 function tourSupport(tour: Tour): 'embed' | 'model' | 'unavailable' {
-  if (tour.type === 'threejs_model') return 'model';
+  if (tour.type === 'threejs_model') return tour.modelUrl ? 'model' : 'unavailable';
   return tour.embedUrl ? 'embed' : 'unavailable';
 }
+
+type TourState = 'idle' | 'caution' | 'loading' | 'open' | 'failed';
+
+/** Why a tour is not showing — each gets its own explanation and way out. */
+type TourFailure = 'unavailable' | 'no-webgl' | ModelFailure;
+
+const FAILURE_COPY: Record<TourFailure, { title: string; body: string }> = {
+  unavailable: {
+    title: 'This tour can’t be opened here yet.',
+    body: 'It hasn’t been published in a form this page can open.',
+  },
+  'no-webgl': {
+    title: 'This device can’t show 3D models.',
+    body: 'The browser has 3D graphics (WebGL) switched off or doesn’t support them. A recent Chrome, Safari, Firefox or Edge will open it.',
+  },
+  network: {
+    title: 'The model didn’t download.',
+    body: 'Either the connection dropped or the file couldn’t be reached. Trying again, ideally on Wi-Fi, usually works.',
+  },
+  format: {
+    title: 'This tour can’t be opened here yet.',
+    body: 'The model was published in a format this viewer can’t read.',
+  },
+  render: {
+    title: 'This device ran out of room for the model.',
+    body: 'Its graphics memory couldn’t hold a model this size. A laptop or a newer phone will open it.',
+  },
+};
 
 const TOUR_TYPE_LABEL: Record<TourType, string> = {
   threejs_model: 'Three.js model',
@@ -162,7 +193,25 @@ const blockHead =
 function formatBytes(bytes: number | null): string | null {
   if (!bytes || bytes <= 0) return null;
   const mb = bytes / 1_000_000;
+  if (mb < 1) return `${Math.max(1, Math.round(bytes / 1000))} KB`;
   return mb >= 1000 ? `${(mb / 1000).toFixed(1)} GB` : `${Math.round(mb)} MB`;
+}
+
+function loadingLabel(tour: Tour, progress: ModelProgress | null): string {
+  const size = formatBytes(tour.fileSizeBytes);
+  if (tourSupport(tour) !== 'model') return `Loading tour${size ? ` · ${size}` : ''}`;
+  if (progress?.phase === 'prepare') return 'Preparing the model…';
+  if (progress?.fraction != null) {
+    return `Downloading · ${Math.round(progress.fraction * 100)}%${size ? ` of ${size}` : ''}`;
+  }
+  return `Downloading the model${size ? ` · ${size}` : ''}`;
+}
+
+function cautionCopy(reason: 'low-memory' | 'save-data', size: string | null): string {
+  const download = size ? `It’s a ${size} download` : 'Its download size isn’t known';
+  return reason === 'save-data'
+    ? `${download}, and this browser has asked to save data.`
+    : `${download}, and this device may struggle to display it.`;
 }
 
 /** ₦1.25B — figures are published for information, never as an offer. */
@@ -207,22 +256,75 @@ export default function ProjectDetail({
   const [activeTourId, setActiveTourId] = useState<string | null>(
     tours.find((tour) => tour.featured)?.id ?? tours[0]?.id ?? null,
   );
-  const [tourState, setTourState] = useState<'idle' | 'loading' | 'open' | 'unsupported'>('idle');
+  const [tourState, setTourState] = useState<TourState>('idle');
+  const [tourFailure, setTourFailure] = useState<TourFailure>('unavailable');
+  const [cautionReason, setCautionReason] = useState<'low-memory' | 'save-data'>('low-memory');
+  const [modelProgress, setModelProgress] = useState<ModelProgress | null>(null);
+  // Bumped by "Try again", so the viewer remounts and downloads afresh.
+  const [tourAttempt, setTourAttempt] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
+  // Read after mount: the server cannot know, and iPhone Safari says no.
+  const [canFullscreen, setCanFullscreen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const viewerRef = useRef<HTMLDivElement>(null);
   const enterTourRef = useRef<HTMLButtonElement>(null);
 
   const activeTour = tours.find((tour) => tour.id === activeTourId) ?? null;
+  const viewing = tourState === 'open' || tourState === 'loading';
 
   const exitTour = useCallback(() => {
     setTourState('idle');
+    setModelProgress(null);
     if (document.fullscreenElement) void document.exitFullscreen();
     enterTourRef.current?.focus();
   }, []);
 
-  // Escape leaves the tour, as the viewer chrome promises it does.
+  // A download reports on every chunk; the bar only needs whole percents.
+  const trackProgress = useCallback((next: ModelProgress) => {
+    setModelProgress((current) =>
+      current?.phase === next.phase &&
+      (current.fraction === null) === (next.fraction === null) &&
+      Math.round((current.fraction ?? 0) * 100) === Math.round((next.fraction ?? 0) * 100)
+        ? current
+        : next,
+    );
+  }, []);
+
+  const failTour = useCallback((failure: TourFailure) => {
+    setTourFailure(failure);
+    setTourState('failed');
+    setModelProgress(null);
+    if (document.fullscreenElement) void document.exitFullscreen();
+  }, []);
+
+  function enterTour(tour: Tour): void {
+    const support = tourSupport(tour);
+    if (support === 'unavailable') return failTour('unavailable');
+    if (support === 'model') {
+      // Asked before anything downloads: a device that cannot draw the model,
+      // or one that may struggle with its size, is told before it pays for it.
+      const verdict = assessDevice(browserHints(), tour.fileSizeBytes);
+      if (verdict.kind === 'unsupported') return failTour('no-webgl');
+      if (verdict.kind === 'caution') {
+        setCautionReason(verdict.reason);
+        setTourState('caution');
+        return;
+      }
+    }
+    setTourState('loading');
+  }
+
   useEffect(() => {
-    if (tourState !== 'open' && tourState !== 'loading') return;
+    setCanFullscreen(Boolean(document.fullscreenEnabled));
+    const onChange = () => setFullscreen(document.fullscreenElement === viewerRef.current);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  // Escape leaves the tour, as the viewer chrome promises it does. In
+  // fullscreen the browser takes the first press to leave fullscreen.
+  useEffect(() => {
+    if (!viewing) return;
 
     function onKey(event: KeyboardEvent): void {
       if (event.key === 'Escape') exitTour();
@@ -230,7 +332,7 @@ export default function ProjectDetail({
 
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [tourState, exitTour]);
+  }, [viewing, exitTour]);
 
   if (!project) {
     return (
@@ -640,6 +742,7 @@ export default function ProjectDetail({
                           onClick={() => {
                             setActiveTourId(tour.id);
                             setTourState('idle');
+                            setModelProgress(null);
                           }}
                         >
                           <span className="flex flex-col gap-0.75">
@@ -668,21 +771,30 @@ export default function ProjectDetail({
               </div>
 
               {activeTour ? (
-                <div ref={viewerRef} className="border border-line-on-dark bg-ink">
+                <div
+                  ref={viewerRef}
+                  className={`flex flex-col border border-line-on-dark bg-ink ${fullscreen ? 'h-full' : ''}`}
+                >
                   <div className="flex min-h-13 items-center justify-between gap-3 border-b border-line-on-dark bg-ink-deep pl-4.5">
                     <p className="text-[0.844rem]">{activeTour.name}</p>
-                    {tourState === 'open' || tourState === 'loading' ? (
+                    {viewing ? (
                       <div className="flex">
+                        {canFullscreen ? (
+                          <button
+                            type="button"
+                            className="min-h-target cursor-pointer px-2.5 text-[0.688rem] font-semibold whitespace-nowrap uppercase tracking-[0.14em] sm:px-3.5 text-white hover:text-orange-on-dark"
+                            onClick={() =>
+                              void (fullscreen
+                                ? document.exitFullscreen()
+                                : viewerRef.current?.requestFullscreen())
+                            }
+                          >
+                            {fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                          </button>
+                        ) : null}
                         <button
                           type="button"
-                          className="min-h-target cursor-pointer px-3.5 text-[0.688rem] font-semibold uppercase tracking-[0.14em] text-white hover:text-orange-on-dark"
-                          onClick={() => void viewerRef.current?.requestFullscreen?.()}
-                        >
-                          Fullscreen
-                        </button>
-                        <button
-                          type="button"
-                          className="min-h-target cursor-pointer px-3.5 text-[0.688rem] font-semibold uppercase tracking-[0.14em] text-orange-on-dark hover:text-orange"
+                          className="min-h-target cursor-pointer px-2.5 text-[0.688rem] font-semibold whitespace-nowrap uppercase tracking-[0.14em] sm:px-3.5 text-orange-on-dark hover:text-orange"
                           onClick={exitTour}
                         >
                           Exit tour
@@ -691,35 +803,65 @@ export default function ProjectDetail({
                     ) : null}
                   </div>
 
-                  <div className="relative h-62.5 sm:h-80 md:h-100">
-                    {tourState === 'open' || tourState === 'loading' ? (
+                  <div
+                    className={`relative ${fullscreen ? 'min-h-0 flex-1' : 'h-62.5 sm:h-80 md:h-100'}`}
+                  >
+                    {viewing ? (
                       <>
-                        {/*
-                          Sandboxed: a tour is a third-party page whose URL an
-                          editor supplies. `allow-same-origin` keeps the frame on
-                          the tour's OWN origin — it grants it nothing of ours —
-                          which the vendor viewers need for storage and WebGL.
-                        */}
-                        <iframe
-                          className="absolute inset-0 size-full border-0"
-                          src={activeTour.embedUrl ?? 'about:blank'}
-                          title={`${activeTour.name} — virtual tour`}
-                          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                          allow="fullscreen; xr-spatial-tracking"
-                          allowFullScreen
-                          referrerPolicy="no-referrer"
-                          onLoad={() => setTourState('open')}
-                        />
+                        {tourSupport(activeTour) === 'model' && activeTour.modelUrl ? (
+                          <ModelViewer
+                            key={`${activeTour.id}-${tourAttempt}`}
+                            url={activeTour.modelUrl}
+                            name={activeTour.name}
+                            expectedBytes={activeTour.fileSizeBytes}
+                            onProgress={trackProgress}
+                            onReady={() => {
+                              setModelProgress(null);
+                              setTourState('open');
+                            }}
+                            onError={failTour}
+                          />
+                        ) : (
+                          /*
+                            Sandboxed: a tour is a third-party page whose URL an
+                            editor supplies. `allow-same-origin` keeps the frame on
+                            the tour's OWN origin — it grants it nothing of ours —
+                            which the vendor viewers need for storage and WebGL.
+                          */
+                          <iframe
+                            className="absolute inset-0 size-full border-0"
+                            src={activeTour.embedUrl ?? 'about:blank'}
+                            title={`${activeTour.name} — virtual tour`}
+                            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                            allow="fullscreen; xr-spatial-tracking"
+                            allowFullScreen
+                            referrerPolicy="no-referrer"
+                            onLoad={() => setTourState('open')}
+                          />
+                        )}
                         {tourState === 'loading' ? (
-                          <div
-                            className="absolute inset-0 flex flex-col items-center justify-center gap-3.5 bg-ink-deep"
-                            aria-live="polite"
-                          >
-                            <div className="h-1.25 w-40 bg-line-on-dark">
-                              <div className="h-full w-1/3 bg-orange" />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3.5 bg-ink-deep px-6 text-center">
+                            <div
+                              className="h-1.25 w-40 bg-line-on-dark sm:w-56"
+                              role="progressbar"
+                              aria-label={`Loading ${activeTour.name}`}
+                              {...(modelProgress?.fraction != null
+                                ? { 'aria-valuenow': Math.round(modelProgress.fraction * 100) }
+                                : {})}
+                            >
+                              <div
+                                className={`h-full bg-orange ${
+                                  modelProgress?.fraction != null ? '' : 'w-1/3 motion-safe:animate-pulse'
+                                }`}
+                                style={
+                                  modelProgress?.fraction != null
+                                    ? { width: `${modelProgress.fraction * 100}%` }
+                                    : undefined
+                                }
+                              />
                             </div>
-                            <p className="text-[0.844rem] text-zinc-200">
-                              Loading tour{tourSize ? ` · ${tourSize}` : ''}
+                            <p className="font-mono text-[0.781rem] text-zinc-200">
+                              {loadingLabel(activeTour, modelProgress)}
                             </p>
                             <button
                               type="button"
@@ -742,20 +884,49 @@ export default function ProjectDetail({
                           }
                         />
                         <div className="absolute inset-0 bg-ink-deep/45" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3.5 px-6 text-center">
-                          {tourState === 'unsupported' ? (
-                            <div className="flex max-w-100 flex-col items-center gap-3.5 bg-ink-deep/85 p-6">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3.5 overflow-y-auto px-6 text-center">
+                          {tourState === 'failed' || tourState === 'caution' ? (
+                            <div
+                              className="flex max-w-100 flex-col items-center gap-3.5 bg-ink-deep/85 p-6"
+                              role={tourState === 'failed' ? 'alert' : 'status'}
+                            >
                               <p className="text-[1.125rem] font-light">
-                                This tour can&rsquo;t be opened here yet.
+                                {tourState === 'failed'
+                                  ? FAILURE_COPY[tourFailure].title
+                                  : 'This is a large model.'}
                               </p>
                               <p className="text-[0.844rem] leading-[1.7] text-zinc-200">
-                                {tourSupport(activeTour) === 'model'
-                                  ? 'The 3D model needs a viewer this site doesn’t carry yet.'
-                                  : 'This tour hasn’t been published in a form this page can open yet.'}{' '}
-                                You can still see the development in the gallery, or open another
-                                tour.
+                                {tourState === 'failed'
+                                  ? FAILURE_COPY[tourFailure].body
+                                  : cautionCopy(cautionReason, tourSize)}{' '}
+                                {images.length === 0
+                                  ? ''
+                                  : tourState === 'caution'
+                                    ? 'The gallery shows the development without the wait.'
+                                    : 'You can still see the development in the gallery.'}
                               </p>
                               <div className="flex flex-wrap justify-center gap-2.5">
+                                {tourState === 'caution' ? (
+                                  <button
+                                    type="button"
+                                    className={btnOrange}
+                                    onClick={() => setTourState('loading')}
+                                  >
+                                    Load anyway
+                                  </button>
+                                ) : null}
+                                {tourState === 'failed' && tourFailure === 'network' ? (
+                                  <button
+                                    type="button"
+                                    className={btnOrange}
+                                    onClick={() => {
+                                      setTourAttempt((value) => value + 1);
+                                      setTourState('loading');
+                                    }}
+                                  >
+                                    Try again
+                                  </button>
+                                ) : null}
                                 {images.length > 0 ? (
                                   <a className={btnWhite} href="#gallery">
                                     View gallery
@@ -776,11 +947,7 @@ export default function ProjectDetail({
                                 ref={enterTourRef}
                                 type="button"
                                 className={btnOrange}
-                                onClick={() =>
-                                  setTourState(
-                                    tourSupport(activeTour) === 'embed' ? 'loading' : 'unsupported',
-                                  )
-                                }
+                                onClick={() => enterTour(activeTour)}
                               >
                                 Enter the tour
                               </button>

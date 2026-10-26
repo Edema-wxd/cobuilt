@@ -151,6 +151,18 @@ describeWithDatabase('projects repository', () => {
       expect(serializeProject(edited!).investor).toBeNull();
     });
 
+    it.each([
+      ['investment amount', { investmentAmount: 2_000_000_000 }],
+      ['expected ROI', { expectedRoi: 25 }],
+    ])('revokes the approval when the %s is edited', async (_label, change) => {
+      const project = await seedProject({ investmentAmount: 1_250_000_000, expectedRoi: 18.5 });
+      await projects.setInvestorApproval(project.id, true, adminId);
+
+      const edited = await projects.update(project.id, change);
+
+      expect(edited!.investor_highlights_approved).toBe(false);
+    });
+
     it('leaves the approval alone when unrelated fields change', async () => {
       const project = await seedProject({ investorHighlights: { tenure: 'Freehold' } });
       await projects.setInvestorApproval(project.id, true, adminId);
