@@ -34,6 +34,15 @@ export const httpUrl = z.string().url().max(512).refine(
   'Must be an http(s) URL',
 );
 
+/**
+ * A boolean query parameter. `z.coerce.boolean()` is wrong here: it runs
+ * `Boolean("false")`, which is `true`, so `?flaggedAsSpam=false` would select
+ * the spam. Only the literal strings are accepted.
+ */
+export const queryBoolean = z
+  .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+  .transform((value) => value === true || value === 'true' || value === '1');
+
 /** Accepts `a,b,c` or a repeated query param and yields a string array. */
 export const csvList = z
   .union([z.string(), z.array(z.string())])

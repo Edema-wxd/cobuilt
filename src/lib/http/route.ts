@@ -126,7 +126,12 @@ export function createRoute(
       const query = parse(config.query, req.query, 'query');
 
       if (config.cache && req.method === 'GET') {
-        applyCacheHeaders(res, config.cache);
+        // An authenticated read can be shaped by the caller's role (drafts,
+        // unapproved investor figures, internal milestones). A public
+        // s-maxage would let a CDN serve that response to anyone requesting
+        // the same URL, so it is kept out of shared caches entirely.
+        if (auth) res.setHeader('Cache-Control', 'private, no-store');
+        else applyCacheHeaders(res, config.cache);
       } else if (req.method !== 'GET') {
         res.setHeader('Cache-Control', 'no-store');
       }

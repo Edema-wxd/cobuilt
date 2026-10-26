@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { httpUrl, pagination, slug, uuid } from './common';
+import { httpUrl, pagination, queryBoolean, slug, uuid } from './common';
 
 export const newsCategory = z.enum(['press_release', 'update', 'announcement']);
 
@@ -7,7 +7,7 @@ export const listNewsQuery = pagination.extend({
   category: z.string().max(100).optional(),
   tag: z.string().max(100).optional(),
   q: z.string().max(200).optional(),
-  includeUnpublished: z.coerce.boolean().default(false),
+  includeUnpublished: queryBoolean.default(false),
 });
 
 const newsBase = {

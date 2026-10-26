@@ -202,6 +202,19 @@ describe('createRoute', () => {
       expect(write.headers['cache-control']).toBe('no-store');
     });
 
+    it('keeps an authenticated read out of shared caches', async () => {
+      const route = createRoute({
+        GET: {
+          auth: 'optional',
+          cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
+          handler: () => ({}),
+        },
+      });
+
+      const res = await callRoute(route, { method: 'GET', as: 'admin' });
+      expect(res.headers['cache-control']).toBe('private, no-store');
+    });
+
     it('honours a custom status and headers from ApiResponse', async () => {
       const route = createRoute({
         GET: { handler: () => new ApiResponse(207, { partial: true }, { 'X-Custom': 'yes' }) },

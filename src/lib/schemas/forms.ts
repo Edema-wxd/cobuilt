@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { email, honeypot, phone, uuid } from './common';
+import { email, honeypot, phone, queryBoolean, uuid } from './common';
 
 /**
  * Public form payloads. Every one carries a honeypot; the investment form also
@@ -52,8 +52,8 @@ export type InvestmentBody = z.infer<typeof investmentBody>;
 
 export const listSubmissionsQuery = z.object({
   formType: z.enum(['inquiry', 'newsletter', 'investment']).optional(),
-  flaggedAsSpam: z.coerce.boolean().optional(),
-  processed: z.coerce.boolean().optional(),
+  flaggedAsSpam: queryBoolean.optional(),
+  processed: queryBoolean.optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });

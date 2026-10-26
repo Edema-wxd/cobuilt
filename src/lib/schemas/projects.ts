@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { httpUrl, isoDate, pagination, slug, uuid } from './common';
+import { httpUrl, isoDate, pagination, queryBoolean, slug, uuid } from './common';
 
 export const projectStatus = z.enum(['future', 'ongoing', 'completed']);
 
@@ -12,7 +12,7 @@ export const listProjectsQuery = pagination.extend({
   q: z.string().max(200).optional(),
   sort: z.enum(['recent', 'title', 'oldest']).default('recent'),
   // Admin-only; ignored for anonymous callers by the route.
-  includeUnpublished: z.coerce.boolean().default(false),
+  includeUnpublished: queryBoolean.default(false),
 });
 export type ListProjectsQuery = z.infer<typeof listProjectsQuery>;
 

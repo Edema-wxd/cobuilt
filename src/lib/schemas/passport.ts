@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { httpUrl, isoDate } from './common';
+import { httpUrl, isoDate, queryBoolean } from './common';
 
 export const milestoneType = z.enum([
   'commencement',
@@ -60,5 +60,5 @@ export type UpdateMilestoneBody = z.infer<typeof updateMilestoneBody>;
 
 export const listMilestonesQuery = z.object({
   status: milestoneStatus.optional(),
-  includeInternal: z.coerce.boolean().default(false),
+  includeInternal: queryBoolean.default(false),
 });

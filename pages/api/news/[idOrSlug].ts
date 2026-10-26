@@ -4,6 +4,7 @@ import { RATE_LIMITS } from '@/lib/rateLimit';
 import { TTL, key, remember, invalidatePrefix } from '@/lib/cache';
 import { notFound, conflict } from '@/lib/http/errors';
 import { isPgError, PG_ERROR } from '@/lib/db';
+import { queryBoolean } from '@/lib/schemas/common';
 import { updateNewsBody } from '@/lib/schemas/news';
 import * as news from '@/lib/repositories/news';
 import * as audit from '@/lib/repositories/audit';
@@ -31,7 +32,7 @@ async function resolve(idOrSlug: string, includeUnpublished: boolean) {
 
 export default createRoute({
   GET: {
-    query: params.extend({ includeUnpublished: z.coerce.boolean().default(false) }),
+    query: params.extend({ includeUnpublished: queryBoolean.default(false) }),
     rateLimit: RATE_LIMITS.api,
     auth: 'optional',
     cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
