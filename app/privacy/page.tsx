@@ -76,8 +76,9 @@ export default function Privacy() {
             channel.
           </li>
           <li>
-            <strong>When you browse</strong> — the page visited, where you arrived from, your
-            browser type, and a truncated IP address. The final octet of an IPv4 address (or the
+            <strong>When you browse</strong> — the page visited, where you arrived from (without
+            any query string), your browser type, a random identifier for the visit, and a
+            truncated IP address. The final octet of an IPv4 address (or the
             last 80 bits of an IPv6 address) is discarded before storage, so the record shows
             coarse geography and never identifies you. The lawful basis is consent where analytics
             cookies are enabled; essential logging rests on legitimate interest.

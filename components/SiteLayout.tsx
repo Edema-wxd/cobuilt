@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import CookieBanner from './CookieBanner';
+import PageViews from './PageViews';
 import SiteFooter from './SiteFooter';
 import SiteHeader from './SiteHeader';
 
@@ -32,6 +33,7 @@ export default function SiteLayout({ current, preloadImage, children }: Props) {
       {children}
       <SiteFooter />
       <CookieBanner />
+      <PageViews />
     </>
   );
 }
