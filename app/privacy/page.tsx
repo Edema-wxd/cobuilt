@@ -155,10 +155,6 @@ export default function Privacy() {
             form contents, cookies or IP addresses.
           </li>
           <li>
-            <strong>Google Fonts</strong>, which supplies the typefaces on this site. Your browser
-            requests them from Google, which receives your IP address and browser details.
-          </li>
-          <li>
             <strong>Meta</strong>, if you contact us on WhatsApp. Meta&rsquo;s own privacy policy
             also applies to that conversation.
           </li>
