@@ -1014,6 +1014,26 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
 
+  /api/csp-report:
+    post:
+      tags: [System]
+      summary: Content Security Policy violation reports
+      description: |
+        Receives the reports browsers send under the page Content Security
+        Policy, in the legacy `report-uri` shape or the Reporting API's. Each
+        violation is logged with its directive, the blocked origin and the page
+        path only. Rate limited per client; always answers 204.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/csp-report:
+            schema: { type: object }
+          application/reports+json:
+            schema: { type: array, items: { type: object } }
+      responses:
+        '204': { description: Received }
+
   /api/analytics/pageview:
     post:
       tags: [System]
