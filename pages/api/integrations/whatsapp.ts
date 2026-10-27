@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
+import { reportError } from '@/lib/monitoring';
 import { query } from '@/lib/db';
 import { safeCompare } from '@/lib/auth/password';
 import { parseJson, readRawBody, verifyHmac } from '@/lib/http/rawBody';
@@ -100,6 +101,7 @@ export default async function handler(
     logger.error('Failed to process WhatsApp webhook', {
       error: error instanceof Error ? error.message : String(error),
     });
+    reportError(error, { source: 'whatsapp-webhook' });
   }
 }
 

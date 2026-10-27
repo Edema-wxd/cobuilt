@@ -1,5 +1,6 @@
 import { query, queryOne } from '../db';
 import { logger } from '../logger';
+import { reportError } from '../monitoring';
 import type { Paginated } from '@/types/models';
 import { paginate } from '@/types/models';
 
@@ -51,6 +52,7 @@ export async function record(entry: AuditEntry): Promise<void> {
       entityType: entry.entityType,
       error: error instanceof Error ? error.message : String(error),
     });
+    reportError(error, { source: 'audit', action: entry.action });
   }
 }
 

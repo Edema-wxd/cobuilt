@@ -21,6 +21,7 @@ import {
 import { applyCors } from './cors';
 import { assertCsrf } from './csrf';
 import { getClientIp, getUserAgent, pathOnly } from './request';
+import { reportError } from '../monitoring';
 
 /**
  * The single request pipeline every API route runs through.
@@ -302,6 +303,7 @@ function respondWithError(
     error: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,
   });
+  reportError(error, { requestId, method: req.method, path: pathOnly(req.url) });
 
   res.status(500).json({
     error: {

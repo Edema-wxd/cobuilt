@@ -3,6 +3,7 @@ import { env } from '../env';
 import { query, queryOne } from '../db';
 import { forbidden, serviceUnavailable, unauthorized } from '../http/errors';
 import { logger } from '../logger';
+import { reportError } from '../monitoring';
 import type { UserRow } from '@/types/models';
 import { effectivePermissions, type Permission, type Role } from './rbac';
 
@@ -61,6 +62,7 @@ export async function verifyNeonToken(token: string): Promise<NeonIdentity> {
     if (error instanceof joseErrors.JWTExpired) throw unauthorized('Token expired');
     if (error instanceof joseErrors.JWKSTimeout || error instanceof TypeError) {
       logger.error('Neon Auth JWKS unreachable', { error: String(error) });
+      reportError(error, { source: 'neon-auth-jwks' });
       throw serviceUnavailable('Sign-in is temporarily unavailable');
     }
     throw unauthorized('Invalid token');

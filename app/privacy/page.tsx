@@ -150,7 +150,8 @@ export default function Privacy() {
           </li>
           <li>
             <strong>An error-monitoring service</strong>, which receives technical details when
-            something on the site fails. These can include an IP address.
+            something on the site fails, such as the error and the page address. It is not sent
+            form contents, cookies or IP addresses.
           </li>
           <li>
             <strong>Google Fonts</strong>, which supplies the typefaces on this site. Your browser

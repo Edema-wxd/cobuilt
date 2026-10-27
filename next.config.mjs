@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   // Server-only packages must not be traced into the edge/client bundles.
-  serverExternalPackages: ['pg', 'ioredis', 'bullmq', 'winston'],
+  serverExternalPackages: ['pg', 'ioredis', 'bullmq', 'winston', '@sentry/node'],
   async headers() {
     return [
       {
