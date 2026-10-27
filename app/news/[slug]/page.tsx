@@ -84,7 +84,7 @@ function RelatedCard({ article }: { article: ArticleSummary }) {
     <article className="flex flex-col gap-3.5">
       <a className="group flex flex-col gap-3.5" href={`/news/${article.slug}`}>
         <div
-          className={`${media} aspect-[16/10] sm:aspect-auto sm:h-45`}
+          className={`${media} aspect-[16/10] sm:aspect-auto sm:h-56`}
           style={{ backgroundImage: `url('${article.featuredImageUrl ?? FALLBACK_IMAGE}')` }}
           {...(article.featuredImageUrl
             ? { role: 'img', 'aria-label': article.title }
@@ -173,7 +173,7 @@ export default async function Page({ params }: PageProps) {
 
         {article.featuredImageUrl ? (
           <div
-            className={`${media} aspect-[16/9] w-full sm:aspect-auto sm:h-115`}
+            className={`${media} aspect-[16/9] w-full sm:aspect-auto sm:h-145`}
             style={{ backgroundImage: `url('${article.featuredImageUrl}')` }}
             role="img"
             aria-label={article.title}

@@ -102,7 +102,7 @@ function Skeleton() {
     <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3" aria-hidden="true">
       {[0, 1, 2, 3, 4, 5].map((index) => (
         <div key={index} className="flex flex-col gap-3.5">
-          <div className="aspect-[16/10] bg-line sm:aspect-auto sm:h-50" />
+          <div className="aspect-[16/10] bg-line sm:aspect-auto sm:h-64" />
           <div className="h-2.5 w-2/5 bg-line" />
           <div className="h-4.5 w-11/12 bg-line" />
           <div className="h-2.5 w-4/5 bg-zinc-100" />
@@ -388,7 +388,7 @@ export default function NewsIndex() {
                     <a className="group flex flex-col gap-3.5" href={`/news/${article.slug}`}>
                       {article.featuredImageUrl ? (
                         <div
-                          className={`${media} aspect-[16/10] sm:aspect-auto sm:h-50`}
+                          className={`${media} aspect-[16/10] sm:aspect-auto sm:h-64`}
                           style={{ backgroundImage: `url('${article.featuredImageUrl}')` }}
                           role="img"
                           aria-label={article.title}
@@ -397,7 +397,7 @@ export default function NewsIndex() {
                         // A missing featured image is ordinary CMS data, so the
                         // card degrades to the house still rather than a gap.
                         <div
-                          className={`${media} aspect-[16/10] sm:aspect-auto sm:h-50`}
+                          className={`${media} aspect-[16/10] sm:aspect-auto sm:h-64`}
                           style={{ backgroundImage: `url('${IMAGES.apartments}')` }}
                           aria-hidden="true"
                         />
