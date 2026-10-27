@@ -115,7 +115,7 @@ export default function Leadership() {
               <h2 className={titleLg}>Who leads the business</h2>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+            <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
               {LEADERS.map((leader) => (
                 <article key={leader.role} className="flex flex-col border border-line bg-white">
                   {/*
@@ -199,7 +199,7 @@ export default function Leadership() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
+            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
               {PHILOSOPHY.map(([title, body]) => (
                 <div key={title} className="flex flex-col gap-3 bg-white p-6 sm:p-8.5">
                   <span className={`${glyph} text-orange`} aria-hidden="true">

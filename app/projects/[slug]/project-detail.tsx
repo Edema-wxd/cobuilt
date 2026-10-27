@@ -410,7 +410,7 @@ export default function ProjectDetail({
 
         <section className="bg-ink py-13 text-white md:py-18">
           <div
-            className={`${container} grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14`}
+            className={`${container} intro grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14`}
           >
             <div className="flex flex-col gap-5.5 [&_h1_em]:text-orange-on-dark">
               <div className="flex items-center gap-3.5">
@@ -710,7 +710,7 @@ export default function ProjectDetail({
         {tours.length > 0 ? (
           <section id="tours" className="bg-ink py-11 text-white sm:py-14 md:py-18">
             <div
-              className={`${container} grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-14`}
+              className={`${container} reveal-stagger grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-14`}
             >
               <div className="flex flex-col gap-5.5 [&_h2_em]:text-orange-on-dark">
                 <p className={eyebrowOnDark}>3D virtual tours</p>
@@ -973,7 +973,7 @@ export default function ProjectDetail({
         */}
         <section className="bg-line py-11 sm:py-14">
           <div
-            className={`${container} grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-13`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-13`}
           >
             <div className="flex flex-col gap-4 [&_h2_em]:text-rust">
               <p className={eyebrowOnLine}>Investor information</p>
@@ -982,7 +982,7 @@ export default function ProjectDetail({
                   <h2 className={sectionTitle}>
                     Indicative <em>project information</em>.
                   </h2>
-                  <dl className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
+                  <dl className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
                     {amount ? (
                       <div className="bg-line p-5">
                         <dt className="text-[0.688rem] uppercase tracking-[0.16em] text-zinc-700">
@@ -1062,7 +1062,7 @@ export default function ProjectDetail({
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {related.map((item) => (
                   <article key={item.id} className="flex flex-col border border-line">
                     {item.featuredImageUrl ? (

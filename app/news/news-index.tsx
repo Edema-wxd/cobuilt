@@ -96,16 +96,20 @@ function toPage(value: string): number {
   return Number.isFinite(page) && page > 0 ? page : 1;
 }
 
-/** Static skeleton — no shimmer, per the motion rule. */
+/** The photo eases in a little under the pointer; its frame clips the overflow. */
+const cardImage =
+  'aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-50';
+
+/** Placeholder cards while the page loads, with a light sweeping across them. */
 function Skeleton() {
   return (
     <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3" aria-hidden="true">
       {[0, 1, 2, 3, 4, 5].map((index) => (
         <div key={index} className="flex flex-col gap-3.5">
-          <div className="aspect-[16/10] bg-line sm:aspect-auto sm:h-50" />
-          <div className="h-2.5 w-2/5 bg-line" />
-          <div className="h-4.5 w-11/12 bg-line" />
-          <div className="h-2.5 w-4/5 bg-zinc-100" />
+          <div className="shimmer aspect-[16/10] sm:aspect-auto sm:h-50" />
+          <div className="shimmer h-2.5 w-2/5" />
+          <div className="shimmer h-4.5 w-11/12" />
+          <div className="shimmer h-2.5 w-4/5 opacity-50" />
         </div>
       ))}
     </div>
@@ -382,26 +386,28 @@ export default function NewsIndex() {
             ) : null}
 
             {state === 'ready' && total > 0 ? (
-              <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
+              <div className="reveal-stagger grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
                 {data?.results.map((article) => (
                   <article key={article.id} className="flex flex-col gap-3.5">
                     <a className="group flex flex-col gap-3.5" href={`/news/${article.slug}`}>
-                      {article.featuredImageUrl ? (
-                        <div
-                          className={`${media} aspect-[16/10] sm:aspect-auto sm:h-50`}
-                          style={{ backgroundImage: `url('${article.featuredImageUrl}')` }}
-                          role="img"
-                          aria-label={article.title}
-                        />
-                      ) : (
-                        // A missing featured image is ordinary CMS data, so the
-                        // card degrades to the house still rather than a gap.
-                        <div
-                          className={`${media} aspect-[16/10] sm:aspect-auto sm:h-50`}
-                          style={{ backgroundImage: `url('${IMAGES.apartments}')` }}
-                          aria-hidden="true"
-                        />
-                      )}
+                      <div className="overflow-hidden">
+                        {article.featuredImageUrl ? (
+                          <div
+                            className={`${media} ${cardImage}`}
+                            style={{ backgroundImage: `url('${article.featuredImageUrl}')` }}
+                            role="img"
+                            aria-label={article.title}
+                          />
+                        ) : (
+                          // A missing featured image is ordinary CMS data, so the
+                          // card degrades to the house still rather than a gap.
+                          <div
+                            className={`${media} ${cardImage}`}
+                            style={{ backgroundImage: `url('${IMAGES.apartments}')` }}
+                            aria-hidden="true"
+                          />
+                        )}
+                      </div>
                       <p className="flex flex-wrap gap-x-3 gap-y-1 text-[0.688rem] tracking-[0.16em] text-zinc-500 uppercase">
                         {article.category ? (
                           <span className="text-rust">{categoryLabel(article.category)}</span>
