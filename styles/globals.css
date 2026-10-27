@@ -106,18 +106,6 @@
   /* Every interactive control meets this, per the brief. */
   --spacing-target: 44px;
 
-  /* The track holds the phrase set twice, so -50% lands exactly where it began. */
-  --animate-marquee: marquee 26s linear infinite;
-
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-
-    to {
-      transform: translateX(-50%);
-    }
-  }
 }
 
 /** The native select arrow is removed; this is its replacement. */
@@ -137,7 +125,7 @@
   }
 
   body {
-    /* Guards the marquee and any full-bleed section from widening the page. */
+    /* Guards any full-bleed section from widening the page. */
     overflow-x: clip;
     background: var(--white);
     color: var(--ink);
@@ -198,7 +186,7 @@
     *,
     *::before,
     *::after {
-      /* Stops the wordmark marquee outright rather than merely shortening it. */
+      /* Stops the hero carousel fade outright rather than merely shortening it. */
       animation: none !important;
       transition-duration: 0.001ms !important;
     }

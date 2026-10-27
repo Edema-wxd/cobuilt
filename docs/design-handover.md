@@ -102,13 +102,13 @@ this audience is, and where the previous round of fixes was spent.
 Corners are square everywhere (`border-radius: 0`), except the video play
 button. Cards are separated by 1px hairlines over a grey ground rather than by
 shadows. There is one shadow on the site (the cookie banner) and one animation
-(the wordmark marquee, hidden on phones).
+(the hero carousel fade).
 
 ### Motion
 
 Effectively none, deliberately. Colour transitions on hover at 150ms, and the
-marquee. No scroll-triggered reveals, no card hover lifts. `prefers-reduced-motion`
-stops the marquee outright. Keep it that way unless a new page has a genuine
+hero carousel fade. No scroll-triggered reveals, no card hover lifts.
+`prefers-reduced-motion` stops the fade outright. Keep it that way unless a new page has a genuine
 reason.
 
 ### Components that already exist
@@ -196,7 +196,7 @@ Also available: 3D virtual tours (see 3.7).
 #### 3.3 Projects index — `/projects` — **built**
 
 Implemented at `app/projects/`. Filterable by status, type, location, sector and tag; sortable by recent, title
-or oldest; paginated; free-text searchable. The home page's All/Past/Ongoing/
+or oldest; paginated; free-text searchable. The home page's former All/Past/Ongoing/
 Future pills are the starting point, but this page needs to carry more filters
 than those four — decide how they behave on a phone, where the existing pills
 already scroll horizontally.
