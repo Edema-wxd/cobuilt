@@ -158,7 +158,7 @@ function Skeleton() {
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3" aria-hidden="true">
       {[0, 1, 2, 3, 4, 5].map((index) => (
         <div key={index} className="flex flex-col border border-line">
-          <div className="aspect-[16/10] bg-line sm:aspect-auto sm:h-57.5" />
+          <div className="aspect-[16/10] bg-line sm:aspect-auto sm:h-72" />
           <div className="flex flex-col gap-3 p-5.5 sm:p-6.5">
             <div className="h-2.5 w-2/5 bg-line" />
             <div className="h-4.5 w-3/4 bg-line" />
@@ -600,13 +600,13 @@ export default function ProjectsIndex() {
                       <article key={project.id} className="flex flex-col border border-line bg-white">
                         {project.featuredImageUrl ? (
                           <div
-                            className={`${media} aspect-[16/10] sm:aspect-auto sm:h-57.5`}
+                            className={`${media} aspect-[16/10] sm:aspect-auto sm:h-72`}
                             style={{ backgroundImage: `url('${project.featuredImageUrl}')` }}
                             role="img"
                             aria-label={`${project.title}${project.location ? `, ${project.location}` : ''}`}
                           />
                         ) : (
-                          <div className="flex aspect-[16/10] items-end bg-line p-4 sm:aspect-auto sm:h-57.5">
+                          <div className="flex aspect-[16/10] items-end bg-line p-4 sm:aspect-auto sm:h-72">
                             <span className="text-[0.688rem] uppercase tracking-[0.16em] text-zinc-600">
                               Image to follow
                             </span>

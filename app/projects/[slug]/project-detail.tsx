@@ -113,6 +113,8 @@ export interface Project {
   location: string | null;
   sector: string | null;
   featuredImageUrl: string | null;
+  /** https only — `load-project` drops anything else before it reaches a link. */
+  brochureUrl: string | null;
   passport: { enabled: boolean; startDate: string | null; completionTarget: string | null };
   investor: {
     investmentAmount: number | null;
@@ -443,6 +445,18 @@ export default function ProjectDetail({
                     Enter the virtual tour
                   </a>
                 ) : null}
+                {project.brochureUrl ? (
+                  <a
+                    className={btnOutlineOnDark}
+                    href={project.brochureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                  >
+                    Download brochure
+                    <span className="sr-only"> for {project.title} (opens in a new tab)</span>
+                  </a>
+                ) : null}
               </div>
             </div>
 
@@ -466,7 +480,7 @@ export default function ProjectDetail({
 
         {project.featuredImageUrl ? (
           <div
-            className={`${media} h-60 sm:h-90 md:h-130`}
+            className={`${media} h-72 sm:h-115 md:h-160`}
             style={{ backgroundImage: cssUrl(project.featuredImageUrl) }}
             role="img"
             aria-label={`${project.title}${project.location ? `, ${project.location}` : ''}`}
@@ -658,7 +672,7 @@ export default function ProjectDetail({
                 className={
                   galleryOpen
                     ? 'grid grid-cols-2 gap-2 md:grid-cols-4'
-                    : 'grid auto-rows-[10rem] grid-cols-2 gap-2 md:auto-rows-[14.375rem] md:grid-cols-[2fr_1fr_1fr]'
+                    : 'grid auto-rows-[12.5rem] grid-cols-2 gap-2 md:auto-rows-[18rem] md:grid-cols-[2fr_1fr_1fr]'
                 }
               >
                 {shownImages.map((url, index) => {
@@ -1067,7 +1081,7 @@ export default function ProjectDetail({
                   <article key={item.id} className="flex flex-col border border-line">
                     {item.featuredImageUrl ? (
                       <div
-                        className={`${media} h-42.5`}
+                        className={`${media} h-56`}
                         style={{ backgroundImage: cssUrl(item.featuredImageUrl) }}
                         role="img"
                         aria-label={item.title}
