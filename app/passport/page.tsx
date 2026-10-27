@@ -320,7 +320,7 @@ export default function Passport() {
               </div>
             </div>
             <div
-              className={`${media} aspect-[4/3] w-full sm:aspect-auto sm:h-80`}
+              className={`${media} aspect-[4/3] w-full sm:aspect-auto sm:h-100`}
               style={{ backgroundImage: `url('${IMAGES.site}')` }}
               role="img"
               aria-label="Site photography filed against a Passport milestone"

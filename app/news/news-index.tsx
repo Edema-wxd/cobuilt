@@ -98,7 +98,7 @@ function toPage(value: string): number {
 
 /** The photo eases in a little under the pointer; its frame clips the overflow. */
 const cardImage =
-  'aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-50';
+  'aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-64';
 
 /** Placeholder cards while the page loads, with a light sweeping across them. */
 function Skeleton() {
@@ -106,7 +106,7 @@ function Skeleton() {
     <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3" aria-hidden="true">
       {[0, 1, 2, 3, 4, 5].map((index) => (
         <div key={index} className="flex flex-col gap-3.5">
-          <div className="shimmer aspect-[16/10] sm:aspect-auto sm:h-50" />
+          <div className="shimmer aspect-[16/10] sm:aspect-auto sm:h-64" />
           <div className="shimmer h-2.5 w-2/5" />
           <div className="shimmer h-4.5 w-11/12" />
           <div className="shimmer h-2.5 w-4/5 opacity-50" />

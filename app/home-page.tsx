@@ -466,7 +466,7 @@ export default function HomePage() {
               </a>
             </div>
             <div
-              className={`${media} aspect-[4/3] sm:aspect-auto sm:h-80 md:h-115`}
+              className={`${media} aspect-[4/3] sm:aspect-auto sm:h-100 md:h-145`}
               style={{ backgroundImage: `url('${IMAGES.villa}')` }}
               role="img"
               aria-label="A completed CoBuilt villa and pool"
@@ -554,7 +554,7 @@ export default function HomePage() {
                 <article key={project.id} className="group flex flex-col border border-line bg-white">
                   <div className="overflow-hidden">
                     <div
-                      className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-57.5`}
+                      className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-72`}
                       style={{ backgroundImage: `url('${project.image}')` }}
                       role="img"
                       aria-label={`${project.title}, ${project.place}`}
@@ -633,7 +633,7 @@ export default function HomePage() {
           id="passport"
         >
           <div
-            className={`${media} reveal aspect-[16/10] sm:aspect-auto sm:min-h-80 lg:min-h-130`}
+            className={`${media} reveal aspect-[16/10] sm:aspect-auto sm:min-h-100 lg:min-h-160`}
             style={{ backgroundImage: `url('${IMAGES.site}')` }}
             role="img"
             aria-label="Anthony Gardens under construction"
@@ -719,7 +719,7 @@ export default function HomePage() {
               <h2 className={titleSm}>Watch the work</h2>
               {/* A still preview, not a player: the embed is wired up when the video ID
                   exists, so nothing here advertises a control that does not work yet. */}
-              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-82.5">
+              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-105">
                 <div
                   className={`${media} absolute inset-0`}
                   style={{ backgroundImage: `url('${IMAGES.site}')` }}
@@ -853,7 +853,7 @@ export default function HomePage() {
                 <article key={item.title} className="group flex flex-col gap-3.5">
                   <div className="overflow-hidden">
                     <div
-                      className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-50`}
+                      className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-64`}
                       style={{ backgroundImage: `url('${item.image}')` }}
                       role="img"
                       aria-label={item.title}

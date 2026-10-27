@@ -588,7 +588,7 @@ function Entry({ entry, projectTitle }: { entry: RecordEntry; projectTitle: stri
               instead; from `sm` the columns change and the parity with it, so
               the rule is scoped to the width it is true for.
             */}
-            <div className="grid grid-cols-2 gap-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 max-sm:[&>*:last-child:nth-child(odd)]:aspect-[2/1] sm:grid-cols-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 max-sm:[&>*:last-child:nth-child(odd)]:aspect-[2/1] sm:grid-cols-2 md:grid-cols-3">
               {entry.photoUrls.map((url, index) => (
                 <div
                   key={`${url}-${index}`}
