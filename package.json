@@ -17,6 +17,7 @@
     "db:migrate": "tsx scripts/migrate.ts up",
     "db:migrate:status": "tsx scripts/migrate.ts status",
     "db:seed": "tsx scripts/seed.ts",
+    "user:invite-admin": "tsx scripts/invite-admin.ts",
     "search:reindex": "tsx scripts/reindex.ts",
     "worker": "tsx scripts/worker.ts",
     "lint:fix": "eslint . --fix"

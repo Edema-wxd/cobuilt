@@ -319,8 +319,8 @@ admin console is what makes the site maintainable without a developer.
   privacy policy promises: data export and account deletion. The account page
   opens for every role, including those with no console permission. Phase 1
   has no public sign-up, so admins create accounts at `/admin/users/new`;
-  `/admin/register` says accounts are by invitation, and only shows a form
-  while `ALLOW_PUBLIC_REGISTRATION` is set to bootstrap the first admin.
+  `/admin/register` says accounts are by invitation. The first admin in a
+  fresh environment is invited with `npm run user:invite-admin`.
 - **Admin console — `/admin` — built.** Overview with analytics, submissions
   inbox (spam flagging, masked contact details), projects (list, create, edit,
   delete), Passport™ milestones per project, news (list, create, edit, delete),
