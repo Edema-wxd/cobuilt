@@ -88,6 +88,7 @@ const schema = z.object({
   RETENTION_FORM_SUBMISSION_DAYS: z.coerce.number().int().positive().default(90),
   RETENTION_INVESTOR_INQUIRY_DAYS: z.coerce.number().int().positive().default(730),
   RETENTION_PAGE_VIEW_DAYS: z.coerce.number().int().positive().default(30),
+  RETENTION_MESSAGE_DAYS: z.coerce.number().int().positive().default(90),
 });
 
 export type Env = z.infer<typeof schema>;

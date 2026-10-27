@@ -8,6 +8,7 @@ import * as projectsRepo from '../repositories/projects';
 import * as newsRepo from '../repositories/news';
 import * as formsRepo from '../repositories/forms';
 import * as analyticsRepo from '../repositories/analytics';
+import * as conversationsRepo from '../repositories/conversations';
 import { indexProject, indexNews, removeDocument, reindexAll } from '../search';
 
 /** Job handlers, shared by the worker process and the integration tests. */
@@ -100,14 +101,18 @@ export async function runMaintenance(action: MaintenanceJobData['action']): Prom
     return;
   }
 
-  const [submissions, pageViews] = await Promise.all([
+  const [submissions, pageViews, messages] = await Promise.all([
     formsRepo.purgeExpired(),
     analyticsRepo.purgeExpiredPageViews(),
+    conversationsRepo.purgeExpired(),
   ]);
 
   logger.info('Retention purge complete', {
     submissionsAnonymised: submissions,
     pageViewsDeleted: pageViews,
+    whatsappMessagesDeleted: messages.whatsapp,
+    chatEventsDeleted: messages.chat,
     formRetentionDays: env.RETENTION_FORM_SUBMISSION_DAYS,
+    messageRetentionDays: env.RETENTION_MESSAGE_DAYS,
   });
 }

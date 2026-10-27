@@ -17,7 +17,7 @@ const RETENTION: Array<[string, string, string]> = [
   ['General enquiries', 'Name, email, phone, your message, IP address and browser details', '90 days, then anonymised'],
   ['Investor enquiries', 'Name, email, phone, company, your message, IP address and browser details', '2 years (730 days), then anonymised'],
   ['Page analytics', 'Page path, referrer, truncated IP, browser type', '30 days, then deleted'],
-  ['WhatsApp and live chat', 'Phone number or chat name, email, your messages', 'As long as needed to deal with the conversation'],
+  ['WhatsApp and live chat', 'Phone number or chat name, email, your messages', '90 days after each message, then deleted'],
   ['Account records', 'Email, name, role, sign-in history', 'While the account is open'],
 ];
 
