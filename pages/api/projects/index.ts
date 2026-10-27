@@ -1,4 +1,4 @@
-import { createRoute, created } from '@/lib/http/route';
+import { createRoute, created, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { TTL, key, remember, invalidatePrefix } from '@/lib/cache';
 import { listProjectsQuery, createProjectBody } from '@/lib/schemas/projects';
@@ -20,7 +20,7 @@ export default createRoute({
     query: listProjectsQuery,
     rateLimit: RATE_LIMITS.api,
     auth: 'optional',
-    cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
+    cache: CONTENT_CACHE,
     handler: async ({ query, auth }) => {
       // Drafts are only ever visible to a signed-in editor or admin, whatever
       // the client asks for.

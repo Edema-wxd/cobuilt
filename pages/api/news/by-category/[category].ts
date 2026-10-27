@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createRoute } from '@/lib/http/route';
+import { createRoute, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { TTL, key, remember } from '@/lib/cache';
 import { pagination } from '@/lib/schemas/common';
@@ -11,7 +11,7 @@ export default createRoute({
   GET: {
     query: pagination.extend({ category: z.string().min(1).max(100) }),
     rateLimit: RATE_LIMITS.api,
-    cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
+    cache: CONTENT_CACHE,
     handler: async ({ query }) => {
       const page = await remember(
         key('news:category', query),

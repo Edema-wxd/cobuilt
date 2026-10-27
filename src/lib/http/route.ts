@@ -54,6 +54,13 @@ export interface CachePolicy {
   staleWhileRevalidate?: number;
 }
 
+/**
+ * Public content (projects, Passport, news, FAQs). No CDN purge runs when an
+ * editor publishes, so this is how long a change can take to appear: a minute,
+ * then one more request while the CDN refetches.
+ */
+export const CONTENT_CACHE: CachePolicy = { sMaxAge: 60, staleWhileRevalidate: 300 };
+
 export interface MethodConfig<TBody = unknown, TQuery = unknown> {
   handler: (ctx: RouteContext<TBody, TQuery>) => unknown;
   /** 'required' rejects anonymous callers; 'optional' populates ctx.auth when a valid token is present. */
@@ -265,6 +272,10 @@ function respondWithError(
   req: NextApiRequest,
 ): void {
   if (res.writableEnded) return;
+
+  // The cache policy was applied before the handler ran; an error must never
+  // be stored and served to everyone in its place.
+  res.setHeader('Cache-Control', 'no-store');
 
   if (error instanceof ApiError) {
     for (const [name, value] of Object.entries(error.headers ?? {})) {

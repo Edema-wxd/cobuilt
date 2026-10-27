@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createRoute, created } from '@/lib/http/route';
+import { createRoute, created, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { TTL, key, remember, invalidatePrefix } from '@/lib/cache';
 import { notFound } from '@/lib/http/errors';
@@ -37,7 +37,7 @@ export default createRoute({
     auth: 'optional',
     // Milestones change more often than project copy, so they carry a shorter
     // CDN lifetime than the project detail response.
-    cache: { sMaxAge: 1800, staleWhileRevalidate: 300 },
+    cache: CONTENT_CACHE,
     handler: async ({ query, auth }) => {
       const isStaff = auth?.role === 'admin' || auth?.role === 'editor';
       const includeInternal = query.includeInternal && isStaff;
