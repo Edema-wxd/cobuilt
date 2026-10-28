@@ -1,8 +1,9 @@
 'use client';
 
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import CountUp from '../components/CountUp';
 import SiteLayout from '../components/SiteLayout';
+import HeroVideo from './hero-video';
 import { PHONE, PHONE_HREF } from '../components/site';
 import { SERVICES, serviceHref } from './services/services';
 import {
@@ -64,15 +65,6 @@ const IMAGES = {
   site: '/images/construction-site.webp',
   apartments: '/images/apartment-blocks.webp',
 } as const;
-
-/**
- * Hero carousel slides. Each entry is a still image today; a video slide
- * (an autoplaying, muted `<video>` in place of the background div) drops
- * into this same rotation once footage is ready, so the fade and indicator
- * logic below does not change.
- */
-const HERO_SLIDES = [IMAGES.hero, IMAGES.site, IMAGES.villa, IMAGES.apartments] as const;
-const HERO_SLIDE_INTERVAL_MS = 6000;
 
 const STATS: Array<{ value: number; plus?: boolean; label: string }> = [
   { value: 5, plus: true, label: 'Projects delivered' },
@@ -273,15 +265,6 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
 
 export default function HomePage() {
   const [filter, setFilter] = useState<Filter>('all');
-  const [heroSlide, setHeroSlide] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setHeroSlide((current) => (current + 1) % HERO_SLIDES.length);
-    }, HERO_SLIDE_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, []);
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [enquirerType, setEnquirerType] = useState<string>(ENQUIRER_TYPES[0]);
@@ -327,26 +310,11 @@ export default function HomePage() {
   }
 
   return (
-    <SiteLayout current="/" preloadImage={IMAGES.hero}>
+    <SiteLayout current="/">
       <main id="top">
         <section className="relative isolate flex min-h-screen items-center overflow-hidden bg-line">
-          <div
-            className="settle absolute inset-0 -z-2"
-            role="img"
-            aria-label="Rotating photography of CoBuilt developments"
-          >
-            {/* Each photo drifts slowly back to rest for as long as it is up. */}
-            {HERO_SLIDES.map((src, index) => (
-              <div
-                key={src}
-                className={`${media} absolute inset-0 transition-[opacity,scale] duration-[1000ms,7000ms] ease-in-out ${
-                  index === heroSlide ? 'scale-100 opacity-100' : 'scale-106 opacity-0'
-                }`}
-                style={{ backgroundImage: `url('${src}')` }}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
+          {/* Preloads its own poster, so SiteLayout is not handed one. */}
+          <HeroVideo />
           {/* Even on a phone, where the text runs the full width; fading to the right from sm up. */}
           <div
             className="pointer-events-none absolute inset-0 -z-1 bg-[linear-gradient(180deg,rgb(20_20_20/82%)_0%,rgb(20_20_20/90%)_100%)] sm:bg-[linear-gradient(92deg,rgb(20_20_20/93%)_0%,rgb(20_20_20/76%)_46%,rgb(20_20_20/30%)_100%)]"
@@ -382,22 +350,6 @@ export default function HomePage() {
                 <a className={btnOutlineOnDark} href="#register">
                   Register your interest
                 </a>
-              </div>
-              {/* Live carousel indicators, also the manual controls. */}
-              <div className="hidden gap-2 pt-2 sm:flex" role="tablist" aria-label="Hero photos">
-                {HERO_SLIDES.map((src, index) => (
-                  <button
-                    key={src}
-                    type="button"
-                    className={`block h-[3px] w-7 cursor-pointer ${
-                      index === heroSlide ? 'bg-orange' : 'bg-white/50'
-                    }`}
-                    role="tab"
-                    aria-selected={index === heroSlide}
-                    aria-label={`Show hero photo ${index + 1}`}
-                    onClick={() => setHeroSlide(index)}
-                  />
-                ))}
               </div>
             </div>
 

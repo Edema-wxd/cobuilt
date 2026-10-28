@@ -116,8 +116,8 @@ defined in `styles/globals.css`.
   it. Pure CSS, so it clears even if the page never hydrates.
 - **Page header** (`intro`): eyebrow, heading, standfirst and actions rise in
   one after another on load, 90ms apart. Hero photographs settle from a slight
-  zoom (`settle`). On the home page each carousel photo also drifts slowly back
-  to rest while it is up.
+  zoom (`settle`). On the home page that zoom wraps the hero video and its
+  poster.
 - **Sections** (`reveal`, `reveal-stagger`): section heads, card grids, value
   and step rows rise in once as they scroll into view; in a `reveal-stagger`
   the children follow one another. Hairline card grids rise as one block, since
