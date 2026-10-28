@@ -64,8 +64,10 @@ export default function Accessibility() {
             order. Form fields have persistent labels, not placeholder-only labels.
           </li>
           <li>
-            <strong>Reduced motion.</strong> The scrolling wordmark and all transitions stop for
-            visitors whose system requests reduced motion.
+            <strong>Reduced motion.</strong> The scrolling wordmark, the opening brand animation,
+            the entrance animations and all transitions stop for visitors whose system requests
+            reduced motion. Content is never hidden behind an animation: with motion off, or with
+            JavaScript off, every page shows in full straight away.
           </li>
           <li>
             <strong>Zoom and reflow.</strong> Content reflows to a single column down to 320&nbsp;px

@@ -108,7 +108,7 @@ export default async function Page({ params }: PageProps) {
 
         <section className={sectionLight}>
           <div
-            className={`${container} grid grid-cols-1 items-start gap-8 md:grid-cols-[1.25fr_1fr] md:gap-14`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-start gap-8 md:grid-cols-[1.25fr_1fr] md:gap-14`}
           >
             <div className="flex flex-col gap-5">
               <p className={eyebrow}>Overview</p>
@@ -166,7 +166,7 @@ export default async function Page({ params }: PageProps) {
               </h2>
             </div>
 
-            <ol className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
+            <ol className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
               {service.deliverables.map((item, index) => (
                 <li key={item} className="flex flex-col gap-3 bg-white p-6 sm:p-7.5">
                   <span className="font-mono text-[1.5rem] leading-none font-light text-rust">
@@ -197,7 +197,7 @@ export default async function Page({ params }: PageProps) {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
+            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
               {others.map((item) => (
                 <article
                   key={item.slug}

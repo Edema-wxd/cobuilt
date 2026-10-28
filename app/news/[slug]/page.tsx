@@ -224,7 +224,7 @@ export default async function Page({ params }: PageProps) {
                 <p className={eyebrow}>More from the media centre</p>
                 <h2 className={titleMd}>Related reading</h2>
               </div>
-              <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
+              <div className="reveal-stagger grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
                 {related.map((item) => (
                   <RelatedCard key={item.id} article={item} />
                 ))}
