@@ -118,8 +118,9 @@ export default function HeroVideo() {
         </>
       )}
 
+      {/* `settle`: the page-load ease-in the hero photograph had, kept for the poster and video. */}
       <div
-        className="absolute inset-0 -z-2"
+        className="settle absolute inset-0 -z-2"
         role="img"
         aria-label="Footage of CoBuilt developments"
       >

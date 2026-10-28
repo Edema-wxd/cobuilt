@@ -24,7 +24,7 @@ export default function CtaBand({ eyebrow = 'Next step', title, body, notice }: 
   return (
     <section className="bg-ink py-13 sm:py-16 md:py-20">
       <div
-        className={`${container} grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.2fr_1fr] lg:gap-13`}
+        className={`${container} reveal-stagger grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.2fr_1fr] lg:gap-13`}
       >
         <div className="flex flex-col gap-4 [&_h2_em]:text-orange-on-dark">
           <p className={eyebrowOnDark}>{eyebrow}</p>

@@ -115,7 +115,7 @@ export default function Leadership() {
               <h2 className={titleLg}>Who leads the business</h2>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+            <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
               {LEADERS.map((leader) => (
                 <article key={leader.role} className="flex flex-col border border-line bg-white">
                   {/*
@@ -123,7 +123,7 @@ export default function Leadership() {
                     photograph is the only thing that goes here, and saying so
                     is more honest than a stock face.
                   */}
-                  <div className="flex h-45 items-start bg-line p-3.5 text-[0.719rem] text-zinc-600 sm:h-57.5">
+                  <div className="flex h-56 items-start bg-line p-3.5 text-[0.719rem] text-zinc-600 sm:h-72">
                     {leader.role} — approved portrait
                   </div>
                   <div className="flex flex-1 flex-col gap-3.25 p-5.5 sm:p-6.5">
@@ -199,7 +199,7 @@ export default function Leadership() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
+            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
               {PHILOSOPHY.map(([title, body]) => (
                 <div key={title} className="flex flex-col gap-3 bg-white p-6 sm:p-8.5">
                   <span className={`${glyph} text-orange`} aria-hidden="true">
@@ -228,7 +228,7 @@ export default function Leadership() {
             <div className="grid grid-cols-1 gap-7 lg:grid-cols-[1.4fr_1fr] lg:gap-9">
               {/* A still preview, not a player: the embed is wired up when the video ID
                   exists, so nothing here advertises a control that does not work yet. */}
-              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-95">
+              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-120">
                 <div
                   className={`${media} absolute inset-0`}
                   style={{ backgroundImage: `url('${IMAGES.site}')` }}
@@ -254,7 +254,7 @@ export default function Leadership() {
 
               <div className="flex flex-col gap-5">
                 <div
-                  className={`${media} aspect-[16/10] w-full sm:aspect-auto sm:h-45`}
+                  className={`${media} aspect-[16/10] w-full sm:aspect-auto sm:h-56`}
                   style={{ backgroundImage: `url('${IMAGES.apartments}')` }}
                   role="img"
                   aria-label="Completed CoBuilt apartment blocks"
