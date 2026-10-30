@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import CountUp from '../components/CountUp';
 import SiteLayout from '../components/SiteLayout';
-import { PHONE, PHONE_HREF } from '../components/site';
+import { PHONE, PHONE_HREF, passportHref } from '../components/site';
 import { SERVICES, serviceHref } from './services/services';
 import {
   cardBody,
@@ -34,11 +34,12 @@ import {
 /**
  * Public landing page — Direction 3c, the Corporate Digital Standards build.
  *
- * Deliberately static: the page renders without PostgreSQL, so `npm run dev`
- * works on a fresh checkout. The only live call is the "Register your interest"
- * form, which posts to `/api/forms/newsletter` (CSRF-exempt, rate limited,
- * double opt-in). Project and milestone content here is illustrative and is
- * replaced by CMS-backed content when the inner pages are built.
+ * The project cards are the most recently published projects, loaded on the
+ * server by app/home-projects.ts and passed in; with none published, or no
+ * database, the section shows an empty state rather than sample projects. The
+ * only call from the browser is the "Register your interest" form, which posts
+ * to `/api/forms/newsletter` (CSRF-exempt, rate limited, double opt-in).
+ * Milestone content here is still illustrative.
  *
  * The page is cut for conversion: every section either builds the case (proof,
  * what we do, how we document it) or asks for the enquiry. Story, values,
@@ -85,51 +86,31 @@ const STATS: Array<{ value: number; plus?: boolean; label: string }> = [
 
 type ProjectStatus = 'ongoing' | 'completed' | 'future';
 
-interface Project {
+export interface HomeProject {
   id: string;
-  status: ProjectStatus;
-  statusLabel: string;
+  slug: string;
   title: string;
-  specs: string[];
-  progress?: { stage: string; percent: number };
-  place: string;
-  linkLabel: string;
-  image: string;
+  status: ProjectStatus;
+  projectType: string | null;
+  location: string | null;
+  image: string | null;
+  passport: boolean;
+  completionTarget: string | null;
+  progress: { percent: number; stage: string | null } | null;
 }
 
-const PROJECTS: Project[] = [
-  {
-    id: 'CB-2024-014',
-    status: 'ongoing',
-    statusLabel: 'Ongoing',
-    title: 'Anthony Gardens',
-    specs: ['3 & 4 bedroom apartments', 'Duplex penthouses'],
-    progress: { stage: 'Superstructure', percent: 68 },
-    place: 'Ikoyi, Lagos',
-    linkLabel: 'Passport →',
-    image: IMAGES.site,
-  },
-  {
-    id: 'CB-2021-008',
-    status: 'completed',
-    statusLabel: 'Completed',
-    title: 'Ridge Terraces',
-    specs: ['32 terraced homes', 'Handed over on the published date'],
-    place: 'Independence Layout, Enugu',
-    linkLabel: 'Profile →',
-    image: IMAGES.hero,
-  },
-  {
-    id: 'CB-2027-021',
-    status: 'future',
-    statusLabel: 'Future',
-    title: 'TechZone Quarter',
-    specs: ['Mixed-use', 'Groundbreak 2027'],
-    place: 'Wuse 2, Abuja',
-    linkLabel: 'Vision →',
-    image: IMAGES.apartments,
-  },
-];
+const STATUS_LABEL: Record<ProjectStatus, string> = {
+  ongoing: 'Ongoing',
+  completed: 'Completed',
+  future: 'Future',
+};
+
+/** What the card's corner link promises, by stage, when it leads to the Passport. */
+const LINK_LABEL: Record<ProjectStatus, string> = {
+  ongoing: 'Passport →',
+  completed: 'Record →',
+  future: 'Vision →',
+};
 
 const badge =
   'whitespace-nowrap px-2.5 py-1.25 text-[0.625rem] font-bold uppercase tracking-[0.14em]';
@@ -186,7 +167,7 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
   );
 }
 
-export default function HomePage() {
+export default function HomePage({ projects }: { projects: HomeProject[] }) {
   const [heroSlide, setHeroSlide] = useState(0);
 
   useEffect(() => {
@@ -347,73 +328,104 @@ export default function HomePage() {
               <h2 className={titleLg}>Delivered, under construction, and planned</h2>
             </div>
 
-            <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-              {PROJECTS.map((project) => (
-                <article key={project.id} className="group flex flex-col border border-line bg-white">
-                  <div className="overflow-hidden">
-                    <div
-                      className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-72`}
-                      style={{ backgroundImage: `url('${project.image}')` }}
-                      role="img"
-                      aria-label={`${project.title}, ${project.place}`}
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-3.25 p-5.5 sm:p-6.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-mono text-[0.656rem] tracking-[0.16em] text-zinc-600 uppercase">
-                        {project.id}
-                      </span>
-                      <span className={STATUS_CLASS[project.status]}>{project.statusLabel}</span>
-                    </div>
-                    <h3 className="text-[1.5rem] font-normal tracking-[-0.02em] text-ink">
-                      {project.title}
-                    </h3>
+            {projects.length === 0 ? (
+              <p className="border border-line bg-white p-6 text-[0.938rem] text-zinc-700 sm:p-8">
+                Our projects will appear here as each one is published.
+              </p>
+            ) : (
+              <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+                {projects.map((project) => {
+                  const href = `/projects/${project.slug}`;
+                  const specs = [
+                    project.completionTarget ? `Target ${project.completionTarget}` : null,
+                  ].filter((spec): spec is string => spec !== null);
 
-                    <div className="flex flex-col gap-2 border-t border-line pt-2">
-                      {project.specs.map((spec) => (
-                        <p key={spec} className="text-[0.844rem] text-zinc-700">
-                          {spec}
-                        </p>
-                      ))}
-                    </div>
-
-                    {project.progress ? (
-                      <div className="flex flex-col gap-1.75 pt-1.5">
-                        <p className="flex justify-between text-[0.75rem] text-ink-mid">
-                          <span>{project.progress.stage}</span>
-                          <b className="font-semibold">{project.progress.percent}%</b>
-                        </p>
-                        <div
-                          className="h-1.25 overflow-hidden bg-line"
-                          role="progressbar"
-                          aria-label={`${project.title} ${project.progress.stage} progress`}
-                          aria-valuenow={project.progress.percent}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                        >
+                  return (
+                    <article
+                      key={project.id}
+                      className="group flex flex-col border border-line bg-white"
+                    >
+                      {project.image ? (
+                        <div className="overflow-hidden">
                           <div
-                            className="reveal-bar h-full bg-rust"
-                            style={{ width: `${project.progress.percent}%` }}
+                            className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-72`}
+                            style={{ backgroundImage: `url('${project.image}')` }}
+                            role="img"
+                            aria-label={`${project.title}${project.location ? `, ${project.location}` : ''}`}
                           />
                         </div>
-                      </div>
-                    ) : null}
+                      ) : (
+                        <div className="flex aspect-[16/10] items-end bg-line p-4 sm:aspect-auto sm:h-72">
+                          <span className="text-[0.688rem] tracking-[0.16em] text-zinc-600 uppercase">
+                            Image to follow
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex flex-1 flex-col gap-3.25 p-5.5 sm:p-6.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-mono text-[0.656rem] tracking-[0.16em] text-zinc-600 uppercase">
+                            {project.projectType ?? ''}
+                          </span>
+                          <span className={STATUS_CLASS[project.status]}>
+                            {STATUS_LABEL[project.status]}
+                          </span>
+                        </div>
+                        <h3 className="text-[1.5rem] font-normal tracking-[-0.02em] text-ink">
+                          <a className="hover:text-rust" href={href}>
+                            {project.title}
+                          </a>
+                        </h3>
 
-                    <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-                      <span className="text-[0.656rem] tracking-[0.18em] text-zinc-500 uppercase">
-                        {project.place}
-                      </span>
-                      <a
-                        className={`${uppercaseLink} -my-3.25 inline-flex min-h-target items-center text-[0.688rem] whitespace-nowrap sm:my-0 sm:inline sm:min-h-0`}
-                        href="/projects"
-                      >
-                        {project.linkLabel}
-                      </a>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                        {specs.length > 0 ? (
+                          <div className="flex flex-col gap-2 border-t border-line pt-2">
+                            {specs.map((spec) => (
+                              <p key={spec} className="text-[0.844rem] text-zinc-700">
+                                {spec}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        {project.progress ? (
+                          <div className="flex flex-col gap-1.75 pt-1.5">
+                            <p className="flex justify-between text-[0.75rem] text-ink-mid">
+                              <span>{project.progress.stage}</span>
+                              <b className="font-semibold">{project.progress.percent}%</b>
+                            </p>
+                            <div
+                              className="h-1.25 overflow-hidden bg-line"
+                              role="progressbar"
+                              aria-label={`${project.title} programme progress`}
+                              aria-valuenow={project.progress.percent}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                            >
+                              <div
+                                className="reveal-bar h-full bg-rust"
+                                style={{ width: `${project.progress.percent}%` }}
+                              />
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+                          <span className="text-[0.656rem] tracking-[0.18em] text-zinc-500 uppercase">
+                            {project.location ?? 'Location to follow'}
+                          </span>
+                          <a
+                            className={`${uppercaseLink} -my-3.25 inline-flex min-h-target items-center text-[0.688rem] whitespace-nowrap sm:my-0 sm:inline sm:min-h-0`}
+                            href={project.passport ? passportHref(project.slug) : href}
+                          >
+                            <span className="sr-only">{project.title}: </span>
+                            {project.passport ? LINK_LABEL[project.status] : 'Project →'}
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="mt-7 flex flex-col gap-2.5 sm:mt-10 sm:flex-row sm:justify-center sm:gap-3">
               <a className={btnOrange} href="/contact">

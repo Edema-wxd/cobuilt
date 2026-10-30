@@ -1,4 +1,4 @@
-import { createRoute, created } from '@/lib/http/route';
+import { createRoute, created, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { TTL, key, remember, invalidatePrefix } from '@/lib/cache';
 import { conflict } from '@/lib/http/errors';
@@ -20,7 +20,7 @@ export default createRoute({
     query: listNewsQuery,
     rateLimit: RATE_LIMITS.api,
     auth: 'optional',
-    cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
+    cache: CONTENT_CACHE,
     handler: async ({ query, auth }) => {
       const canSeeDrafts =
         query.includeUnpublished && (auth?.role === 'admin' || auth?.role === 'editor');

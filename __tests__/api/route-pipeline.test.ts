@@ -202,6 +202,33 @@ describe('createRoute', () => {
       expect(write.headers['cache-control']).toBe('no-store');
     });
 
+    it('never lets a cacheable GET publish an error to the CDN', async () => {
+      const failing = createRoute({
+        GET: {
+          cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
+          handler: () => {
+            throw new Error('database unavailable');
+          },
+        },
+      });
+      const missing = createRoute({
+        GET: {
+          cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
+          handler: () => {
+            throw notFound('No such project');
+          },
+        },
+      });
+
+      const crashed = await callRoute(failing, { method: 'GET' });
+      expect(crashed.status).toBe(500);
+      expect(crashed.headers['cache-control']).toBe('no-store');
+
+      const absent = await callRoute(missing, { method: 'GET' });
+      expect(absent.status).toBe(404);
+      expect(absent.headers['cache-control']).toBe('no-store');
+    });
+
     it('keeps an authenticated read out of shared caches', async () => {
       const route = createRoute({
         GET: {

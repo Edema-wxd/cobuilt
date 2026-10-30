@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createRoute, noContent } from '@/lib/http/route';
+import { createRoute, noContent, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { invalidatePrefix } from '@/lib/cache';
 import { notFound } from '@/lib/http/errors';
@@ -30,7 +30,7 @@ export default createRoute({
     query: params,
     rateLimit: RATE_LIMITS.api,
     auth: 'optional',
-    cache: { sMaxAge: 1800 },
+    cache: CONTENT_CACHE,
     handler: async ({ query, auth }) => {
       const milestone = await load(query.milestoneId);
       const isStaff = auth?.role === 'admin' || auth?.role === 'editor';
