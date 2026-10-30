@@ -81,7 +81,7 @@ export default function Services() {
             </div>
 
             {/* The 1px gap over a grey ground draws the rules between cards. */}
-            <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
+            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
               {SERVICES.map((service) => (
                 <article
                   key={service.slug}

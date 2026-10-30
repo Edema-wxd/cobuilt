@@ -152,18 +152,18 @@ function facetLabel(facets: Facets | null, group: keyof Facets, value: string): 
   return match?.label ?? match?.value ?? value;
 }
 
-/** Static skeleton — no shimmer, per the motion rule. */
+/** Placeholder cards while the page loads, with a light sweeping across them. */
 function Skeleton() {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3" aria-hidden="true">
       {[0, 1, 2, 3, 4, 5].map((index) => (
         <div key={index} className="flex flex-col border border-line">
-          <div className="aspect-[16/10] bg-line sm:aspect-auto sm:h-72" />
+          <div className="shimmer aspect-[16/10] sm:aspect-auto sm:h-72" />
           <div className="flex flex-col gap-3 p-5.5 sm:p-6.5">
-            <div className="h-2.5 w-2/5 bg-line" />
-            <div className="h-4.5 w-3/4 bg-line" />
-            <div className="h-2.5 w-11/12 bg-zinc-100" />
-            <div className="h-2.5 w-3/5 bg-zinc-100" />
+            <div className="shimmer h-2.5 w-2/5" />
+            <div className="shimmer h-4.5 w-3/4" />
+            <div className="shimmer h-2.5 w-11/12 opacity-50" />
+            <div className="shimmer h-2.5 w-3/5 opacity-50" />
           </div>
         </div>
       ))}
@@ -379,7 +379,7 @@ export default function ProjectsIndex() {
           <div
             className={`${container} grid grid-cols-1 items-end gap-9 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14`}
           >
-            <div className="flex flex-col gap-4.5 [&_h1_em]:text-orange-on-dark">
+            <div className="intro flex flex-col gap-4.5 [&_h1_em]:text-orange-on-dark">
               <p className={eyebrowOnDark}>Our projects</p>
               <h1 className="text-[length:clamp(2rem,4.6vw,3.5rem)]">
                 Every development, with its <em>record attached</em>.
@@ -390,7 +390,7 @@ export default function ProjectsIndex() {
               </p>
             </div>
 
-            <dl className="grid grid-cols-2 gap-px border border-line-on-dark bg-line-on-dark">
+            <dl className="intro-self grid grid-cols-2 gap-px border border-line-on-dark bg-line-on-dark [--step:3]">
               {HERO_STATS.map((stat) => (
                 <div key={stat.label} className="bg-ink p-5.5">
                   <dd className="text-[2.25rem] leading-none font-light">
@@ -588,7 +588,7 @@ export default function ProjectsIndex() {
               ) : null}
 
               {state === 'ready' && total > 0 ? (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+                <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                   {data?.results.map((project) => {
                     const specs = [project.projectType, project.sector].filter(
                       (value): value is string => Boolean(value),
@@ -597,14 +597,16 @@ export default function ProjectsIndex() {
                     const passportLink = passportHref(project.slug);
 
                     return (
-                      <article key={project.id} className="flex flex-col border border-line bg-white">
+                      <article key={project.id} className="group flex flex-col border border-line bg-white">
                         {project.featuredImageUrl ? (
-                          <div
-                            className={`${media} aspect-[16/10] sm:aspect-auto sm:h-72`}
-                            style={{ backgroundImage: `url('${project.featuredImageUrl}')` }}
-                            role="img"
-                            aria-label={`${project.title}${project.location ? `, ${project.location}` : ''}`}
-                          />
+                          <div className="overflow-hidden">
+                            <div
+                              className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-72`}
+                              style={{ backgroundImage: `url('${project.featuredImageUrl}')` }}
+                              role="img"
+                              aria-label={`${project.title}${project.location ? `, ${project.location}` : ''}`}
+                            />
+                          </div>
                         ) : (
                           <div className="flex aspect-[16/10] items-end bg-line p-4 sm:aspect-auto sm:h-72">
                             <span className="text-[0.688rem] uppercase tracking-[0.16em] text-zinc-600">
@@ -659,7 +661,10 @@ export default function ProjectsIndex() {
                                 aria-valuemin={0}
                                 aria-valuemax={100}
                               >
-                                <div className="h-full bg-rust" style={{ width: `${progress.percent}%` }} />
+                                <div
+                                  className="reveal-bar h-full bg-rust"
+                                  style={{ width: `${progress.percent}%` }}
+                                />
                               </div>
                             </div>
                           ) : null}

@@ -19,7 +19,8 @@ export const section = 'py-13 sm:py-16 md:py-22';
 export const sectionLight = `${section} bg-white`;
 export const sectionMuted = `${section} border-t border-line bg-zinc-100`;
 export const sectionDark = `${section} bg-ink text-white`;
-export const sectionHead = 'flex flex-col gap-3.5';
+/** Rises in as it scrolls into view; see `reveal` in styles/globals.css. */
+export const sectionHead = 'reveal flex flex-col gap-3.5';
 
 export const titleLg = 'text-[length:clamp(1.875rem,3.4vw,2.75rem)]';
 export const titleMd = 'text-[length:clamp(1.75rem,3vw,2.5rem)]';
@@ -36,7 +37,8 @@ export const bodyCopy = 'text-base leading-[1.8] text-zinc-700';
 export const bodyCopyOnDark = 'text-base leading-[1.75] text-zinc-200';
 
 /** The 1px gap over a grey ground draws the hairlines between cards. */
-export const cardGrid = 'grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300';
+export const cardGrid =
+  'reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300';
 export const card = 'flex flex-col gap-3 bg-white p-6 sm:p-8.5';
 
 /** The regulatory notice, which every investor-facing path has to carry. */

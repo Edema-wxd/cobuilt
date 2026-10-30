@@ -150,7 +150,7 @@ export default function Passport() {
 
         <section className={sectionLight}>
           <div
-            className={`${container} grid grid-cols-1 items-start gap-8 md:grid-cols-[1.2fr_1fr] md:gap-14`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-start gap-8 md:grid-cols-[1.2fr_1fr] md:gap-14`}
           >
             <div className="flex flex-col gap-5 [&_h2_em]:text-rust">
               <p className={eyebrow}>What it is</p>
@@ -233,7 +233,7 @@ export default function Passport() {
               </p>
             </div>
 
-            <dl className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
+            <dl className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
               {STATUSES.map((status) => (
                 <div key={status.label} className="flex flex-col gap-3 bg-white p-6 sm:p-7.5">
                   <dt>
@@ -277,7 +277,7 @@ export default function Passport() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-4">
+            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-4">
               {ATTACHMENTS.map(([title, body]) => (
                 <div key={title} className="flex flex-col gap-3 bg-white p-6 sm:p-7.5">
                   <span className={`${glyph} text-orange`} aria-hidden="true">
@@ -293,7 +293,7 @@ export default function Passport() {
 
         <section className={sectionMuted}>
           <div
-            className={`${container} grid grid-cols-1 items-center gap-7 md:grid-cols-2 md:gap-14`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-center gap-7 md:grid-cols-2 md:gap-14`}
           >
             <div className="flex flex-col gap-5">
               <p className={eyebrow}>Read one</p>

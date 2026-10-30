@@ -46,11 +46,11 @@ export default function PageHero({
   meta,
 }: Props) {
   return (
-    <section className="relative isolate bg-ink">
+    <section className="relative isolate overflow-hidden bg-ink">
       {image ? (
         <>
           <div
-            className={`${media} absolute inset-0 -z-2`}
+            className={`${media} settle absolute inset-0 -z-2`}
             style={{ backgroundImage: `url('${image}')` }}
             {...(imageAlt ? { role: 'img', 'aria-label': imageAlt } : { 'aria-hidden': true })}
           />
@@ -62,7 +62,7 @@ export default function PageHero({
       ) : null}
 
       <div
-        className={`${container} flex flex-col gap-4.5 pt-10 pb-11 text-white sm:pt-13 sm:pb-14 md:pt-16 md:pb-18`}
+        className={`${container} intro flex flex-col gap-4.5 pt-10 pb-11 text-white sm:pt-13 sm:pb-14 md:pt-16 md:pb-18`}
       >
         {trail && trail.length > 0 ? (
           <nav aria-label="Breadcrumb">

@@ -99,7 +99,7 @@ export default function Contact() {
 
         <section className="bg-line py-13 sm:py-16 md:py-20" id="enquiry">
           <div
-            className={`${container} grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-13`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-13`}
           >
             <div className="flex flex-col gap-5 [&_h2_em]:text-rust">
               <p className={eyebrowOnLine}>Send an enquiry</p>
@@ -148,7 +148,7 @@ export default function Contact() {
 
         <section className={sectionLight}>
           <div
-            className={`${container} grid grid-cols-1 items-start gap-8 md:grid-cols-[1fr_1.25fr] md:gap-14`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-start gap-8 md:grid-cols-[1fr_1.25fr] md:gap-14`}
           >
             <div className="flex flex-col gap-5">
               <p className={eyebrow}>The office</p>
@@ -172,7 +172,7 @@ export default function Contact() {
               ) : null}
             </div>
 
-            <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
+            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
               {ROUTES.map(([head, body]) => (
                 <div key={head} className="flex flex-col gap-3 bg-white p-6 sm:p-7.5">
                   <span className={`${glyph} text-orange`} aria-hidden="true">
