@@ -101,15 +101,46 @@ this audience is, and where the previous round of fixes was spent.
 
 Corners are square everywhere (`border-radius: 0`), except the video play
 button. Cards are separated by 1px hairlines over a grey ground rather than by
-shadows. There is one shadow on the site (the cookie banner) and one animation
-(the wordmark marquee, hidden on phones).
+shadows. There is one shadow on the site (the cookie banner).
 
 ### Motion
 
-Effectively none, deliberately. Colour transitions on hover at 150ms, and the
-marquee. No scroll-triggered reveals, no card hover lifts. `prefers-reduced-motion`
-stops the marquee outright. Keep it that way unless a new page has a genuine
-reason.
+Restrained and entrance-only: things arrive, they do not perform. One easing
+(`--ease-settle`, quick off the mark with a long soft landing) and one
+movement (a 20px rise with a fade) carry almost all of it. Everything is
+defined in `styles/globals.css`.
+
+- **Brand mark** (`components/BrandIntro.tsx`): on the first page of a visit
+  the CoBuilt logo and a small running-bond wall of orange bricks cover the
+  page for about a second, then lift away. Later pages in the same visit skip
+  it. Pure CSS, so it clears even if the page never hydrates.
+- **Page header** (`intro`): eyebrow, heading, standfirst and actions rise in
+  one after another on load, 90ms apart. Hero photographs settle from a slight
+  zoom (`settle`). On the home page each carousel photo also drifts slowly back
+  to rest while it is up.
+- **Sections** (`reveal`, `reveal-stagger`): section heads, card grids, value
+  and step rows rise in once as they scroll into view; in a `reveal-stagger`
+  the children follow one another. Hairline card grids rise as one block, since
+  staggering them shows the grey ground. Driven by
+  `components/MotionObserver.tsx`, which also catches content that loads later
+  (filtered projects, search results).
+- **Figures and progress**: the stat bands count up (`components/CountUp.tsx`)
+  and project progress bars fill (`reveal-bar`) as they come into view.
+- **Hover**: colour transitions at 150ms on links and buttons; card photos ease
+  in by 4% inside their frame. Still no card lifts or shadows.
+- **Loading**: a 3px orange bar runs along the top of the window while the next
+  page loads (`components/NavProgress.tsx`); pages that wait on the database
+  show the brick mark laying itself on a loop (`components/PageLoading.tsx`,
+  the `loading.tsx` files); list placeholders shimmer (`shimmer`).
+- **The marquee**, hidden on phones, is unchanged.
+
+The rules that keep it safe: nothing is ever hidden until
+`MotionObserver` has marked what is already on screen and switched motion on,
+so a page that fails to hydrate, prints, or runs without JavaScript shows
+everything. `prefers-reduced-motion` stops all of it outright: no brand mark,
+no entrances, no counting, no shimmer. New pages get motion by using the
+shared pieces (`PageHero`, `sectionHead`, `cardGrid`, `CtaBand`) or by adding
+`reveal` / `reveal-stagger` to a container; do not invent new movements.
 
 ### Components that already exist
 

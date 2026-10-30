@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
+import BrandIntro from './BrandIntro';
 import CookieBanner from './CookieBanner';
+import MotionObserver from './MotionObserver';
+import NavProgress from './NavProgress';
 import PageViews from './PageViews';
 import SiteFooter from './SiteFooter';
 import SiteHeader from './SiteHeader';
@@ -17,7 +20,9 @@ interface Props {
 }
 
 /**
- * Header, footer, legal bar and cookie banner, shared by every page.
+ * Header, footer, legal bar and cookie banner, shared by every page, along
+ * with the site's motion: the first-visit brand mark, the navigation progress
+ * bar and the scroll entrances.
  *
  * Title and description are no longer props: each page exports `metadata`
  * (or `generateMetadata`) instead, which is what puts them in the head.
@@ -29,6 +34,9 @@ export default function SiteLayout({ current, preloadImage, children }: Props) {
         <link rel="preload" as="image" href={preloadImage} fetchPriority="high" />
       ) : null}
 
+      <BrandIntro />
+      <NavProgress />
+      <MotionObserver />
       <SiteHeader {...(current ? { current } : {})} />
       {children}
       <SiteFooter />

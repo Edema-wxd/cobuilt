@@ -105,7 +105,9 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
     return {
       kind: 'found',
       props: {
-        project: project as Project,
+        // The brochure is an editor-supplied link, so it gets the same https
+        // check as a tour URL before it becomes an `href`.
+        project: { ...project, brochureUrl: httpsUrl(project.brochureUrl) } as Project,
         services,
         tags,
         // Albums are a CMS grouping; the page shows one run of photography.

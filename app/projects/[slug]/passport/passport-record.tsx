@@ -296,7 +296,7 @@ export default function PassportRecord({ project, entries, summary }: PassportRe
               facts, and stacking them put most of a screen of metadata between
               the reader and the record.
             */}
-            <dl className="grid grid-cols-2 gap-px border border-zinc-300 bg-zinc-300 lg:grid-cols-3">
+            <dl className="reveal grid grid-cols-2 gap-px border border-zinc-300 bg-zinc-300 lg:grid-cols-3">
               <div className="bg-white p-4 sm:p-5">
                 <dt className={dataLabel}>Development</dt>
                 <dd className="text-[0.938rem]">
@@ -588,7 +588,7 @@ function Entry({ entry, projectTitle }: { entry: RecordEntry; projectTitle: stri
               instead; from `sm` the columns change and the parity with it, so
               the rule is scoped to the width it is true for.
             */}
-            <div className="grid grid-cols-2 gap-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 max-sm:[&>*:last-child:nth-child(odd)]:aspect-[2/1] sm:grid-cols-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2 max-sm:[&>*:last-child:nth-child(odd)]:aspect-[2/1] sm:grid-cols-2 md:grid-cols-3">
               {entry.photoUrls.map((url, index) => (
                 <div
                   key={`${url}-${index}`}
@@ -680,7 +680,7 @@ function RecordTerms({ project }: { project: PassportProject }) {
   return (
     <section className="bg-ink py-12 text-white sm:py-15 md:py-18" aria-labelledby="record-terms-title">
       <div
-        className={`${container} grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.25fr_1fr] lg:gap-13`}
+        className={`${container} reveal-stagger grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.25fr_1fr] lg:gap-13`}
       >
         <div className="flex flex-col gap-4 [&_h2_em]:text-orange-on-dark">
           <p className="text-[0.719rem] font-medium uppercase tracking-[0.28em] text-orange-on-dark">

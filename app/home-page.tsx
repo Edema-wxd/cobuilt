@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
+import CountUp from '../components/CountUp';
 import SiteLayout from '../components/SiteLayout';
 import { PHONE, PHONE_HREF } from '../components/site';
 import { SERVICES, serviceHref } from './services/services';
@@ -73,11 +74,11 @@ const IMAGES = {
 const HERO_SLIDES = [IMAGES.hero, IMAGES.site, IMAGES.villa, IMAGES.apartments] as const;
 const HERO_SLIDE_INTERVAL_MS = 6000;
 
-const STATS: Array<{ value: string; plus?: boolean; label: string }> = [
-  { value: '5', plus: true, label: 'Projects delivered' },
-  { value: '3', label: 'Projects under development' },
-  { value: '30', plus: true, label: 'Units developed' },
-  { value: '5', plus: true, label: 'Locations' },
+const STATS: Array<{ value: number; plus?: boolean; label: string }> = [
+  { value: 5, plus: true, label: 'Projects delivered' },
+  { value: 3, label: 'Projects under development' },
+  { value: 30, plus: true, label: 'Units developed' },
+  { value: 5, plus: true, label: 'Locations' },
 ];
 
 type ProjectStatus = 'ongoing' | 'completed' | 'future';
@@ -330,15 +331,16 @@ export default function HomePage() {
       <main id="top">
         <section className="relative isolate flex min-h-screen items-center overflow-hidden bg-line">
           <div
-            className="absolute inset-0 -z-2"
+            className="settle absolute inset-0 -z-2"
             role="img"
             aria-label="Rotating photography of CoBuilt developments"
           >
+            {/* Each photo drifts slowly back to rest for as long as it is up. */}
             {HERO_SLIDES.map((src, index) => (
               <div
                 key={src}
-                className={`${media} absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                  index === heroSlide ? 'opacity-100' : 'opacity-0'
+                className={`${media} absolute inset-0 transition-[opacity,scale] duration-[1000ms,7000ms] ease-in-out ${
+                  index === heroSlide ? 'scale-100 opacity-100' : 'scale-106 opacity-0'
                 }`}
                 style={{ backgroundImage: `url('${src}')` }}
                 aria-hidden="true"
@@ -354,7 +356,7 @@ export default function HomePage() {
           <div
             className={`${container} grid grid-cols-1 items-center gap-7 pt-11 pb-9 sm:gap-8 sm:py-16 lg:grid-cols-[1fr_280px] lg:gap-10`}
           >
-            <div className="flex flex-col gap-4.5 text-left sm:gap-6 lg:max-w-170">
+            <div className="intro flex flex-col gap-4.5 text-left sm:gap-6 lg:max-w-170">
               <p className={eyebrowOnDark}>Building Trust Through Every Brick</p>
               <h1 className="text-[length:clamp(2rem,9.5vw,2.5rem)] leading-[1.05] text-white sm:text-[length:clamp(2.25rem,5vw,3.75rem)] sm:leading-[1.02] [&_em]:text-orange-on-dark">
                 Every family deserves a home that feels like <em>coming home</em>.
@@ -404,7 +406,7 @@ export default function HomePage() {
               on a phone. From lg it sits on the light right-hand side of the photo, where the
               scrim is thinnest, so it carries its own dark tile to keep the text above 4.5:1.
             */}
-            <div className="flex flex-col items-start gap-1 border-t border-line-on-dark pt-6 text-left lg:items-end lg:gap-2.25 lg:border-t-0 lg:bg-ink-deep/80 lg:p-5 lg:text-right">
+            <div className="intro-self flex flex-col items-start gap-1 border-t border-line-on-dark pt-6 text-left [--step:5] lg:items-end lg:gap-2.25 lg:border-t-0 lg:bg-ink-deep/80 lg:p-5 lg:text-right">
               <span className="text-[0.656rem] uppercase tracking-[0.24em] text-orange-on-dark">
                 Call us
               </span>
@@ -421,12 +423,12 @@ export default function HomePage() {
 
         <section className="bg-orange" aria-label="CoBuilt at a glance">
           <div
-            className={`${container} grid grid-cols-2 gap-x-4 gap-y-6 py-8 sm:gap-7 sm:py-10.5 md:grid-cols-4 md:gap-8`}
+            className={`${container} reveal-stagger grid grid-cols-2 gap-x-4 gap-y-6 py-8 sm:gap-7 sm:py-10.5 md:grid-cols-4 md:gap-8`}
           >
             {STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col gap-1.5">
                 <p className="text-[2.25rem] leading-none font-light tracking-[-0.03em] text-ink sm:text-[2.625rem]">
-                  {stat.value}
+                  <CountUp value={stat.value} />
                   {stat.plus ? <span className="text-[1.5rem]">+</span> : null}
                 </p>
                 <p className="text-[0.688rem] leading-[1.4] tracking-[0.12em] text-ink uppercase sm:leading-[1.6] sm:tracking-[0.18em]">
@@ -439,7 +441,7 @@ export default function HomePage() {
 
         <section className={sectionLight} id="about">
           <div
-            className={`${container} grid grid-cols-1 items-center gap-7 sm:gap-9 md:grid-cols-2 md:gap-16`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-center gap-7 sm:gap-9 md:grid-cols-2 md:gap-16`}
           >
             <div className="flex flex-col gap-5 [&_h2_em]:text-rust">
               <p className={eyebrow}>About CoBuilt</p>
@@ -464,7 +466,7 @@ export default function HomePage() {
               </a>
             </div>
             <div
-              className={`${media} aspect-[4/3] sm:aspect-auto sm:h-80 md:h-115`}
+              className={`${media} aspect-[4/3] sm:aspect-auto sm:h-100 md:h-145`}
               style={{ backgroundImage: `url('${IMAGES.villa}')` }}
               role="img"
               aria-label="A completed CoBuilt villa and pool"
@@ -484,7 +486,7 @@ export default function HomePage() {
             </div>
 
             {/* The 1px gap over a grey ground draws the rules between cards. */}
-            <div className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
+            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
               {SERVICES.map((service) => (
                 <article
                   key={service.slug}
@@ -547,15 +549,17 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+            <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
               {visibleProjects.map((project) => (
-                <article key={project.id} className="flex flex-col border border-line bg-white">
-                  <div
-                    className={`${media} aspect-[16/10] sm:aspect-auto sm:h-57.5`}
-                    style={{ backgroundImage: `url('${project.image}')` }}
-                    role="img"
-                    aria-label={`${project.title}, ${project.place}`}
-                  />
+                <article key={project.id} className="group flex flex-col border border-line bg-white">
+                  <div className="overflow-hidden">
+                    <div
+                      className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-72`}
+                      style={{ backgroundImage: `url('${project.image}')` }}
+                      role="img"
+                      aria-label={`${project.title}, ${project.place}`}
+                    />
+                  </div>
                   <div className="flex flex-1 flex-col gap-3.25 p-5.5 sm:p-6.5">
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-mono text-[0.656rem] tracking-[0.16em] text-zinc-600 uppercase">
@@ -593,7 +597,7 @@ export default function HomePage() {
                           aria-valuemax={100}
                         >
                           <div
-                            className="h-full bg-rust"
+                            className="reveal-bar h-full bg-rust"
                             style={{ width: `${project.progress.percent}%` }}
                           />
                         </div>
@@ -629,12 +633,12 @@ export default function HomePage() {
           id="passport"
         >
           <div
-            className={`${media} aspect-[16/10] sm:aspect-auto sm:min-h-80 lg:min-h-130`}
+            className={`${media} reveal aspect-[16/10] sm:aspect-auto sm:min-h-100 lg:min-h-160`}
             style={{ backgroundImage: `url('${IMAGES.site}')` }}
             role="img"
             aria-label="Anthony Gardens under construction"
           />
-          <div className="flex flex-col gap-5 px-gutter py-11 text-white sm:gap-6 sm:py-14 lg:max-w-180 lg:py-20 [&_h2_em]:text-orange-on-dark">
+          <div className="reveal flex flex-col gap-5 px-gutter py-11 text-white sm:gap-6 sm:py-14 lg:max-w-180 lg:py-20 [&_h2_em]:text-orange-on-dark">
             <p className={eyebrowOnDark}>Project Passport™ · CB-2024-014</p>
             <h2 className={titleMd}>
               A permanent, public record for every <em>development</em>.
@@ -645,7 +649,7 @@ export default function HomePage() {
               features attached.
             </p>
 
-            <ol className="flex flex-col">
+            <ol className="reveal-stagger flex flex-col">
               {MILESTONES.map((milestone) => (
                 <li
                   key={milestone.index}
@@ -682,14 +686,14 @@ export default function HomePage() {
 
         <section className={sectionLight} aria-labelledby="values-title">
           <div className={container}>
-            <div className="mb-8 flex flex-col items-start gap-3 text-left sm:mb-12 sm:items-center sm:text-center">
+            <div className="reveal mb-8 flex flex-col items-start gap-3 text-left sm:mb-12 sm:items-center sm:text-center">
               <p className={eyebrow}>Our values</p>
               <h2 className={titleMd} id="values-title">
                 Where standards meet trusted professionals
               </h2>
             </div>
             {/* Vertical rules only read correctly on a single row, so the two-column layout drops every second one. */}
-            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
+            <div className="reveal-stagger grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
               {VALUES.map(([title, body]) => (
                 <div
                   key={title}
@@ -708,14 +712,14 @@ export default function HomePage() {
 
         <section className={sectionMuted} id="leadership">
           <div
-            className={`${container} grid grid-cols-1 items-start gap-9 lg:grid-cols-[1.35fr_1fr] lg:gap-11`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-start gap-9 lg:grid-cols-[1.35fr_1fr] lg:gap-11`}
           >
             <div className="flex flex-col gap-5">
               <p className={eyebrow}>Video library</p>
               <h2 className={titleSm}>Watch the work</h2>
               {/* A still preview, not a player: the embed is wired up when the video ID
                   exists, so nothing here advertises a control that does not work yet. */}
-              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-82.5">
+              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-105">
                 <div
                   className={`${media} absolute inset-0`}
                   style={{ backgroundImage: `url('${IMAGES.site}')` }}
@@ -795,7 +799,7 @@ export default function HomePage() {
                 Working with CoBuilt
               </h2>
             </div>
-            <ol className="mt-8 grid grid-cols-1 gap-7 sm:mt-11 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
+            <ol className="reveal-stagger mt-8 grid grid-cols-1 gap-7 sm:mt-11 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
               {STEPS.map(([number, title, body]) => (
                 <li
                   key={number}
@@ -844,15 +848,17 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
+            <div className="reveal-stagger grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
               {NEWS.map((item) => (
-                <article key={item.title} className="flex flex-col gap-3.5">
-                  <div
-                    className={`${media} aspect-[16/10] sm:aspect-auto sm:h-50`}
-                    style={{ backgroundImage: `url('${item.image}')` }}
-                    role="img"
-                    aria-label={item.title}
-                  />
+                <article key={item.title} className="group flex flex-col gap-3.5">
+                  <div className="overflow-hidden">
+                    <div
+                      className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-64`}
+                      style={{ backgroundImage: `url('${item.image}')` }}
+                      role="img"
+                      aria-label={item.title}
+                    />
+                  </div>
                   <p className="flex gap-3 text-[0.688rem] tracking-[0.16em] text-zinc-500 uppercase">
                     <span className="text-rust">{item.category}</span>
                     <span>{item.date}</span>
@@ -869,7 +875,7 @@ export default function HomePage() {
 
         <section className="bg-line py-13 sm:py-19" id="register">
           <div
-            className={`${container} grid grid-cols-1 items-center gap-7 sm:gap-9 lg:grid-cols-2 lg:gap-13`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-center gap-7 sm:gap-9 lg:grid-cols-2 lg:gap-13`}
           >
             <div className="flex flex-col gap-4 [&_h2_em]:text-rust">
               <p className={eyebrowOnLine}>Register your interest</p>
