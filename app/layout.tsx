@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+// Typefaces are bundled and served from this origin, so no visitor data
+// reaches a font CDN and the build needs no network access.
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
 import '../styles/globals.css';
 
 /**
  * Root layout — replaces the former `pages/_app.tsx` and `pages/_document.tsx`.
- *
- * Typefaces are loaded with a plain stylesheet link rather than `next/font` so
- * that a build without network access still succeeds — the stacks in
- * `styles/globals.css` fall back to system faces.
  */
 
 /**
@@ -59,12 +59,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <noscript>
           <style>{'.brand-intro{display:none}html{--intro-offset:0ms}'}</style>
         </noscript>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
-        />
       </head>
       <body>{children}</body>
     </html>

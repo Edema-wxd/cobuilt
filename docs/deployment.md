@@ -82,16 +82,12 @@ cp .env.example .env.production      # fill in — see below
 npm run db:migrate
 npm run build
 
-# 3. Bootstrap the first admin. Identity is Neon Auth (`neon deploy` provisions it
-#    and writes NEON_AUTH_BASE_URL / NEON_AUTH_JWKS_URL). Two ways to get the
-#    first administrator:
-#      a. Insert the account, then have its owner sign up with that address at
-#         /admin/register (they confirm it with the emailed code):
-#           INSERT INTO users (email, full_name, role)
-#           VALUES ('admin@cobuilt.com', '...', 'admin');
-#      b. Start once with ALLOW_PUBLIC_REGISTRATION=true, sign up at
-#         /admin/register (the first verified sign-up becomes admin), then
-#         restart with it unset.
+# 3. Invite the first admin. Identity is Neon Auth (`neon deploy` provisions it
+#    and writes NEON_AUTH_BASE_URL / NEON_AUTH_JWKS_URL). This creates the
+#    account; its owner then signs up with that address at /admin/register and
+#    confirms the emailed code, which links the two. Later admins are invited
+#    from /admin/users/new.
+npm run user:invite-admin -- --email admin@cobuilt.com --name "Full Name"
 #    Add the site's origin as a Neon Auth trusted domain first:
 #      neon neon-auth domain add https://<site origin>
 

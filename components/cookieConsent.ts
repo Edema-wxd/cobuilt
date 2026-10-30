@@ -58,6 +58,9 @@ export const ALLOW_ALL: Record<OptionalCategory, boolean> = {
 /** Fired when something asks for the preferences panel — the footer link. */
 export const OPEN_PREFERENCES_EVENT = 'cobuilt:cookie-preferences';
 
+/** Fired after a choice is saved, so anything gated on consent can react at once. */
+export const CONSENT_CHANGED_EVENT = 'cobuilt:cookie-consent-changed';
+
 function isConsent(value: unknown): value is CookieConsent {
   if (typeof value !== 'object' || value === null) return false;
   const c = value as Record<string, unknown>;
@@ -93,6 +96,7 @@ export function write(choice: Record<OptionalCategory, boolean>): CookieConsent 
   } catch {
     // The choice still governs this page view; it just will not be remembered.
   }
+  window.dispatchEvent(new CustomEvent(CONSENT_CHANGED_EVENT, { detail: consent }));
   return consent;
 }
 

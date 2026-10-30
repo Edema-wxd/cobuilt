@@ -19,7 +19,7 @@ const CATEGORIES: Array<[string, string, string]> = [
   ],
   [
     'Analytics',
-    'Anonymous page-view counts, so we can see which projects draw interest. IP addresses are truncated before storage.',
+    'Anonymous page-view counts, so we can see which projects draw interest. IP addresses are truncated before storage. A random identifier for the visit is kept in your browser’s session storage and discarded when you close the tab.',
     '30 days',
   ],
   [

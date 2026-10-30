@@ -17,7 +17,7 @@ const RETENTION: Array<[string, string, string]> = [
   ['General enquiries', 'Name, email, phone, your message, IP address and browser details', '90 days, then anonymised'],
   ['Investor enquiries', 'Name, email, phone, company, your message, IP address and browser details', '2 years (730 days), then anonymised'],
   ['Page analytics', 'Page path, referrer, truncated IP, browser type', '30 days, then deleted'],
-  ['WhatsApp and live chat', 'Phone number or chat name, email, your messages', 'As long as needed to deal with the conversation'],
+  ['WhatsApp and live chat', 'Phone number or chat name, email, your messages', '90 days after each message, then deleted'],
   ['Account records', 'Email, name, role, sign-in history', 'While the account is open'],
 ];
 
@@ -76,8 +76,9 @@ export default function Privacy() {
             channel.
           </li>
           <li>
-            <strong>When you browse</strong> — the page visited, where you arrived from, your
-            browser type, and a truncated IP address. The final octet of an IPv4 address (or the
+            <strong>When you browse</strong> — the page visited, where you arrived from (without
+            any query string), your browser type, a random identifier for the visit, and a
+            truncated IP address. The final octet of an IPv4 address (or the
             last 80 bits of an IPv6 address) is discarded before storage, so the record shows
             coarse geography and never identifies you. The lawful basis is consent where analytics
             cookies are enabled; essential logging rests on legitimate interest.
@@ -150,11 +151,8 @@ export default function Privacy() {
           </li>
           <li>
             <strong>An error-monitoring service</strong>, which receives technical details when
-            something on the site fails. These can include an IP address.
-          </li>
-          <li>
-            <strong>Google Fonts</strong>, which supplies the typefaces on this site. Your browser
-            requests them from Google, which receives your IP address and browser details.
+            something on the site fails, such as the error and the page address. It is not sent
+            form contents, cookies or IP addresses.
           </li>
           <li>
             <strong>Meta</strong>, if you contact us on WhatsApp. Meta&rsquo;s own privacy policy

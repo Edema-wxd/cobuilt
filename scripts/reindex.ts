@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import './loadEnv';
 import { ensureIndexes, isSearchConfigured, reindexAll } from '../src/lib/search/index';
 import { pool } from '../src/lib/db';
 import { logger } from '../src/lib/logger';
