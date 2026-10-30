@@ -108,19 +108,6 @@
 
   /* One easing for every entrance: quick off the mark, long soft landing. */
   --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
-
-  /* The track holds the phrase set twice, so -50% lands exactly where it began. */
-  --animate-marquee: marquee 26s linear infinite;
-
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-
-    to {
-      transform: translateX(-50%);
-    }
-  }
 }
 
 /** The native select arrow is removed; this is its replacement. */
@@ -138,7 +125,7 @@
  * Three kinds, all of them entrances: the page header rises in on load
  * (`intro`), sections rise in as they scroll into view (`reveal`,
  * `reveal-stagger`), and the brand mark plays once per visit while the first
- * page loads. Nothing loops except the marquee and loading states.
+ * page loads. Nothing loops except the hero carousel and loading states.
  *
  * Every hidden state is opt-in twice over. It needs `motion-ready` on <html>,
  * which components/MotionObserver.tsx adds only once it is watching the page,
@@ -373,7 +360,7 @@
   }
 
   body {
-    /* Guards the marquee and any full-bleed section from widening the page. */
+    /* Guards any full-bleed section from widening the page. */
     overflow-x: clip;
     background: var(--white);
     color: var(--ink);
@@ -435,7 +422,7 @@
     *::before,
     *::after {
       /*
-       * Stops the wordmark marquee outright rather than merely shortening it,
+       * Stops the hero carousel fade outright rather than merely shortening it,
        * and with it every entrance: none of them is needed to see the content.
        */
       animation: none !important;

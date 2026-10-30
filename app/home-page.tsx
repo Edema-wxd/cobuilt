@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import CountUp from '../components/CountUp';
 import SiteLayout from '../components/SiteLayout';
 import { PHONE, PHONE_HREF } from '../components/site';
@@ -23,7 +23,6 @@ import {
 import {
   btnOrange,
   btnOutline,
-  btnOutlineOnDark,
   btnWhite,
   container,
   eyebrow,
@@ -38,8 +37,12 @@ import {
  * Deliberately static: the page renders without PostgreSQL, so `npm run dev`
  * works on a fresh checkout. The only live call is the "Register your interest"
  * form, which posts to `/api/forms/newsletter` (CSRF-exempt, rate limited,
- * double opt-in). Project, news and milestone content here is illustrative and
- * is replaced by CMS-backed content when the inner pages are built.
+ * double opt-in). Project and milestone content here is illustrative and is
+ * replaced by CMS-backed content when the inner pages are built.
+ *
+ * The page is cut for conversion: every section either builds the case (proof,
+ * what we do, how we document it) or asks for the enquiry. Story, values,
+ * leadership, video and news live on their own pages, reachable from the nav.
  *
  * Two constraints from the brief are deliberate and should survive edits:
  * the page carries no investment call to action — every investor path resolves
@@ -51,8 +54,7 @@ import {
  * Layout values come from the handoff mockup, drawn once at 1160px. Everything
  * below that is mobile-first: base classes are the phone layout, and `sm`,
  * `md` and `lg` add the tablet and desktop layouts back. The page degrades by
- * stacking and by dropping ornament (the hero rail, the marquee), never by
- * dropping content.
+ * stacking and by dropping ornament (the hero rail), never by dropping content.
  *
  * The section bands, titles and card classes this page established now live in
  * `components/sections.ts`, shared with the pages built from the same patterns
@@ -88,7 +90,6 @@ interface Project {
   status: ProjectStatus;
   statusLabel: string;
   title: string;
-  tagline: string;
   specs: string[];
   progress?: { stage: string; percent: number };
   place: string;
@@ -102,7 +103,6 @@ const PROJECTS: Project[] = [
     status: 'ongoing',
     statusLabel: 'Ongoing',
     title: 'Anthony Gardens',
-    tagline: 'Eighty-four homes, built in the open.',
     specs: ['3 & 4 bedroom apartments', 'Duplex penthouses'],
     progress: { stage: 'Superstructure', percent: 68 },
     place: 'Ikoyi, Lagos',
@@ -114,8 +114,7 @@ const PROJECTS: Project[] = [
     status: 'completed',
     statusLabel: 'Completed',
     title: 'Ridge Terraces',
-    tagline: 'Handed over on the published date.',
-    specs: ['32 terraced homes', 'Handover September 2025', 'Full milestone archive'],
+    specs: ['32 terraced homes', 'Handed over on the published date'],
     place: 'Independence Layout, Enugu',
     linkLabel: 'Profile →',
     image: IMAGES.hero,
@@ -125,8 +124,7 @@ const PROJECTS: Project[] = [
     status: 'future',
     statusLabel: 'Future',
     title: 'TechZone Quarter',
-    tagline: 'Where the working city meets home.',
-    specs: ['Mixed-use, design development', 'Groundbreak 2027', 'Programme 2027–29'],
+    specs: ['Mixed-use', 'Groundbreak 2027'],
     place: 'Wuse 2, Abuja',
     linkLabel: 'Vision →',
     image: IMAGES.apartments,
@@ -142,15 +140,6 @@ const STATUS_CLASS: Record<ProjectStatus, string> = {
   future: `${badge} bg-line text-ink`,
 };
 
-type Filter = 'all' | ProjectStatus;
-
-const FILTERS: Array<{ value: Filter; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'completed', label: 'Past' },
-  { value: 'ongoing', label: 'Ongoing' },
-  { value: 'future', label: 'Future' },
-];
-
 interface Milestone {
   index: string;
   name: string;
@@ -161,90 +150,16 @@ interface Milestone {
 const MILESTONES: Milestone[] = [
   { index: '01', name: 'Land acquired', date: '15 Jan 2026', done: true },
   { index: '02', name: 'Design approved', date: '15 Feb 2026', done: true },
-  {
-    index: '03',
-    name: 'Construction started',
-    date: '05 Mar 2026',
-    done: true,
-  },
+  { index: '03', name: 'Construction started', date: '05 Mar 2026', done: true },
   { index: '04', name: 'Roofing', date: 'Nov 2026', done: false },
-  {
-    index: '05',
-    name: 'Building services installation',
-    date: 'Feb 2027',
-    done: false,
-  },
-];
-
-const VALUES: Array<[string, string]> = [
-  [
-    'Integrity',
-    'We conduct our business honestly, ethically and transparently in every decision and commitment.',
-  ],
-  [
-    'Excellence',
-    'We pursue the highest standards of professionalism, quality and continuous improvement.',
-  ],
-  [
-    'Innovation',
-    'We embrace technology and forward-thinking solutions that create smarter developments.',
-  ],
-  [
-    'Sustainability',
-    'We balance economic success with environmental stewardship and social responsibility.',
-  ],
 ];
 
 const STEPS: Array<[string, string, string]> = [
-  ['01', 'Enquire', 'Tell us about the site, brief or scheme you have in mind.'],
-  [
-    '02',
-    'Appraise',
-    'We prepare a feasibility appraisal covering market, technical and cost position.',
-  ],
-  ['03', 'Deliver', 'Design, procurement and construction managed against a published programme.'],
-  ['04', 'Hand over', 'Practical completion, documentation and a permanent Passport archive.'],
+  ['01', 'Enquire', 'Tell us about your site, brief or scheme.'],
+  ['02', 'Appraise', 'We assess market, technical and cost feasibility.'],
+  ['03', 'Deliver', 'Design and construction against a published programme.'],
+  ['04', 'Hand over', 'Completion, documentation and a permanent Passport.'],
 ];
-
-const NEWS: Array<{
-  category: string;
-  date: string;
-  title: string;
-  excerpt: string;
-  image: string;
-}> = [
-  {
-    category: 'Project update',
-    date: '02 Sep 2026',
-    title: 'Anthony Gardens reaches sixth-floor slab',
-    excerpt: 'Superstructure works remain on programme ahead of roofing in November.',
-    image: IMAGES.site,
-  },
-  {
-    category: 'Thought leadership',
-    date: '21 Aug 2026',
-    title: 'What verified milestone reporting changes for Nigerian development',
-    excerpt: 'A practical view on documentation standards and stakeholder trust.',
-    image: IMAGES.apartments,
-  },
-  {
-    category: 'Announcement',
-    date: '04 Aug 2026',
-    title: 'CoBuilt publishes 2026 sustainability commitments',
-    excerpt: 'Targets covering materials, energy and community engagement.',
-    image: IMAGES.villa,
-  },
-];
-
-const ENQUIRER_TYPES = [
-  'Prospective client',
-  'Prospective partner',
-  'Supplier or contractor',
-  'Media enquiry',
-  'Other',
-] as const;
-
-const MARQUEE_PHRASES = ['CoBuilt Investment Partners', 'Building Trust Through Every Brick'];
 
 type FormState = 'idle' | 'sending' | 'done' | 'error';
 
@@ -272,7 +187,6 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
 }
 
 export default function HomePage() {
-  const [filter, setFilter] = useState<Filter>('all');
   const [heroSlide, setHeroSlide] = useState(0);
 
   useEffect(() => {
@@ -284,13 +198,9 @@ export default function HomePage() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [enquirerType, setEnquirerType] = useState<string>(ENQUIRER_TYPES[0]);
   const [website, setWebsite] = useState('');
   const [state, setState] = useState<FormState>('idle');
   const [message, setMessage] = useState('');
-
-  const visibleProjects =
-    filter === 'all' ? PROJECTS : PROJECTS.filter((project) => project.status === filter);
 
   async function register(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -304,7 +214,7 @@ export default function HomePage() {
         body: JSON.stringify({
           email,
           fullName: name,
-          source: `landing:register-interest:${enquirerType}`.slice(0, 100),
+          source: 'landing:register-interest',
           website,
         }),
       });
@@ -362,9 +272,8 @@ export default function HomePage() {
                 Every family deserves a home that feels like <em>coming home</em>.
               </h1>
               <p className="max-w-135 text-base leading-[1.65] text-zinc-100 sm:text-[1.0625rem] sm:leading-[1.7]">
-                CoBuilt Investment Partners delivers high-quality residential, commercial, mixed-use
-                and strategic developments that create lasting value for investors, businesses and
-                communities.
+                Residential, commercial and mixed-use developments across Nigeria, delivered on a
+                published programme and documented at every milestone.
               </p>
               {/* Stacked full width on a phone, so the primary action is never stranded on its own row. */}
               <div className="flex flex-col gap-2.5 pt-1.5 sm:flex-row sm:flex-wrap sm:gap-3 sm:pt-1">
@@ -373,14 +282,6 @@ export default function HomePage() {
                 </a>
                 <a className={btnWhite} href="#projects">
                   Explore our projects
-                </a>
-                {/*
-                  Labelled for what it does: this one scrolls to the newsletter
-                  band, where "Contact us" used to, which is a different thing
-                  from an enquiry. The enquiry form is /contact, above.
-                */}
-                <a className={btnOutlineOnDark} href="#register">
-                  Register your interest
                 </a>
               </div>
               {/* Live carousel indicators, also the manual controls. */}
@@ -439,118 +340,15 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className={sectionLight} id="about">
-          <div
-            className={`${container} reveal-stagger grid grid-cols-1 items-center gap-7 sm:gap-9 md:grid-cols-2 md:gap-16`}
-          >
-            <div className="flex flex-col gap-5 [&_h2_em]:text-rust">
-              <p className={eyebrow}>About CoBuilt</p>
-              <h2 className={titleLg}>
-                A development company built on <em>documented</em> delivery.
-              </h2>
-              <p className="text-base leading-[1.8] text-zinc-700">
-                CoBuilt Investment Partners plans, manages and delivers residential, commercial,
-                mixed-use and strategic developments. Our integrated model spans land acquisition,
-                feasibility, planning, financing, development management, construction oversight,
-                sales and asset management.
-              </p>
-              <p className="text-base leading-[1.8] text-zinc-600">
-                That record is Project Passport™ — a permanent, public account of each development,
-                from commencement through to handover.
-              </p>
-              <a
-                className="mt-2 inline-flex min-h-target items-center self-start border-b border-orange text-[0.719rem] font-semibold tracking-[0.16em] text-rust uppercase hover:text-rust-hover sm:block sm:min-h-0 sm:pb-2"
-                href="/about"
-              >
-                Read our story
-              </a>
-            </div>
-            <div
-              className={`${media} aspect-[4/3] sm:aspect-auto sm:h-100 md:h-145`}
-              style={{ backgroundImage: `url('${IMAGES.villa}')` }}
-              role="img"
-              aria-label="A completed CoBuilt villa and pool"
-            />
-          </div>
-        </section>
-
-        <section className={sectionMuted} id="services">
-          <div className={container}>
-            <div className={`${sectionHead} mb-8 max-w-165 sm:mb-11`}>
-              <p className={eyebrow}>Our services</p>
-              <h2 className={titleLg}>What we do</h2>
-              <p className="text-base leading-[1.75] text-zinc-700">
-                Six disciplines delivered under one governance framework — from feasibility through
-                to practical completion and handover.
-              </p>
-            </div>
-
-            {/* The 1px gap over a grey ground draws the rules between cards. */}
-            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
-              {SERVICES.map((service) => (
-                <article
-                  key={service.slug}
-                  className={`flex flex-col gap-3 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
-                >
-                  <span
-                    className={`${glyph} ${service.informational ? 'text-zinc-500' : 'text-orange'}`}
-                    aria-hidden="true"
-                  >
-                    ◈
-                  </span>
-                  <h3 className={`${cardTitle} tracking-[0.16em]`}>{service.title}</h3>
-                  <p className={cardBody}>{service.summary}</p>
-                  {service.informational ? (
-                    <p className="mt-1.5 self-start border border-zinc-400 px-2.5 py-1.5 text-[0.656rem] font-bold tracking-[0.16em] text-zinc-700 uppercase">
-                      Informational
-                    </p>
-                  ) : (
-                    <a
-                      className={`${uppercaseLink} -mt-1.75 -mb-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:mt-1.5 sm:mb-0 sm:block sm:min-h-0 sm:self-auto`}
-                      href={serviceHref(service.slug)}
-                    >
-                      Learn more →
-                    </a>
-                  )}
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
         <section className={sectionLight} id="projects">
           <div className={container}>
-            <div className="mb-7 flex flex-wrap items-end justify-between gap-5 sm:mb-10 sm:gap-8">
-              <div className={`${sectionHead} max-w-150`}>
-                <p className={eyebrow}>Featured projects</p>
-                <h2 className={titleLg}>Delivered, under construction, and planned</h2>
-              </div>
-              {/* One scrolling row on a phone, bled to the screen edge, rather than two wrapped rows. */}
-              <div
-                className="-mx-gutter flex w-[calc(100%+2*var(--spacing-gutter))] flex-none gap-2 overflow-x-auto px-gutter py-1 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:p-0 [&::-webkit-scrollbar]:hidden"
-                role="group"
-                aria-label="Filter projects by stage"
-              >
-                {FILTERS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`inline-flex min-h-target flex-none cursor-pointer items-center border px-4.5 text-[0.688rem] font-semibold tracking-[0.14em] uppercase ${
-                      filter === option.value
-                        ? 'border-ink bg-ink text-white'
-                        : 'border-zinc-300 bg-white text-ink hover:border-ink'
-                    }`}
-                    aria-pressed={filter === option.value}
-                    onClick={() => setFilter(option.value)}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+            <div className={`${sectionHead} mb-7 max-w-150 sm:mb-10`}>
+              <p className={eyebrow}>Featured projects</p>
+              <h2 className={titleLg}>Delivered, under construction, and planned</h2>
             </div>
 
             <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-              {visibleProjects.map((project) => (
+              {PROJECTS.map((project) => (
                 <article key={project.id} className="group flex flex-col border border-line bg-white">
                   <div className="overflow-hidden">
                     <div
@@ -570,9 +368,6 @@ export default function HomePage() {
                     <h3 className="text-[1.5rem] font-normal tracking-[-0.02em] text-ink">
                       {project.title}
                     </h3>
-                    <p className="text-[0.906rem] leading-[1.55] text-zinc-600 italic">
-                      {project.tagline}
-                    </p>
 
                     <div className="flex flex-col gap-2 border-t border-line pt-2">
                       {project.specs.map((spec) => (
@@ -620,10 +415,53 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="mt-7 flex justify-center sm:mt-10">
-              <a className={`${btnOutline} w-full sm:w-auto`} href="/projects">
+            <div className="mt-7 flex flex-col gap-2.5 sm:mt-10 sm:flex-row sm:justify-center sm:gap-3">
+              <a className={btnOrange} href="/contact">
+                Discuss your project
+              </a>
+              <a className={btnOutline} href="/projects">
                 Explore all projects
               </a>
+            </div>
+          </div>
+        </section>
+
+        <section className={sectionMuted} id="services">
+          <div className={container}>
+            <div className={`${sectionHead} mb-8 max-w-165 sm:mb-11`}>
+              <p className={eyebrow}>Our services</p>
+              <h2 className={titleLg}>What we do</h2>
+            </div>
+
+            {/* The 1px gap over a grey ground draws the rules between cards. */}
+            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
+              {SERVICES.map((service) => (
+                <article
+                  key={service.slug}
+                  className={`flex flex-col gap-3 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
+                >
+                  <span
+                    className={`${glyph} ${service.informational ? 'text-zinc-500' : 'text-orange'}`}
+                    aria-hidden="true"
+                  >
+                    ◈
+                  </span>
+                  <h3 className={`${cardTitle} tracking-[0.16em]`}>{service.title}</h3>
+                  <p className={cardBody}>{service.summary}</p>
+                  {service.informational ? (
+                    <p className="mt-1.5 self-start border border-zinc-400 px-2.5 py-1.5 text-[0.656rem] font-bold tracking-[0.16em] text-zinc-700 uppercase">
+                      Informational
+                    </p>
+                  ) : (
+                    <a
+                      className={`${uppercaseLink} -mt-1.75 -mb-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:mt-1.5 sm:mb-0 sm:block sm:min-h-0 sm:self-auto`}
+                      href={serviceHref(service.slug)}
+                    >
+                      Learn more →
+                    </a>
+                  )}
+                </article>
+              ))}
             </div>
           </div>
         </section>
@@ -644,9 +482,8 @@ export default function HomePage() {
               A permanent, public record for every <em>development</em>.
             </h2>
             <p className="max-w-115 text-[0.969rem] leading-[1.75] text-zinc-200">
-              Each project carries a unique Project ID and a passport updated at every mandatory
-              milestone, with site photography, progress reports, project team and sustainability
-              features attached.
+              Every milestone is published with photos and reports, so you never take progress on
+              trust.
             </p>
 
             <ol className="reveal-stagger flex flex-col">
@@ -684,120 +521,23 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className={sectionLight} aria-labelledby="values-title">
-          <div className={container}>
-            <div className="reveal mb-8 flex flex-col items-start gap-3 text-left sm:mb-12 sm:items-center sm:text-center">
-              <p className={eyebrow}>Our values</p>
-              <h2 className={titleMd} id="values-title">
-                Where standards meet trusted professionals
-              </h2>
-            </div>
-            {/* Vertical rules only read correctly on a single row, so the two-column layout drops every second one. */}
-            <div className="reveal-stagger grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
-              {VALUES.map(([title, body]) => (
-                <div
-                  key={title}
-                  className="flex flex-col items-start gap-3.25 text-left sm:items-center sm:border-r sm:border-line sm:px-7 sm:text-center sm:max-md:even:border-r-0 md:last:border-r-0"
-                >
-                  <span className={`${glyph} text-orange`} aria-hidden="true">
-                    ◈
-                  </span>
-                  <h3 className={`${cardTitle} tracking-[0.18em]`}>{title}</h3>
-                  <p className={cardBody}>{body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className={sectionMuted} id="leadership">
-          <div
-            className={`${container} reveal-stagger grid grid-cols-1 items-start gap-9 lg:grid-cols-[1.35fr_1fr] lg:gap-11`}
-          >
-            <div className="flex flex-col gap-5">
-              <p className={eyebrow}>Video library</p>
-              <h2 className={titleSm}>Watch the work</h2>
-              {/* A still preview, not a player: the embed is wired up when the video ID
-                  exists, so nothing here advertises a control that does not work yet. */}
-              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-105">
-                <div
-                  className={`${media} absolute inset-0`}
-                  style={{ backgroundImage: `url('${IMAGES.site}')` }}
-                />
-                <span
-                  className="absolute inset-0 flex items-center justify-center"
-                  aria-hidden="true"
-                >
-                  <span className="flex size-16 items-center justify-center rounded-full border-[1.5px] border-white bg-[rgb(20_20_20/86%)] text-[1.125rem] text-white">
-                    ▶
-                  </span>
-                </span>
-                {/* Solid for the lower half so the kicker never lands on bright sky. */}
-                <figcaption className="absolute inset-x-0 bottom-0 flex flex-col bg-[linear-gradient(0deg,rgb(20_20_20/92%)_55%,rgb(20_20_20/0%))] px-4 pt-12 pb-4 text-white sm:px-5.5 sm:pt-14 sm:pb-5.5">
-                  <span className="text-[0.656rem] tracking-[0.18em] text-orange-on-dark uppercase">
-                    Project documentary · 6:42
-                  </span>
-                  <span className="mt-1.5 text-[1.0625rem] font-normal sm:text-[1.25rem]">
-                    Anthony Gardens: one year on site
-                  </span>
-                </figcaption>
-              </figure>
-              <p className="text-[0.781rem] text-zinc-600">
-                Embedded from the official CoBuilt YouTube channel. Captions available.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-5">
-              <p className={eyebrow}>Leadership</p>
-              <article className="border border-line bg-white">
-                <div className="flex h-45 items-start bg-line p-3.5 text-[0.719rem] text-zinc-600 sm:h-52.5">
-                  Managing Director — approved portrait
-                </div>
-                <div className="flex flex-col gap-3.25 p-5.5 sm:p-6.5">
-                  <div>
-                    <p className="text-[1.25rem] font-normal text-ink">Managing Director</p>
-                    <p className="mt-1.25 text-[0.719rem] tracking-[0.14em] text-zinc-500 uppercase">
-                      CoBuilt Investment Partners
-                    </p>
-                  </div>
-                  <p className="text-[0.938rem] leading-[1.7] text-zinc-700 italic">
-                    “Transparency is not a marketing exercise. It is a delivery discipline — and it
-                    is how we intend to be measured.”
-                  </p>
-                  <a
-                    className={`${uppercaseLink} -my-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:my-0 sm:block sm:min-h-0 sm:self-auto`}
-                    href="/leadership#philosophy"
-                  >
-                    Leadership philosophy →
-                  </a>
-                </div>
-              </article>
-
-              <figure className="flex flex-col gap-3.5 border border-line bg-white p-5.5 sm:p-6.5">
-                <span className={`${glyph} text-orange`} aria-hidden="true">
-                  ◈
-                </span>
-                <blockquote className="text-[0.938rem] leading-[1.7] text-zinc-700">
-                  “Every query we raised was answered with a document, not an assurance.”
-                </blockquote>
-                <figcaption className="border-t border-line pt-2">
-                  <p className="text-[0.906rem] text-ink">Estate Surveyor</p>
-                  <p className="mt-1 text-[0.719rem] tracking-[0.14em] text-zinc-500 uppercase">
-                    Ridge Terraces
-                  </p>
-                </figcaption>
-              </figure>
-            </div>
-          </div>
-        </section>
-
         <section className={sectionLight} aria-labelledby="how-title">
           <div className={container}>
-            <div className={sectionHead}>
-              <p className={eyebrow}>How it works</p>
-              <h2 className={titleMd} id="how-title">
-                Working with CoBuilt
-              </h2>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-11">
+              <div className={sectionHead}>
+                <p className={eyebrow}>How it works</p>
+                <h2 className={titleMd} id="how-title">
+                  Working with CoBuilt
+                </h2>
+              </div>
+              <figure className="reveal flex max-w-115 flex-col gap-2 border-l-3 border-orange pl-4">
+                <blockquote className="text-[0.938rem] leading-[1.7] text-zinc-700 italic">
+                  “Every query we raised was answered with a document, not an assurance.”
+                </blockquote>
+                <figcaption className="text-[0.719rem] tracking-[0.14em] text-zinc-500 uppercase">
+                  Estate Surveyor · Ridge Terraces
+                </figcaption>
+              </figure>
             </div>
             <ol className="reveal-stagger mt-8 grid grid-cols-1 gap-7 sm:mt-11 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
               {STEPS.map(([number, title, body]) => (
@@ -813,62 +553,10 @@ export default function HomePage() {
                 </li>
               ))}
             </ol>
-          </div>
-        </section>
-
-        {/* A 28px wordmark scrolling past on a phone is noise, not texture, so it starts at sm. */}
-        <div
-          className="hidden overflow-hidden border-y border-line bg-white py-6 sm:block"
-          aria-hidden="true"
-        >
-          <div className="flex w-max animate-marquee items-center gap-14">
-            {/* Rendered twice: the -50% translation relies on an exact duplicate. */}
-            {[0, 1].map((copy) =>
-              MARQUEE_PHRASES.map((phrase) => (
-                <Fragment key={`${copy}-${phrase}`}>
-                  <span className="text-[1.75rem] font-light tracking-[0.14em] whitespace-nowrap text-line uppercase">
-                    {phrase}
-                  </span>
-                  <span className="text-[1.75rem] text-orange">◈</span>
-                </Fragment>
-              )),
-            )}
-          </div>
-        </div>
-
-        <section className={sectionLight} id="media">
-          <div className={container}>
-            <div className="mb-7 flex flex-wrap items-end justify-between gap-5 sm:mb-9 sm:gap-8">
-              <div className={`${sectionHead} max-w-150`}>
-                <p className={eyebrow}>Media centre</p>
-                <h2 className={titleMd}>Keep up with company updates in one place</h2>
-              </div>
-              <a className={btnOutline} href="/news">
-                More news
+            <div className="mt-8 flex sm:mt-11">
+              <a className={`${btnOrange} w-full sm:w-auto`} href="/contact">
+                Start with an enquiry
               </a>
-            </div>
-
-            <div className="reveal-stagger grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
-              {NEWS.map((item) => (
-                <article key={item.title} className="group flex flex-col gap-3.5">
-                  <div className="overflow-hidden">
-                    <div
-                      className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-64`}
-                      style={{ backgroundImage: `url('${item.image}')` }}
-                      role="img"
-                      aria-label={item.title}
-                    />
-                  </div>
-                  <p className="flex gap-3 text-[0.688rem] tracking-[0.16em] text-zinc-500 uppercase">
-                    <span className="text-rust">{item.category}</span>
-                    <span>{item.date}</span>
-                  </p>
-                  <h3 className="text-[1.1875rem] leading-[1.35] font-normal tracking-normal text-ink">
-                    {item.title}
-                  </h3>
-                  <p className="text-[0.875rem] leading-[1.65] text-zinc-600">{item.excerpt}</p>
-                </article>
-              ))}
             </div>
           </div>
         </section>
@@ -882,9 +570,6 @@ export default function HomePage() {
               <h2 className={titleSm}>
                 Follow our developments as they <em>progress</em>.
               </h2>
-              <p className="text-[0.969rem] leading-[1.75] text-zinc-700">
-                Receive project updates, company news and Project Passport™ notifications.
-              </p>
               {/* The regulatory position, which the brief requires on every investor path. */}
               <p className="border-l-3 border-orange pl-4 text-[0.844rem] leading-[1.7] text-zinc-700">
                 This is an information request only. CoBuilt Investment Partners does not currently
@@ -934,25 +619,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className={field}>
-                <label className={fieldLabel} htmlFor="enquirerType">
-                  I am enquiring as
-                </label>
-                <select
-                  id="enquirerType"
-                  className={`${input} select-chevron cursor-pointer pr-10`}
-                  name="enquirerType"
-                  value={enquirerType}
-                  onChange={(event) => setEnquirerType(event.target.value)}
-                >
-                  {ENQUIRER_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Honeypot: scored server-side, never shown to a reader. */}
               <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
                 <label htmlFor="website">Website</label>
@@ -998,11 +664,7 @@ export default function HomePage() {
                 >
                   {message}
                 </p>
-              ) : (
-                <p className="text-center text-[0.719rem] text-zinc-600">
-                  Protected against automated submissions. You will receive a confirmation email.
-                </p>
-              )}
+              ) : null}
             </form>
           </div>
         </section>
