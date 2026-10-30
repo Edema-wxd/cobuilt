@@ -2,7 +2,7 @@ import type { HomeProject } from './home-page';
 import { MILESTONE_LABEL } from './projects/[slug]/project-shared';
 
 /** How many of the most recently published projects the landing page shows. */
-const LIMIT = 6;
+const LIMIT = 3;
 
 /**
  * The landing page's project cards: the most recently published projects,
@@ -34,7 +34,6 @@ export async function loadHomeProjects(): Promise<HomeProject[]> {
           title: project.title,
           // The column is the project_status enum: ongoing, completed or future.
           status: project.status as HomeProject['status'],
-          description: project.description,
           projectType: project.projectType,
           location: project.location,
           image: project.featuredImageUrl,

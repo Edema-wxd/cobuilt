@@ -132,7 +132,6 @@ defined in `styles/globals.css`.
   page loads (`components/NavProgress.tsx`); pages that wait on the database
   show the brick mark laying itself on a loop (`components/PageLoading.tsx`,
   the `loading.tsx` files); list placeholders shimmer (`shimmer`).
-- **The marquee**, hidden on phones, is unchanged.
 
 The rules that keep it safe: nothing is ever hidden until
 `MotionObserver` has marked what is already on screen and switched motion on,
@@ -227,7 +226,7 @@ Also available: 3D virtual tours (see 3.7).
 #### 3.3 Projects index — `/projects` — **built**
 
 Implemented at `app/projects/`. Filterable by status, type, location, sector and tag; sortable by recent, title
-or oldest; paginated; free-text searchable. The home page's All/Past/Ongoing/
+or oldest; paginated; free-text searchable. The home page's former All/Past/Ongoing/
 Future pills are the starting point, but this page needs to carry more filters
 than those four — decide how they behave on a phone, where the existing pills
 already scroll horizontally.
