@@ -19,7 +19,7 @@ export const body = 'bg-white pt-13 pb-18 md:pt-18 md:pb-24';
 export const prose = 'mx-auto flex w-full max-w-190 flex-col gap-8 px-gutter md:gap-10';
 
 /** `group` lets the first section's heading drop its rule. */
-export const section = 'group flex flex-col gap-3.5';
+export const section = 'reveal group flex flex-col gap-3.5';
 export const sectionTitle =
   'border-t border-line pt-7 text-[1.5rem] font-normal tracking-[-0.02em] text-ink group-first:border-t-0 group-first:pt-0';
 

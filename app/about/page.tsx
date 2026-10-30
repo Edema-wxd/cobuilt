@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import CtaBand from '../../components/CtaBand';
+import CountUp from '../../components/CountUp';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
 import {
@@ -132,11 +133,11 @@ const VALUES: Array<[string, string]> = [
   ],
 ];
 
-const STATS: Array<{ value: string; plus?: boolean; label: string }> = [
-  { value: '5', plus: true, label: 'Projects delivered' },
-  { value: '3', label: 'Projects under development' },
-  { value: '30', plus: true, label: 'Units developed' },
-  { value: '5', plus: true, label: 'Locations' },
+const STATS: Array<{ value: number; plus?: boolean; label: string }> = [
+  { value: 5, plus: true, label: 'Projects delivered' },
+  { value: 3, label: 'Projects under development' },
+  { value: 30, plus: true, label: 'Units developed' },
+  { value: 5, plus: true, label: 'Locations' },
 ];
 
 export default function About() {
@@ -167,12 +168,12 @@ export default function About() {
 
         <section className="bg-orange" aria-label="CoBuilt at a glance">
           <div
-            className={`${container} grid grid-cols-2 gap-x-4 gap-y-6 py-8 sm:gap-7 sm:py-10.5 md:grid-cols-4 md:gap-8`}
+            className={`${container} reveal-stagger grid grid-cols-2 gap-x-4 gap-y-6 py-8 sm:gap-7 sm:py-10.5 md:grid-cols-4 md:gap-8`}
           >
             {STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col gap-1.5">
                 <p className="text-[2.25rem] leading-none font-light tracking-[-0.03em] text-ink sm:text-[2.625rem]">
-                  {stat.value}
+                  <CountUp value={stat.value} />
                   {stat.plus ? <span className="text-[1.5rem]">+</span> : null}
                 </p>
                 <p className="text-[0.688rem] leading-[1.4] tracking-[0.12em] text-ink uppercase sm:leading-[1.6] sm:tracking-[0.18em]">
@@ -185,7 +186,7 @@ export default function About() {
 
         <section className={sectionLight}>
           <div
-            className={`${container} grid grid-cols-1 items-start gap-7 sm:gap-9 md:grid-cols-2 md:gap-16`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-start gap-7 sm:gap-9 md:grid-cols-2 md:gap-16`}
           >
             <div className="flex flex-col gap-5 [&_h2_em]:text-rust">
               <p className={eyebrow}>Who we are</p>
@@ -210,7 +211,7 @@ export default function About() {
             </div>
             <div className="flex flex-col gap-5">
               <div
-                className={`${media} aspect-[4/3] w-full sm:aspect-auto sm:h-80 md:h-100`}
+                className={`${media} aspect-[4/3] w-full sm:aspect-auto sm:h-100 md:h-125`}
                 style={{ backgroundImage: `url('${IMAGES.site}')` }}
                 role="img"
                 aria-label="A CoBuilt development under construction"
@@ -244,7 +245,7 @@ export default function About() {
               </p>
             </div>
 
-            <ol className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-4">
+            <ol className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-4">
               {MODEL.map(([number, title, body]) => (
                 <li key={number} className="flex flex-col gap-3 bg-white p-6 sm:p-7.5">
                   <span className="font-mono text-[1.75rem] leading-none font-light text-rust">
@@ -279,7 +280,7 @@ export default function About() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-px border border-line-on-dark bg-[rgb(255_255_255/18%)] sm:grid-cols-2">
+            <div className="reveal grid grid-cols-1 gap-px border border-line-on-dark bg-[rgb(255_255_255/18%)] sm:grid-cols-2">
               {COMMITMENTS.map(([title, body]) => (
                 <div key={title} className="flex flex-col gap-3 bg-ink p-6 sm:p-8.5">
                   <span className={`${glyph} text-orange-on-dark`} aria-hidden="true">
@@ -311,7 +312,7 @@ export default function About() {
               </h2>
             </div>
             {/* Vertical rules only read correctly on a single row, so the two-column layout drops every second one. */}
-            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
+            <div className="reveal-stagger grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-x-0 sm:gap-y-9 md:grid-cols-4 md:gap-0">
               {VALUES.map(([title, body]) => (
                 <div
                   key={title}

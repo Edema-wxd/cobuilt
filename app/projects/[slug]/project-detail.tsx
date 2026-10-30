@@ -113,6 +113,8 @@ export interface Project {
   location: string | null;
   sector: string | null;
   featuredImageUrl: string | null;
+  /** https only — `load-project` drops anything else before it reaches a link. */
+  brochureUrl: string | null;
   passport: { enabled: boolean; startDate: string | null; completionTarget: string | null };
   investor: {
     investmentAmount: number | null;
@@ -410,7 +412,7 @@ export default function ProjectDetail({
 
         <section className="bg-ink py-13 text-white md:py-18">
           <div
-            className={`${container} grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14`}
+            className={`${container} intro grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14`}
           >
             <div className="flex flex-col gap-5.5 [&_h1_em]:text-orange-on-dark">
               <div className="flex items-center gap-3.5">
@@ -443,6 +445,18 @@ export default function ProjectDetail({
                     Enter the virtual tour
                   </a>
                 ) : null}
+                {project.brochureUrl ? (
+                  <a
+                    className={btnOutlineOnDark}
+                    href={project.brochureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                  >
+                    Download brochure
+                    <span className="sr-only"> for {project.title} (opens in a new tab)</span>
+                  </a>
+                ) : null}
               </div>
             </div>
 
@@ -466,7 +480,7 @@ export default function ProjectDetail({
 
         {project.featuredImageUrl ? (
           <div
-            className={`${media} h-60 sm:h-90 md:h-130`}
+            className={`${media} h-72 sm:h-115 md:h-160`}
             style={{ backgroundImage: cssUrl(project.featuredImageUrl) }}
             role="img"
             aria-label={`${project.title}${project.location ? `, ${project.location}` : ''}`}
@@ -658,7 +672,7 @@ export default function ProjectDetail({
                 className={
                   galleryOpen
                     ? 'grid grid-cols-2 gap-2 md:grid-cols-4'
-                    : 'grid auto-rows-[10rem] grid-cols-2 gap-2 md:auto-rows-[14.375rem] md:grid-cols-[2fr_1fr_1fr]'
+                    : 'grid auto-rows-[12.5rem] grid-cols-2 gap-2 md:auto-rows-[18rem] md:grid-cols-[2fr_1fr_1fr]'
                 }
               >
                 {shownImages.map((url, index) => {
@@ -710,7 +724,7 @@ export default function ProjectDetail({
         {tours.length > 0 ? (
           <section id="tours" className="bg-ink py-11 text-white sm:py-14 md:py-18">
             <div
-              className={`${container} grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-14`}
+              className={`${container} reveal-stagger grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:gap-14`}
             >
               <div className="flex flex-col gap-5.5 [&_h2_em]:text-orange-on-dark">
                 <p className={eyebrowOnDark}>3D virtual tours</p>
@@ -973,7 +987,7 @@ export default function ProjectDetail({
         */}
         <section className="bg-line py-11 sm:py-14">
           <div
-            className={`${container} grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-13`}
+            className={`${container} reveal-stagger grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-13`}
           >
             <div className="flex flex-col gap-4 [&_h2_em]:text-rust">
               <p className={eyebrowOnLine}>Investor information</p>
@@ -982,7 +996,7 @@ export default function ProjectDetail({
                   <h2 className={sectionTitle}>
                     Indicative <em>project information</em>.
                   </h2>
-                  <dl className="grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
+                  <dl className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2">
                     {amount ? (
                       <div className="bg-line p-5">
                         <dt className="text-[0.688rem] uppercase tracking-[0.16em] text-zinc-700">
@@ -1062,12 +1076,12 @@ export default function ProjectDetail({
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {related.map((item) => (
                   <article key={item.id} className="flex flex-col border border-line">
                     {item.featuredImageUrl ? (
                       <div
-                        className={`${media} h-42.5`}
+                        className={`${media} h-56`}
                         style={{ backgroundImage: cssUrl(item.featuredImageUrl) }}
                         role="img"
                         aria-label={item.title}

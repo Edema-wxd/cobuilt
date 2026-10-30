@@ -31,7 +31,7 @@ export default function ProsePage({
     <SiteLayout {...(current ? { current } : {})}>
       <main>
         <div className={prose.head}>
-          <div className={prose.headInner}>
+          <div className={`${prose.headInner} intro`}>
             <p className={eyebrowOnDark}>{eyebrow}</p>
             <h1 className={prose.title}>{title}</h1>
             <p className={prose.standfirst}>{standfirst}</p>
