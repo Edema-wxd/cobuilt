@@ -159,6 +159,45 @@ Ordered by build sequence. For each, the data listed is what the API already
 returns — designing for fields that do not exist creates backend work, so flag
 it if a page needs more.
 
+### The landing page — `/` — **built**, partly managed in the console
+
+The reference implementation (§2), cut for conversion on 30 Oct and brought
+back to the client's spec on 1 Nov. Top to bottom:
+
+| Section | Source | Hidden when |
+|---|---|---|
+| Hero: fixed tagline, headline, subheading, "Discuss your project" and "Explore our projects", rotating photography, tap-to-call | Headline and subheading from `/admin/homepage`, else the copy as built | — |
+| Stat band: delivered, under development, units, locations | Counted from live projects; units, and any override, from `/admin/homepage`. The pre-database figures (5+, 3, 30+, 5+) show only when there is no database | Every figure is 0 |
+| Featured projects, with "Discuss your project" and "Explore all projects" | Three most recently published projects | — (empty state instead) |
+| Services | `app/services/services.ts` | — |
+| Project Passport™ explainer | Illustrative milestones | — |
+| How it works, with the testimonial and "Contact us" | Static | — |
+| Project video | YouTube link and title from `/admin/homepage` | No video set, or switched off |
+| Leadership spotlight, "Meet the leadership" | First three published `leadership` rows by sort order | None published, or switched off |
+| Latest news, "View all news" | Three most recent published articles | None published, or switched off |
+| Register your interest, with the regulatory notice beside the form | — | — |
+
+The three late bands are deliberately compact and come after the case is made;
+they alternate grey and white among those shown, so hiding one never sets two
+bands of one ground side by side. A fresh database shows hero, projects (empty
+state), services, Passport, how it works and the form — a clean page, not a row
+of zeros.
+
+**The video loads on request.** The band shows a house still, the title and a
+play button; nothing is requested from YouTube, not even a thumbnail, until the
+visitor presses play, and the player then comes from `youtube-nocookie.com`
+with focus moved into it. The caption says YouTube sees the visitor's IP once
+they press play and points to CC for captions; the console asks editors to add
+captions before featuring a video. Same rule as the contact map (§3.6).
+
+**What the console can change** (`/admin/homepage`, admin only,
+`settings:write`, audited): headline (`*phrase*` sets the accent italic),
+subheading, the video link and title, an override per figure (0 hides it; "+"
+marks a floor), and on/off for the video, leadership and news bands. Not the
+tagline, which is fixed (§1), and not the CTAs: the header's "Discuss your
+project" plus the page's three primary actions are the spec's set, and adding
+more dilutes them. Changes reach the page at once, and within a minute at worst.
+
 ### Tier 1 — the landing page already promises these
 
 This tier is **done**, and so is the Tier 2 navigation below it except for
@@ -354,6 +393,7 @@ admin console is what makes the site maintainable without a developer.
 - **Admin console — `/admin` — built.** Overview with analytics, submissions
   inbox (spam flagging, masked contact details), projects (list, create, edit,
   delete), Passport™ milestones per project, news (list, create, edit, delete),
+  homepage settings (hero copy, featured video, figures, optional sections),
   3D tours (upload, edit, delete), investor-content approval, users and roles,
   and the audit log. Editors send only the fields that changed, and any change
   to an investor figure withdraws its approval after a confirmation. A record
@@ -366,7 +406,8 @@ admin console is what makes the site maintainable without a developer.
   More routes now call `notFound()` — an unknown service slug, an unknown
   article — so this is more visible than it was.
 - **Social preview images** — **built.** A branded card per page, and an item's own photography wins where it has some. See docs/decisions.md §2.18.
-- **A video library page** — the footer links to one; the home page has a still.
+- **A video library page** — the footer links to one. The home page now embeds
+  one video an administrator chooses; a library of several still needs a page.
 
 ---
 
@@ -407,7 +448,7 @@ admin console is what makes the site maintainable without a developer.
 
 ## 6. Where things are
 
-- Live reference: the landing page, `pages/index.tsx`.
+- Live reference: the landing page, `app/home-page.tsx` (loaders beside it in `app/home-*.ts`).
 - Design tokens and base styles: `styles/globals.css`.
 - Shared class strings: `components/ui.ts`, `components/prose.ts`.
 - Navigation and footer content: `components/site.ts`.

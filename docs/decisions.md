@@ -519,6 +519,48 @@ which link previews ignore. The cards use the renderer's built-in sans rather
 than Geist, because fetching a font at build time would break the offline
 build.
 
+### 2.19 The homepage is managed in the console, and computes its own figures
+
+The client's spec lists sections the 30 Oct streamline had cut — latest news,
+a leadership spotlight, an embedded YouTube video, a "Contact us" action — and
+the stat band was four hardcoded numbers. All are back, compact and late on the
+page (design handover, "The landing page"), and each band is left out when it
+has nothing to show.
+
+**Settings are one JSONB document** under `site_settings.key = 'homepage'`
+(migration 0016), with its shape owned by `src/lib/schemas/settings.ts` rather
+than by columns. A later field needs no migration, a stored field that no
+longer validates falls back on its own, and a key never saved means "as built".
+Writes go through `PUT /api/admin/settings/homepage`, behind a new
+`settings:write` permission that only `admin` holds, and are audited with the
+fields that changed.
+
+**The figures are counted, not claimed.** Delivered, under development and
+locations are counted from live projects; there is no units column, so units
+show only when an administrator sets them. An override replaces any figure, and
+0 hides one. The old figures are kept only as the no-database fallback, so the
+build and an outage never show a band of zeros. On a site about documented
+delivery, a figure the record can back is the stronger claim — but it means the
+band will read lower than the old copy until every delivered project is
+entered, or until the figures are overridden.
+
+**A save regenerates the page at once.** §2.12 found `revalidatePath` throws
+from a pages API route. `res.revalidate('/')` does not: it asks the running
+server to regenerate the path over HTTP, and that works for an App Router page
+too (checked against `next start`). It is still best-effort; the page's
+one-minute `revalidate` is the guarantee.
+
+**The video is click-to-load**, for the reason in §2.17: the poster is a house
+still, not YouTube's thumbnail, so nothing reaches YouTube before the visitor
+presses play, and the player is `youtube-nocookie.com`. Only the video ID is
+kept from what an editor pastes; the embed URL is built from it. The report-only
+CSP already allows both (`frame-src https:`, `img-src https:`), so
+`next.config.mjs` is unchanged.
+
+**The leadership spotlight queries `leadership` directly** (`app/home-leadership.ts`)
+using only the columns from migration 0007, because a leadership repository is
+being written in parallel. When it lands, the query moves there.
+
 ## 3. Still open
 
 Carried from §17, with a recommendation where the work surfaced one.
