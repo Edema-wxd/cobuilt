@@ -125,6 +125,32 @@ export interface NewsRow {
   cms_synced_at: Date | null;
 }
 
+/** The tiers of the organisational structure the leadership page groups by. */
+export type LeadershipTier = 'board' | 'executive' | 'management';
+
+export interface LeaderRow {
+  id: string;
+  full_name: string;
+  slug: string;
+  role_title: string | null;
+  summary: string | null;
+  bio: string | null;
+  qualifications: string[];
+  expertise: string[];
+  quote: string | null;
+  photo_url: string | null;
+  photo_alt: string | null;
+  social_links: Record<string, unknown>;
+  tier: LeadershipTier;
+  sort_order: number;
+  published: boolean;
+  featured: boolean;
+  cms_source: string | null;
+  cms_synced_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface UserRow {
   id: string;
   email: string;

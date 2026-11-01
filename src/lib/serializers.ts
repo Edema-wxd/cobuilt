@@ -1,5 +1,6 @@
 import type {
   FormSubmissionRow,
+  LeaderRow,
   MilestoneRow,
   NewsRow,
   ProjectRow,
@@ -239,6 +240,50 @@ export function serializeNewsSummaryForAdmin(row: NewsRow) {
   const { content, ...summary } = serializeNewsForAdmin(row);
   void content;
   return summary;
+}
+
+/**
+ * A published leader, for /api/leadership, the leadership pages and the
+ * homepage spotlight. Only the networks the schema accepts are passed through
+ * from `social_links`, since the CMS writes that column unvalidated.
+ */
+export function serializeLeader(row: LeaderRow) {
+  const social = row.social_links ?? {};
+  const link = (name: string) => {
+    const value = social[name];
+    return typeof value === 'string' && value.startsWith('https://') ? value : null;
+  };
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    fullName: row.full_name,
+    roleTitle: row.role_title,
+    summary: row.summary,
+    bio: row.bio,
+    qualifications: row.qualifications ?? [],
+    expertise: row.expertise ?? [],
+    quote: row.quote,
+    photoUrl: row.photo_url,
+    photoAlt: row.photo_alt,
+    socialLinks: { linkedin: link('linkedin'), x: link('x'), website: link('website') },
+    tier: row.tier,
+    featured: row.featured,
+    sortOrder: row.sort_order,
+  };
+}
+
+export type PublicLeader = ReturnType<typeof serializeLeader>;
+
+/** Admin view: drafts say so, and a CMS-mirrored row carries its origin. */
+export function serializeLeaderForAdmin(row: LeaderRow) {
+  return {
+    ...serializeLeader(row),
+    published: row.published,
+    cms: cmsOrigin(row),
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
+  };
 }
 
 export function serializeUser(row: UserRow) {
