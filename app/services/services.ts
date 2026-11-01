@@ -1,12 +1,13 @@
 /**
  * The six disciplines, as the standards document names them.
  *
- * Static content, not API content. There is a `services` table behind the
- * projects API, but it holds taxonomy for filtering projects — a name, a slug
- * and a one-line description — not the page copy below, and no endpoint
- * publishes it. Until a CMS content type exists for services
- * (docs/design-handover.md §5.1), this module is the source: one place to edit,
- * and the slugs here are the public URLs.
+ * Services are now managed in the admin console and stored in the `services`
+ * table (db/migrations/0015_services.sql, which seeded it with exactly this
+ * copy). This module is the fallback the service pages render when the
+ * database cannot be reached — including during a build with none configured —
+ * so editing it no longer changes the live site: edit the service in the
+ * console instead. See `./load-services.ts`. (The landing page's service grid
+ * still imports `SERVICES` directly; moving it onto the loader is outstanding.)
  *
  * The sixth, Property Investment, is marked informational by the brief and must
  * stay that way: no call to action, and the licensing notice on the page.
@@ -221,7 +222,7 @@ export function findService(slug: string): Service | undefined {
   return SERVICES.find((service) => service.slug === slug);
 }
 
-/** `/services/[slug]` links on the landing page and the services index. */
+/** `/services/[slug]` links on the landing page, the services index and the service pages. */
 export function serviceHref(slug: string): string {
   return `/services/${slug}`;
 }
