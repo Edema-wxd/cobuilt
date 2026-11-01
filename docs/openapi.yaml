@@ -42,6 +42,7 @@ tags:
   - name: Project Passport
   - name: Virtual Tours
   - name: News
+  - name: Services
   - name: FAQs
   - name: Search
   - name: Forms
@@ -402,6 +403,47 @@ paths:
                       results:
                         type: array
                         items: { $ref: '#/components/schemas/NewsSummary' }
+
+  /api/services:
+    get:
+      tags: [Services]
+      summary: List published services
+      description: |
+        Every published service, in the order set in the console. Unpaginated:
+        the set is a handful of disciplines. Drafts never appear here, whoever
+        is asking.
+      security: []
+      responses:
+        '200':
+          description: Published services in display order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/ServiceSummary' }
+
+  /api/services/{slug}:
+    get:
+      tags: [Services]
+      summary: Service detail with its projects
+      description: |
+        A published service with the live projects attached to it in the
+        console, split into case studies and other related projects, each in
+        the order the editor set. Draft, scheduled and deleted projects are
+        left out. An unpublished service is a 404.
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The service
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /api/search:
     get:
@@ -904,6 +946,171 @@ paths:
         '204': { description: Deleted }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/services:
+    get:
+      tags: [Services]
+      summary: List every service, drafts included
+      description: Requires `admin` or `editor` with `services:write`.
+      responses:
+        '200':
+          description: Every service in display order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/ServiceAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Services]
+      summary: Create a service
+      description: |
+        Requires `admin` or `editor` with `services:write`. The service is added
+        at the end of the list, and is a draft unless `published` is true. A
+        missing slug is made from the title, and suffixed (`-2`) if taken.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ServiceInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: Another service has that title }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/services/reorder:
+    post:
+      tags: [Services]
+      summary: Set the display order
+      description: |
+        Requires `admin` or `editor` with `services:write`. `ids` is every
+        service, once each, in the new order; a list that leaves one out or
+        names one that does not exist is a 422, because the screen it came from
+        is out of date.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              additionalProperties: false
+              properties:
+                ids: { type: array, items: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Every service in its new order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/ServiceAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/services/{serviceId}:
+    parameters:
+      - { name: serviceId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Services]
+      summary: A service with every attached project
+      description: Requires `admin` or `editor` with `services:write`. Draft projects are included and flagged.
+      responses:
+        '200':
+          description: The service
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceAdminDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Services]
+      summary: Update, publish or unpublish a service
+      description: |
+        Requires `admin` or `editor` with `services:write`. Every field is
+        optional; the ones present are applied. `published: false` takes the
+        page off the public site and keeps everything for later.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ServiceUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceAdminDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Another service has that title or slug }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Services]
+      summary: Delete a service
+      description: |
+        Requires `admin` with `services:write`. Also removes the service from
+        every project tagged with it. Cannot be undone; unpublishing is the
+        reversible alternative.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/services/{serviceId}/projects:
+    parameters:
+      - { name: serviceId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Services]
+      summary: Set the projects shown on a service page
+      description: |
+        Requires `admin` or `editor` with `services:write`. Replaces the list;
+        the array order is the page order. Draft projects may be attached and
+        appear on the page once published. An unknown or deleted project is a
+        422 naming its position, and nothing is changed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projects]
+              additionalProperties: false
+              properties:
+                projects:
+                  type: array
+                  maxItems: 24
+                  items:
+                    type: object
+                    required: [projectId]
+                    properties:
+                      projectId: { type: string, format: uuid }
+                      caseStudy: { type: boolean, default: false }
+      responses:
+        '200':
+          description: The projects now on the page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/ServiceProjectAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
 
   /api/users/{userId}:
     parameters:
@@ -1515,6 +1722,115 @@ components:
         metaTitle:        { type: string, nullable: true }
         metaDescription:  { type: string, maxLength: 160, nullable: true }
         publishedAt:      { type: string, format: date-time, nullable: true }
+
+    ServiceStep:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, maxLength: 160 }
+        body:  { type: string, maxLength: 1000, default: '' }
+
+    ServiceSummary:
+      type: object
+      properties:
+        id:            { type: string, format: uuid }
+        slug:          { type: string }
+        title:         { type: string }
+        summary:       { type: string }
+        informational: { type: boolean, description: Information only — no call to action on the page }
+
+    Service:
+      allOf:
+        - $ref: '#/components/schemas/ServiceSummary'
+        - type: object
+          properties:
+            standfirst:   { type: string }
+            body:         { type: array, items: { type: string }, description: Overview paragraphs }
+            covers:       { type: array, items: { type: string }, description: Scope of work }
+            deliverables: { type: array, items: { type: string } }
+            suitedTo:     { type: array, items: { type: string } }
+            process:      { type: array, items: { $ref: '#/components/schemas/ServiceStep' } }
+            benefits:     { type: array, items: { $ref: '#/components/schemas/ServiceStep' } }
+            seo:
+              type: object
+              properties:
+                metaTitle:       { type: string, nullable: true }
+                metaDescription: { type: string, nullable: true }
+
+    ServiceProject:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        slug:             { type: string }
+        title:            { type: string }
+        description:      { type: string, nullable: true }
+        status:           { $ref: '#/components/schemas/ProjectStatus' }
+        location:         { type: string, nullable: true }
+        featuredImageUrl: { type: string, nullable: true }
+        caseStudy:        { type: boolean }
+
+    ServiceProjectAdmin:
+      allOf:
+        - $ref: '#/components/schemas/ServiceProject'
+        - type: object
+          properties:
+            isPublished: { type: boolean, description: False projects stay off the public page }
+
+    ServiceDetail:
+      allOf:
+        - $ref: '#/components/schemas/Service'
+        - type: object
+          properties:
+            caseStudies:     { type: array, items: { $ref: '#/components/schemas/ServiceProject' } }
+            relatedProjects: { type: array, items: { $ref: '#/components/schemas/ServiceProject' } }
+
+    ServiceAdmin:
+      allOf:
+        - $ref: '#/components/schemas/Service'
+        - type: object
+          properties:
+            published:    { type: boolean }
+            sortOrder:    { type: integer }
+            projectCount: { type: integer, description: On list responses only }
+            createdAt:    { type: string, format: date-time }
+            updatedAt:    { type: string, format: date-time }
+
+    ServiceAdminDetail:
+      allOf:
+        - $ref: '#/components/schemas/ServiceAdmin'
+        - type: object
+          properties:
+            projects: { type: array, items: { $ref: '#/components/schemas/ServiceProjectAdmin' } }
+
+    ServiceFields:
+      type: object
+      description: Unknown fields are refused with a 422.
+      properties:
+        title:           { type: string, minLength: 2, maxLength: 255 }
+        slug:            { type: string, description: 'The page lives at /services/{slug}' }
+        summary:         { type: string, maxLength: 300, description: The line on the service's card }
+        standfirst:      { type: string, maxLength: 600 }
+        body:            { type: array, maxItems: 20, items: { type: string }, description: Overview paragraphs }
+        covers:          { type: array, maxItems: 30, items: { type: string }, description: Scope of work }
+        deliverables:    { type: array, maxItems: 30, items: { type: string } }
+        suitedTo:        { type: array, maxItems: 30, items: { type: string } }
+        process:         { type: array, maxItems: 12, items: { $ref: '#/components/schemas/ServiceStep' } }
+        benefits:        { type: array, maxItems: 12, items: { $ref: '#/components/schemas/ServiceStep' } }
+        informational:   { type: boolean, default: false }
+        published:       { type: boolean, default: false }
+        metaTitle:       { type: string, maxLength: 255, nullable: true }
+        metaDescription: { type: string, maxLength: 160, nullable: true }
+
+    ServiceInput:
+      allOf:
+        - $ref: '#/components/schemas/ServiceFields'
+        - required: [title, summary]
+
+    ServiceUpdate:
+      description: Any of the service fields, at least one; the ones present are applied.
+      allOf:
+        - $ref: '#/components/schemas/ServiceFields'
+        - minProperties: 1
 
     SearchResponse:
       type: object
