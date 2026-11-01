@@ -43,6 +43,7 @@ tags:
   - name: Virtual Tours
   - name: News
   - name: FAQs
+  - name: Leadership
   - name: Search
   - name: Forms
   - name: Authentication
@@ -304,6 +305,31 @@ paths:
                         question: { type: string }
                         answer: { type: string }
                         category: { type: string, nullable: true }
+
+  /api/leadership:
+    get:
+      tags: [Leadership]
+      summary: List published leadership profiles
+      description: |
+        Every published leader, in editorial order; drafts are never returned.
+        `featured=true` narrows the list to the homepage spotlight. Cached for
+        a minute (`s-maxage=60`); console writes clear the application cache
+        at once.
+      security: []
+      parameters:
+        - { name: featured, in: query, schema: { type: boolean } }
+      responses:
+        '200':
+          description: Published leaders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/Leader' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
 
   /api/news:
     get:
@@ -904,6 +930,127 @@ paths:
         '204': { description: Deleted }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/leadership:
+    get:
+      tags: [Leadership]
+      summary: List every leader, drafts included
+      description: Requires `admin` or `editor` with `leadership:write`. In running order.
+      responses:
+        '200':
+          description: Every leader
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/LeaderAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Leadership]
+      summary: Create a leadership profile
+      description: |
+        Requires `admin` or `editor` with `leadership:write`. A new profile is
+        a draft unless `published` is true, and goes to the end of the running
+        order. The slug is derived from the name when omitted. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LeaderInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeaderAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/leadership/{leaderId}:
+    parameters:
+      - { name: leaderId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Leadership]
+      summary: One leader, draft or published
+      responses:
+        '200':
+          description: The leader
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeaderAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Leadership]
+      summary: Update a leadership profile
+      description: |
+        Requires `admin` or `editor` with `leadership:write`. Only the fields
+        sent change; `null` clears an optional one. Audited with the field
+        names, and the new publication and spotlight state when they change.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LeaderUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeaderAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Leadership]
+      summary: Delete a leadership profile
+      description: Requires `admin` with `leadership:write`. Audited.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/leadership/reorder:
+    post:
+      tags: [Leadership]
+      summary: Set the running order
+      description: |
+        Requires `admin` or `editor` with `leadership:write`. Takes every
+        leader's id, each once, in the new order. A list that no longer
+        matches the table — a leader added or removed since it was loaded — is
+        a 409 and nothing is changed. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Every leader, in the new order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/LeaderAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
 
   /api/users/{userId}:
     parameters:
@@ -1515,6 +1662,91 @@ components:
         metaTitle:        { type: string, nullable: true }
         metaDescription:  { type: string, maxLength: 160, nullable: true }
         publishedAt:      { type: string, format: date-time, nullable: true }
+
+    LeadershipTier:
+      type: string
+      enum: [board, executive, management]
+      description: The organisational structure the leadership page groups by.
+
+    Leader:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        slug:           { type: string }
+        fullName:       { type: string }
+        roleTitle:      { type: string, nullable: true }
+        summary:        { type: string, nullable: true, description: Short profile for cards and the homepage spotlight }
+        bio:            { type: string, nullable: true, description: Professional biography; paragraphs separated by a blank line }
+        qualifications: { type: array, items: { type: string } }
+        expertise:      { type: array, items: { type: string }, description: Areas of expertise }
+        quote:          { type: string, nullable: true }
+        photoUrl:       { type: string, nullable: true }
+        photoAlt:       { type: string, nullable: true }
+        socialLinks:
+          type: object
+          properties:
+            linkedin: { type: string, nullable: true }
+            x:        { type: string, nullable: true }
+            website:  { type: string, nullable: true }
+        tier:      { $ref: '#/components/schemas/LeadershipTier' }
+        featured:  { type: boolean, description: In the homepage spotlight }
+        sortOrder: { type: integer }
+
+    LeaderAdmin:
+      allOf:
+        - $ref: '#/components/schemas/Leader'
+        - type: object
+          properties:
+            published: { type: boolean }
+            cms:
+              type: object
+              nullable: true
+              description: Set when the row is mirrored from the CMS, whose next publish overwrites console edits.
+              properties:
+                source:   { type: string }
+                syncedAt: { type: string, format: date-time, nullable: true }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    LeaderInput:
+      description: Unknown fields are rejected with a 422.
+      allOf:
+        - $ref: '#/components/schemas/LeaderFields'
+        - type: object
+          required: [fullName, roleTitle]
+
+    LeaderUpdate:
+      description: |
+        Any subset of the `LeaderFields`, at least one; `null` clears an
+        optional field. Unknown fields are rejected with a 422.
+      allOf:
+        - $ref: '#/components/schemas/LeaderFields'
+        - type: object
+          minProperties: 1
+
+    LeaderFields:
+      type: object
+      properties:
+        fullName:       { type: string, minLength: 2, maxLength: 255 }
+        slug:           { type: string }
+        roleTitle:      { type: string, minLength: 2, maxLength: 255 }
+        summary:        { type: string, maxLength: 300, nullable: true }
+        bio:            { type: string, maxLength: 20000, nullable: true }
+        qualifications: { type: array, maxItems: 20, uniqueItems: true, items: { type: string, maxLength: 200 } }
+        expertise:      { type: array, maxItems: 20, uniqueItems: true, items: { type: string, maxLength: 200 } }
+        quote:          { type: string, maxLength: 300, nullable: true }
+        photoUrl:       { type: string, format: uri, pattern: '^https://', nullable: true }
+        photoAlt:       { type: string, maxLength: 255, nullable: true }
+        socialLinks:
+          type: object
+          additionalProperties: false
+          properties:
+            linkedin: { type: string, format: uri, pattern: '^https://' }
+            x:        { type: string, format: uri, pattern: '^https://' }
+            website:  { type: string, format: uri, pattern: '^https://' }
+        tier:      { $ref: '#/components/schemas/LeadershipTier' }
+        published: { type: boolean, default: false }
+        featured:  { type: boolean, default: false }
 
     SearchResponse:
       type: object
