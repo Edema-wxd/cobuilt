@@ -38,7 +38,7 @@ export const filterInput =
 /** What each role opens, shown wherever a role is chosen. */
 export const ROLE_NOTES: Record<Role, string> = {
   admin: 'Everything, including users and legal sign-off',
-  editor: 'Projects, news, tours; reads submissions',
+  editor: 'Projects, news, services, tours; reads submissions',
   viewer: 'Read-only dashboard and analytics',
   investor: 'Phase 2 — no console access',
 };
