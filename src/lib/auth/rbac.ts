@@ -28,6 +28,9 @@ export const PERMISSIONS = [
   'analytics:read',
   'audit:read',
   'privacy:manage',
+  // Site-wide content set in the console: the homepage's copy, video,
+  // figures and sections. Admin only.
+  'settings:write',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

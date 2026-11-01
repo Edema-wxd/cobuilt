@@ -120,6 +120,7 @@ export const AUDIT_ACTIONS = {
   DATA_SUBJECT_EXPORTED: 'data_subject.exported',
   DATA_SUBJECT_ERASED: 'data_subject.erased',
   FORM_SPAM_FLAGGED: 'form.spam_flagged',
+  SETTINGS_UPDATED: 'settings.updated',
   LOGIN_SUCCEEDED: 'auth.login_succeeded',
   LOGIN_FAILED: 'auth.login_failed',
   PASSWORD_RESET_REQUESTED: 'auth.password_reset_requested',

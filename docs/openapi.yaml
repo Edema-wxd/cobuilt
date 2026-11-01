@@ -824,6 +824,57 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /api/admin/settings/homepage:
+    get:
+      tags: [Admin]
+      summary: Homepage settings, with the figures the page computes
+      description: |
+        Requires `admin` with `settings:write`. A homepage that was never
+        saved returns the defaults: every text field null (the page as
+        built), no video, no figure overrides, every optional section on.
+        `computed` is what the stat band counts from live projects, so a form
+        can show what an override replaces; units have no column and are never
+        computed.
+      responses:
+        '200':
+          description: Settings and computed figures
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HomepageSettingsView' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [Admin]
+      summary: Replace the homepage settings
+      description: |
+        Requires `admin` with `settings:write`. The whole document is sent
+        and replaces what is stored; a null (or empty) text field restores the
+        copy as built. The video link must be a YouTube link to one video
+        (watch, youtu.be, Shorts, live or embed) and is stored as the canonical
+        watch URL; anything else is a 422 on `video.url`. Audited as
+        `settings.updated` with the fields that changed. The landing page
+        regenerates within a minute; the save also requests regeneration at
+        once, and `revalidated` says whether that succeeded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HomepageSettings' }
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/HomepageSettingsView'
+                  - type: object
+                    properties:
+                      revalidated: { type: boolean }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
   /api/uploadthing:
     get:
       tags: [Virtual Tours]
@@ -1566,6 +1617,61 @@ components:
         message:         { type: string, minLength: 10, maxLength: 5000 }
         consent:         { type: boolean, enum: [true] }
         website:         { $ref: '#/components/schemas/Honeypot' }
+
+    HomepageStatOverride:
+      type: object
+      nullable: true
+      description: Replaces the computed figure. 0 hides the figure; null uses the count.
+      required: [value]
+      properties:
+        value: { type: integer, minimum: 0, maximum: 1000000 }
+        plus:  { type: boolean, default: false, description: Shown as "30+" }
+
+    HomepageSettings:
+      type: object
+      required: [heroHeadline, heroSubheading, video, stats, sections]
+      properties:
+        heroHeadline:
+          type: string
+          maxLength: 160
+          nullable: true
+          description: '`*phrase*` marks the accent italic. The tagline is fixed and not settable.'
+        heroSubheading: { type: string, maxLength: 320, nullable: true }
+        video:
+          type: object
+          nullable: true
+          required: [url, title]
+          properties:
+            url:   { type: string, description: A YouTube link to one video, stored as https://www.youtube.com/watch?v=… }
+            title: { type: string, minLength: 3, maxLength: 120, description: The player's accessible name }
+        stats:
+          type: object
+          required: [completed, ongoing, units, locations]
+          properties:
+            completed: { $ref: '#/components/schemas/HomepageStatOverride' }
+            ongoing:   { $ref: '#/components/schemas/HomepageStatOverride' }
+            units:     { $ref: '#/components/schemas/HomepageStatOverride' }
+            locations: { $ref: '#/components/schemas/HomepageStatOverride' }
+        sections:
+          type: object
+          required: [news, leadership, video]
+          properties:
+            news:       { type: boolean }
+            leadership: { type: boolean }
+            video:      { type: boolean }
+
+    HomepageSettingsView:
+      type: object
+      properties:
+        settings: { $ref: '#/components/schemas/HomepageSettings' }
+        computed:
+          type: object
+          properties:
+            completed: { type: integer }
+            ongoing:   { type: integer }
+            locations: { type: integer }
+        updatedAt: { type: string, format: date-time, nullable: true }
+        updatedBy: { type: string, nullable: true, description: Full name of whoever saved last }
 
     User:
       type: object
