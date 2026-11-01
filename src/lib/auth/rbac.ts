@@ -22,6 +22,7 @@ export const PERMISSIONS = [
   'news:publish',
   'news:delete',
   'leadership:write',
+  'services:write',
   'forms:read',
   'forms:moderate',
   'users:read',
@@ -47,6 +48,7 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'news:write',
     'news:publish',
     'leadership:write',
+    'services:write',
     'forms:read',
   ],
   // Read-only dashboard access for CoBuilt stakeholders.

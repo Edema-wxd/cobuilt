@@ -377,8 +377,8 @@ of them now reach a page:
 | Nav item | Page | Content source |
 |---|---|---|
 | About | `/about` | Static |
-| Leadership | `/leadership` | Static at launch; `leadership` table since §2.19 |
-| Services | `/services`, `/services/[slug]` | Static, `app/services/services.ts` |
+| Leadership | `/leadership` | Static at launch; `leadership` table since §2.20 |
+| Services | `/services`, `/services/[slug]` | PostgreSQL, managed in the console (§2.21); `app/services/services.ts` as fallback |
 | Passport™ | `/passport` | Static |
 | Media | `/news`, `/news/[slug]` | `/api/news` |
 | Contact | `/contact` | Posts to `/api/forms/inquiry` |
@@ -396,7 +396,7 @@ it rather than keeping its own copy, so the card line and the page cannot drift.
 Property Investment stays informational there and on its page: no call to
 action, and the licensing notice above the fold rather than only at the foot.
 
-**Services, About, Leadership and Passport™ are static.** There is a `services`
+**Services, About, Leadership and Passport™ are static.** (Services and Leadership no longer are: see §2.20 and §2.21.) There is a `services`
 table, but it is filter taxonomy — a name, a slug, a one-line description — and
 no endpoint publishes page copy. Rather than invent CMS content types, these
 pages hold their copy in the repo and render without PostgreSQL, like the
@@ -587,6 +587,35 @@ http is refused because a portrait is shown inline on an https page.
 **Running order is saved whole.** The console's arrows send every leader's id
 in the new order, and a list that no longer matches the table is a 409. Two
 editors reordering at once cannot interleave into an order neither chose.
+
+### 2.21 Services are managed in the console
+
+The client's spec lists a different set of services from the six the site
+launched with, and asks for process, benefits, case studies and related
+projects on each page. So services became content: `/admin/services` adds,
+renames, reorders, publishes and unpublishes them, behind a new
+`services:write` permission (admin and editor; deleting is admin-only, like
+tours). Public reads are `/api/services` and `/api/services/[slug]`.
+
+**The existing `services` table was extended, not replaced.** It was already
+the taxonomy projects are tagged with (`projects.service_ids`), and a second
+table of "service pages" would let the two lists drift. Migration 0015 adds the
+page columns; `name` stays the title and `description` the card summary. Rows
+that predate it arrive unpublished, because they had no page copy. The
+migration seeds the six launch services verbatim, so a fresh database renders
+the same pages.
+
+**The projects on a page are curated, not derived.** `service_projects` holds
+the editor's choice, order and case-study flag. A project's own `service_ids`
+says which disciplines it involved, which is usually more than a page should
+show. Only published projects appear; drafts can be lined up in advance.
+
+**The pages never depend on the database being up.** `app/services/load-services.ts`
+reads the repository, and falls back to `app/services/services.ts` when the
+query fails — including in a build with no database. The pages regenerate at
+most once a minute, like the landing page, and the API's Redis entries are
+cleared on every write. Copy that counted the services ("Six disciplines") now
+counts what is published.
 
 ## 3. Still open
 

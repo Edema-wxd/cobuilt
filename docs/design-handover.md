@@ -169,7 +169,7 @@ back to the client's spec on 1 Nov. Top to bottom:
 | Hero: fixed tagline, headline, subheading, "Discuss your project" and "Explore our projects", rotating photography, tap-to-call | Headline and subheading from `/admin/homepage`, else the copy as built | — |
 | Stat band: delivered, under development, units, locations | Counted from live projects; units, and any override, from `/admin/homepage`. The pre-database figures (5+, 3, 30+, 5+) show only when there is no database | Every figure is 0 |
 | Featured projects, with "Discuss your project" and "Explore all projects" | Three most recently published projects | — (empty state instead) |
-| Services | `app/services/services.ts` | — |
+| Services | Published services from `/admin/services`, in their order; `app/services/services.ts` when there is no database | None published |
 | Project Passport™ explainer | Illustrative milestones | — |
 | How it works, with the testimonial and "Contact us" | Static | — |
 | Project video | YouTube link and title from `/admin/homepage` | No video set, or switched off |
@@ -362,10 +362,11 @@ nothing at all.
   role, short profile, areas of expertise, qualifications and the biography
   (in a disclosure), the page adds the organisational structure by tier, and
   `/leadership/[slug]` is the full profile. With none published the page keeps
-  the pending state above. See `docs/decisions.md` §2.19.
-- **`/services` and `/services/[slug]`** — **built.** Six pages generated from
-  `app/services/services.ts`, which the landing page's own card grid now reads
-  too, so the two cannot drift. Property Investment stays informational: no call
+  the pending state above. See `docs/decisions.md` §2.20.
+- **`/services` and `/services/[slug]`** — **built.** A page per published
+  service, managed at `/admin/services` (`docs/decisions.md` §2.21), with
+  `app/services/services.ts` as the no-database fallback. The landing page's
+  card grid reads the same published list, so the two cannot drift. Property Investment stays informational: no call
   to action, the licensing notice above the fold, and its closing band offers
   only registration.
 - **Passport™ — `/passport`** — **built.** The nav item's explainer: what a

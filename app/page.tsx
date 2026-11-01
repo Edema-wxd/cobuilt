@@ -4,6 +4,7 @@ import { loadHomeLeaders } from './home-leadership';
 import { loadHomeNews } from './home-news';
 import { loadHomeProjects } from './home-projects';
 import { loadHomeSettings } from './home-settings';
+import { loadServiceCards } from './services/load-services';
 
 /**
  * Public landing page — `/`.
@@ -11,8 +12,8 @@ import { loadHomeSettings } from './home-settings';
  * The page body is a client component: it holds the portfolio filter and the
  * "Register your interest" form. This file carries the metadata, which only a
  * server component can export, and loads what the page shows: published
- * projects, the latest news, the leadership spotlight, and the settings set
- * at /admin/homepage with the statistics.
+ * projects and services, the latest news, the leadership spotlight, and the
+ * settings set at /admin/homepage with the statistics.
  *
  * Each loader catches its own failure and returns its empty or as-built
  * value, so the build — which has no database — and an outage both render.
@@ -32,9 +33,10 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const [settings, projects, news, leaders] = await Promise.all([
+  const [settings, projects, services, news, leaders] = await Promise.all([
     loadHomeSettings(),
     loadHomeProjects(),
+    loadServiceCards(),
     loadHomeNews(),
     loadHomeLeaders(),
   ]);
@@ -43,6 +45,7 @@ export default async function Page() {
     <HomePage
       settings={settings}
       projects={projects}
+      services={services}
       news={settings.showNews ? news : []}
       leaders={settings.showLeadership ? leaders : []}
     />

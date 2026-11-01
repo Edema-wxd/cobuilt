@@ -22,6 +22,13 @@ describe('RBAC', () => {
     expect(effectivePermissions('viewer').has('leadership:write')).toBe(false);
   });
 
+  it('lets admins and editors, and no one else, manage services', () => {
+    expect(hasPermission('admin', {}, 'services:write')).toBe(true);
+    expect(hasPermission('editor', {}, 'services:write')).toBe(true);
+    expect(hasPermission('viewer', {}, 'services:write')).toBe(false);
+    expect(hasPermission('investor', {}, 'services:write')).toBe(false);
+  });
+
   it('gives a viewer read-only access', () => {
     const viewer = effectivePermissions('viewer');
     expect(viewer.has('projects:read')).toBe(true);

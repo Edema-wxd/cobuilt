@@ -6,7 +6,8 @@ import SiteLayout from '../components/SiteLayout';
 import { PHONE, PHONE_HREF, passportHref } from '../components/site';
 import HomeVideo from './home-video';
 import { cssUrl } from './projects/[slug]/project-shared';
-import { SERVICES, serviceHref } from './services/services';
+import type { ServiceCard } from './services/load-services';
+import { serviceHref } from './services/services';
 import {
   cardBody,
   cardTitle,
@@ -236,11 +237,13 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
 
 export default function HomePage({
   projects,
+  services,
   news,
   leaders,
   settings,
 }: {
   projects: HomeProject[];
+  services: ServiceCard[];
   news: HomeArticle[];
   leaders: HomeLeader[];
   settings: HomeSettings;
@@ -534,45 +537,51 @@ export default function HomePage({
           </div>
         </section>
 
-        <section className={sectionMuted} id="services">
-          <div className={container}>
-            <div className={`${sectionHead} mb-8 max-w-165 sm:mb-11`}>
-              <p className={eyebrow}>Our services</p>
-              <h2 className={titleLg}>What we do</h2>
-            </div>
+        {services.length > 0 ? (
+          <section className={sectionMuted} id="services">
+            <div className={container}>
+              <div className={`${sectionHead} mb-8 max-w-165 sm:mb-11`}>
+                <p className={eyebrow}>Our services</p>
+                <h2 className={titleLg}>What we do</h2>
+              </div>
 
-            {/* The 1px gap over a grey ground draws the rules between cards. */}
-            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
-              {SERVICES.map((service) => (
-                <article
-                  key={service.slug}
-                  className={`flex flex-col gap-3 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
-                >
-                  <span
-                    className={`${glyph} ${service.informational ? 'text-zinc-500' : 'text-orange'}`}
-                    aria-hidden="true"
+              {/*
+                Each card draws its own right and bottom rules, so a short last
+                row stays white rather than showing the grey ground (the count
+                is whatever is published at /admin/services).
+              */}
+              <div className="reveal grid grid-cols-1 border-t border-l border-zinc-300 sm:grid-cols-2 md:grid-cols-3">
+                {services.map((service) => (
+                  <article
+                    key={service.slug}
+                    className={`flex flex-col gap-3 border-r border-b border-zinc-300 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
                   >
-                    ◈
-                  </span>
-                  <h3 className={`${cardTitle} tracking-[0.16em]`}>{service.title}</h3>
-                  <p className={cardBody}>{service.summary}</p>
-                  {service.informational ? (
-                    <p className="mt-1.5 self-start border border-zinc-400 px-2.5 py-1.5 text-[0.656rem] font-bold tracking-[0.16em] text-zinc-700 uppercase">
-                      Informational
-                    </p>
-                  ) : (
-                    <a
-                      className={`${uppercaseLink} -mt-1.75 -mb-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:mt-1.5 sm:mb-0 sm:block sm:min-h-0 sm:self-auto`}
-                      href={serviceHref(service.slug)}
+                    <span
+                      className={`${glyph} ${service.informational ? 'text-zinc-500' : 'text-orange'}`}
+                      aria-hidden="true"
                     >
-                      Learn more →
-                    </a>
-                  )}
-                </article>
-              ))}
+                      ◈
+                    </span>
+                    <h3 className={`${cardTitle} tracking-[0.16em]`}>{service.title}</h3>
+                    <p className={cardBody}>{service.summary}</p>
+                    {service.informational ? (
+                      <p className="mt-1.5 self-start border border-zinc-400 px-2.5 py-1.5 text-[0.656rem] font-bold tracking-[0.16em] text-zinc-700 uppercase">
+                        Informational
+                      </p>
+                    ) : (
+                      <a
+                        className={`${uppercaseLink} -mt-1.75 -mb-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:mt-1.5 sm:mb-0 sm:block sm:min-h-0 sm:self-auto`}
+                        href={serviceHref(service.slug)}
+                      >
+                        Learn more →
+                      </a>
+                    )}
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         <section
           className="grid grid-cols-1 bg-ink lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"

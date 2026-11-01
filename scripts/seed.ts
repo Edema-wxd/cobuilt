@@ -16,11 +16,8 @@ const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'admin@cobuilt.local';
 async function seedTaxonomy(): Promise<void> {
   const projectTypes = ['Residential', 'Commercial', 'Mixed Use', 'Infrastructure'];
   const sectors = ['Real Estate', 'Hospitality', 'Retail', 'Industrial'];
-  const services = [
-    ['Project Management', 'End-to-end delivery of construction programmes'],
-    ['Development Advisory', 'Feasibility, structuring and investment appraisal'],
-    ['Asset Management', 'Operating and optimising completed assets'],
-  ];
+  // Services are not seeded here: migration 0015 creates the six published
+  // service pages, which are also the services a project can be tagged with.
   const locations: Array<[string, string, number, number]> = [
     ['Lekki, Lagos', 'Lagos', 6.4698, 3.5852],
     ['Ikoyi, Lagos', 'Lagos', 6.4541, 3.4316],
@@ -39,14 +36,6 @@ async function seedTaxonomy(): Promise<void> {
     await query(
       `INSERT INTO sectors (name, slug) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING`,
       [name, slugify(name)],
-    );
-  }
-
-  for (const [name, description] of services) {
-    await query(
-      `INSERT INTO services (name, slug, description) VALUES ($1, $2, $3)
-       ON CONFLICT (name) DO NOTHING`,
-      [name, slugify(name!), description],
     );
   }
 
@@ -155,6 +144,25 @@ async function seedProjects(adminId: string): Promise<void> {
   }
 }
 
+/** Puts the sample projects on two service pages, one as a case study, so those sections render. */
+async function seedServiceProjects(): Promise<void> {
+  const links: Array<[service: string, project: string, caseStudy: boolean]> = [
+    ['real-estate-development', 'ocean-ridge-residences', true],
+    ['real-estate-development', 'northgate-mixed-use-quarter', false],
+    ['construction-management', 'kingsway-commercial-centre', true],
+    ['construction-management', 'ocean-ridge-residences', false],
+  ];
+
+  for (const [index, [service, project, caseStudy]] of links.entries()) {
+    await query(
+      `INSERT INTO service_projects (service_id, project_id, is_case_study, sort_order)
+       SELECT s.id, p.id, $3, $4 FROM services s, projects p WHERE s.slug = $1 AND p.slug = $2
+       ON CONFLICT DO NOTHING`,
+      [service, project, caseStudy, index * 10],
+    );
+  }
+}
+
 async function seedNews(adminId: string): Promise<void> {
   const articles = [
     ['CoBuilt breaks ground on Ocean Ridge Residences', 'press_release'],
@@ -217,6 +225,7 @@ async function main(): Promise<void> {
   await seedTaxonomy();
   const adminId = await seedAdmin();
   await seedProjects(adminId);
+  await seedServiceProjects();
   await seedNews(adminId);
   await seedFaqs();
 
