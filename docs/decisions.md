@@ -377,7 +377,7 @@ of them now reach a page:
 | Nav item | Page | Content source |
 |---|---|---|
 | About | `/about` | Static |
-| Leadership | `/leadership` | Static |
+| Leadership | `/leadership` | Static at launch; `leadership` table since §2.19 |
 | Services | `/services`, `/services/[slug]` | Static, `app/services/services.ts` |
 | Passport™ | `/passport` | Static |
 | Media | `/news`, `/news/[slug]` | `/api/news` |
@@ -557,9 +557,36 @@ kept from what an editor pastes; the embed URL is built from it. The report-only
 CSP already allows both (`frame-src https:`, `img-src https:`), so
 `next.config.mjs` is unchanged.
 
-**The leadership spotlight queries `leadership` directly** (`app/home-leadership.ts`)
-using only the columns from migration 0007, because a leadership repository is
-being written in parallel. When it lands, the query moves there.
+**The leadership spotlight reads the leadership repository** (§2.20): the
+profiles switched to "Homepage spotlight" in `/admin/leadership`, or the first three
+published ones until anyone is marked.
+
+### 2.20 Leadership profiles come from the database, managed in the console
+
+`/leadership` was static (§2.15). It now reads the published rows of
+`leadership` on the server (`export const revalidate = 60`), and each leader has
+a profile page at `/leadership/[slug]`. Editors and admins manage them at
+`/admin/leadership` under a new `leadership:write` permission; only an admin
+deletes. Migration 0017 adds the spec's per-leader fields — `summary`,
+`qualifications` and `expertise` (text arrays), `quote`, `photo_alt` — plus
+`tier` (`board`, `executive`, `management`), which is what the page's
+organisational structure is drawn from, and `featured` for the homepage
+spotlight. No existing column was renamed; the Strapi sync writes the new
+fields when its model carries them and otherwise leaves the console's values
+alone.
+
+**No profile is invented.** With nothing published, or no database (as at
+build time), the page keeps the launch state: one approved remit and the
+roles whose profiles are awaiting approval. A published leader without a
+photograph keeps the "approved portrait" slot rather than a stock face.
+
+**Portraits are an https URL, not an upload.** The only UploadThing route
+accepts 3D model files for tours; projects and news take image URLs too.
+http is refused because a portrait is shown inline on an https page.
+
+**Running order is saved whole.** The console's arrows send every leader's id
+in the new order, and a list that no longer matches the table is a 409. Two
+editors reordering at once cannot interleave into an order neither chose.
 
 ## 3. Still open
 

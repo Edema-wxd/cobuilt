@@ -7,42 +7,31 @@ const LIMIT = 3;
 const SUMMARY_CHARS = 180;
 
 /**
- * The landing page's leadership spotlight: published profiles in their
- * editorial order.
+ * The landing page's leadership spotlight: the profiles an editor marked for
+ * it (the "Spotlight" toggle in /admin/leadership), in their editorial order.
+ * Until anyone is marked, it shows the first published profiles instead, so
+ * publishing leaders is enough to fill the band.
  *
- * This reads the `leadership` table directly, using only the columns it has
- * had since migration 0007. A leadership repository is being added
- * separately; when it lands, swap the query below for its published-list
- * call and keep the mapping.
+ * Reads through the leadership repository, the same rows /leadership shows.
+ * The card prefers the profile's own short summary and falls back to the
+ * opening of the biography.
  *
  * Returns an empty list rather than throwing when the database cannot be
  * reached, and the page leaves the section out.
  */
 export async function loadHomeLeaders(): Promise<HomeLeader[]> {
   try {
-    const { query } = await import('@/lib/db');
-    const { rows } = await query<{
-      id: string;
-      full_name: string;
-      slug: string;
-      role_title: string | null;
-      bio: string | null;
-      photo_url: string | null;
-    }>(
-      `SELECT id, full_name, slug, role_title, bio, photo_url
-         FROM leadership
-        WHERE published = TRUE
-        ORDER BY sort_order ASC, full_name ASC
-        LIMIT $1`,
-      [LIMIT],
-    );
+    const leadership = await import('@/lib/repositories/leadership');
+    const featured = await leadership.listPublishedLeadership({ featured: true, limit: LIMIT });
+    const rows =
+      featured.length > 0 ? featured : await leadership.listPublishedLeadership({ limit: LIMIT });
 
     return rows.map((row) => ({
       id: row.id,
       slug: row.slug,
       name: row.full_name,
       role: row.role_title,
-      summary: summarise(row.bio),
+      summary: row.summary?.trim() || summarise(row.bio),
       photo: row.photo_url,
     }));
   } catch (error) {

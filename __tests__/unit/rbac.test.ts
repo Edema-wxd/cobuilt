@@ -18,6 +18,8 @@ describe('RBAC', () => {
     expect(editor.has('projects:delete')).toBe(false);
     expect(editor.has('news:delete')).toBe(false);
     expect(editor.has('users:write')).toBe(false);
+    expect(editor.has('leadership:write')).toBe(true);
+    expect(effectivePermissions('viewer').has('leadership:write')).toBe(false);
   });
 
   it('gives a viewer read-only access', () => {

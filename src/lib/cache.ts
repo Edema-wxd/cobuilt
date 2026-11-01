@@ -17,6 +17,7 @@ export const TTL = {
   projectDetail: 60,
   passport: 60,
   news: 60,
+  leadership: 60,
   search: 300,
   facets: 60,
 } as const;

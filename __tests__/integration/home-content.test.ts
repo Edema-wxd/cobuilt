@@ -92,6 +92,20 @@ describeWithDatabase('landing page content', () => {
       expect(leaders[0]).toMatchObject({ name: 'first', role: 'Director', photo: null });
     });
 
+    it('prefers the profiles marked for the spotlight, and their own summary', async () => {
+      await leader('first', 1);
+      await leader('second', 2);
+      await leader('third', 3);
+      await query(
+        `UPDATE leadership SET featured = TRUE, summary = 'Leads delivery.' WHERE slug = 'third'`,
+      );
+
+      const leaders = await loadHomeLeaders();
+
+      expect(leaders.map((l) => l.slug)).toEqual(['third']);
+      expect(leaders[0]!.summary).toBe('Leads delivery.');
+    });
+
     it('cuts a long biography to a short summary without markup', async () => {
       const sentence = 'Leads the delivery of every CoBuilt scheme from appraisal to handover. ';
       await leader('long-bio', 1, true, `<p>${sentence.repeat(6)}</p>`);

@@ -357,7 +357,12 @@ nothing at all.
   (`/leadership#video-library`). The portrait slot still says what it is waiting
   for rather than holding a stock face, and the roles whose profiles are
   unapproved are listed honestly in a card of the same shape — see §5.2. The
-  treatment is built; the content drops in.
+  treatment is built; the content drops in. Profiles are now published from
+  the admin console (`/admin/leadership`): each card carries the portrait,
+  role, short profile, areas of expertise, qualifications and the biography
+  (in a disclosure), the page adds the organisational structure by tier, and
+  `/leadership/[slug]` is the full profile. With none published the page keeps
+  the pending state above. See `docs/decisions.md` §2.19.
 - **`/services` and `/services/[slug]`** — **built.** Six pages generated from
   `app/services/services.ts`, which the landing page's own card grid now reads
   too, so the two cannot drift. Property Investment stays informational: no call
@@ -393,8 +398,9 @@ admin console is what makes the site maintainable without a developer.
 - **Admin console — `/admin` — built.** Overview with analytics, submissions
   inbox (spam flagging, masked contact details), projects (list, create, edit,
   delete), Passport™ milestones per project, news (list, create, edit, delete),
-  homepage settings (hero copy, featured video, figures, optional sections),
-  3D tours (upload, edit, delete), investor-content approval, users and roles,
+  leadership profiles (publish, order, homepage spotlight), homepage settings
+  (hero copy, featured video, figures, optional sections), 3D tours (upload,
+  edit, delete), investor-content approval, users and roles,
   and the audit log. Editors send only the fields that changed, and any change
   to an investor figure withdraws its approval after a confirmation. A record
   mirrored from the CMS carries a notice that the CMS will overwrite console

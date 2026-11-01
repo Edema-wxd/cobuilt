@@ -219,9 +219,18 @@ async function handleUpsert(
 
   // leadership
   const fullName = readString(entry, 'fullName') ?? readString(entry, 'name') ?? 'Unnamed';
-  await query(
-    `INSERT INTO leadership (full_name, slug, role_title, bio, photo_url, social_links, sort_order, published, cms_source, cms_id)
-     VALUES ($1,$2,$3,$4,$5,coalesce($6::jsonb,'{}'::jsonb),coalesce($7,0),$8,$9,$10)
+  const tier = readString(entry, 'tier');
+  // The profile fields added in 0017 are optional in the CMS model: one it
+  // does not send (null here) keeps the value set in the console rather than
+  // clearing it, so an older Strapi model keeps syncing unchanged.
+  const row = await queryOne<{ slug: string }>(
+    `INSERT INTO leadership (
+       full_name, slug, role_title, bio, photo_url, social_links, sort_order, published,
+       summary, qualifications, expertise, quote, photo_alt, tier, featured,
+       cms_source, cms_id, cms_synced_at
+     ) VALUES ($1,$2,$3,$4,$5,coalesce($6::jsonb,'{}'::jsonb),coalesce($7,0),$8,
+       $9,coalesce($10::text[],'{}'::text[]),coalesce($11::text[],'{}'::text[]),$12,$13,
+       coalesce($14,'executive'),coalesce($15,FALSE),$16,$17,NOW())
      ON CONFLICT (cms_source, cms_id) DO UPDATE SET
        full_name = EXCLUDED.full_name,
        role_title = EXCLUDED.role_title,
@@ -229,7 +238,16 @@ async function handleUpsert(
        photo_url = EXCLUDED.photo_url,
        social_links = EXCLUDED.social_links,
        sort_order = EXCLUDED.sort_order,
-       published = EXCLUDED.published`,
+       published = EXCLUDED.published,
+       summary = coalesce($9, leadership.summary),
+       qualifications = coalesce($10::text[], leadership.qualifications),
+       expertise = coalesce($11::text[], leadership.expertise),
+       quote = coalesce($12, leadership.quote),
+       photo_alt = coalesce($13, leadership.photo_alt),
+       tier = coalesce($14, leadership.tier),
+       featured = coalesce($15, leadership.featured),
+       cms_synced_at = NOW()
+     RETURNING slug`,
     [
       fullName,
       readString(entry, 'slug') ?? slugify(fullName),
@@ -239,13 +257,30 @@ async function handleUpsert(
       entry.socialLinks ? JSON.stringify(entry.socialLinks) : null,
       readNumber(entry, 'sortOrder'),
       published !== null,
+      readString(entry, 'summary'),
+      readStringArray(entry, 'qualifications'),
+      readStringArray(entry, 'expertise') ?? readStringArray(entry, 'areasOfExpertise'),
+      readString(entry, 'quote'),
+      readString(entry, 'photoAlt'),
+      // An unknown tier would fail the CHECK and the whole sync with it.
+      tier && LEADERSHIP_TIERS.has(tier) ? tier : null,
+      readBoolean(entry, 'featured'),
       env.CMS_SOURCE,
       entryId,
     ],
   );
 
-  return { status: 'applied', model, entryId, revalidate: ['/about', '/investors'] };
+  await invalidatePrefix('leadership');
+
+  return {
+    status: 'applied',
+    model,
+    entryId,
+    revalidate: ['/', '/about', '/investors', '/leadership', `/leadership/${row!.slug}`],
+  };
 }
+
+const LEADERSHIP_TIERS = new Set(['board', 'executive', 'management']);
 
 async function handleDelete(model: string, entryId: string): Promise<SyncResult> {
   if (model === 'project') {
@@ -288,6 +323,11 @@ async function handleDelete(model: string, entryId: string): Promise<SyncResult>
     env.CMS_SOURCE,
     entryId,
   ]);
+
+  if (model === 'leadership') {
+    await invalidatePrefix('leadership');
+    return { status: 'applied', model, entryId, revalidate: ['/', '/leadership'] };
+  }
 
   return { status: 'applied', model, entryId, revalidate: [] };
 }
@@ -345,6 +385,11 @@ function readString(entry: Record<string, unknown>, name: string): string | null
 function readNumber(entry: Record<string, unknown>, name: string): number | null {
   const value = field(entry, name);
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function readBoolean(entry: Record<string, unknown>, name: string): boolean | null {
+  const value = field(entry, name);
+  return typeof value === 'boolean' ? value : null;
 }
 
 function readStringArray(entry: Record<string, unknown>, name: string): string[] | null {
