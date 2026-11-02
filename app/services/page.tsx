@@ -15,7 +15,8 @@ import {
   uppercaseLink,
 } from '../../components/sections';
 import { btnWhite, btnOutlineOnDark, container, eyebrow } from '../../components/ui';
-import { SERVICES, serviceHref } from './services';
+import { disciplineCount, listText, loadServiceCards } from './load-services';
+import { serviceHref } from './services';
 
 /**
  * Services index — `/services`.
@@ -24,15 +25,24 @@ import { SERVICES, serviceHref } from './services';
  * went to the newsletter form. They now go to `/services/[slug]`, and this page
  * is where the nav's Services item lands.
  *
- * The six cards are the landing page's own grid, which is the pattern the
- * handover says to extend rather than replace.
+ * The cards are the landing page's own grid, which is the pattern the
+ * handover says to extend rather than replace. They list the published
+ * services from the console, in its order, falling back to the built-in six
+ * when the database cannot be reached (`./load-services.ts`).
  */
 
-export const metadata: Metadata = {
-  title: 'Services',
-  description:
-    'Six disciplines delivered under one governance framework by CoBuilt Investment Partners — development, construction management, development management, advisory, asset management, and property investment information.',
-};
+// Regenerated at most once a minute, so a service published, renamed or
+// reordered in the console reaches this page within the minute.
+export const revalidate = 60;
+
+// The count and the names follow the services published in the console.
+export async function generateMetadata(): Promise<Metadata> {
+  const services = await loadServiceCards();
+  return {
+    title: 'Services',
+    description: `${disciplineCount(services.length)} delivered under one governance framework by CoBuilt Investment Partners — ${listText(services.map((service) => service.title))}.`,
+  };
+}
 
 const STEPS: Array<[string, string, string]> = [
   ['01', 'Enquire', 'Tell us about the site, brief or scheme you have in mind.'],
@@ -45,7 +55,10 @@ const STEPS: Array<[string, string, string]> = [
   ['04', 'Hand over', 'Practical completion, documentation and a permanent Passport archive.'],
 ];
 
-export default function Services() {
+export default async function Services() {
+  const services = await loadServiceCards();
+  const count = disciplineCount(services.length);
+
   return (
     <SiteLayout current="/services">
       <main>
@@ -53,7 +66,7 @@ export default function Services() {
           eyebrow="Our services"
           title={
             <>
-              Six disciplines, one <em>governance</em> framework.
+              {count}, one <em>governance</em> framework.
             </>
           }
           standfirst="From feasibility through to practical completion, handover and the operation of the finished asset — delivered by one organisation and recorded as the work happens."
@@ -80,12 +93,16 @@ export default function Services() {
               </p>
             </div>
 
-            {/* The 1px gap over a grey ground draws the rules between cards. */}
-            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
-              {SERVICES.map((service) => (
+            {/*
+              Each card draws its own right and bottom rule. The landing page's
+              1px gap over a grey ground would show a short last row's empty
+              cells as a grey block, and the number of services is the console's.
+            */}
+            <div className="reveal grid grid-cols-1 border-t border-l border-zinc-300 sm:grid-cols-2 md:grid-cols-3">
+              {services.map((service) => (
                 <article
                   key={service.slug}
-                  className={`flex flex-col gap-3 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
+                  className={`flex flex-col gap-3 border-r border-b border-zinc-300 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
                 >
                   <span
                     className={`${glyph} ${service.informational ? 'text-zinc-500' : 'text-orange'}`}
@@ -139,7 +156,7 @@ export default function Services() {
 
         <CtaBand
           title="Tell us what you are trying to build"
-          body="Send the site, the brief or the problem. We will tell you which of the six disciplines you actually need — including when the answer is none of them yet."
+          body={`Send the site, the brief or the problem. We will tell you which of the ${count.toLowerCase()} you actually need — including when the answer is none of them yet.`}
           notice
         />
       </main>

@@ -94,6 +94,18 @@ to the public.
 | `entry.unpublish` | `published_at` is cleared. The row survives, the content leaves the website. |
 | `entry.delete` | Projects and news are soft-deleted (`deleted_at`); FAQs and leadership rows are removed. |
 
+### Leadership fields
+
+A `leadership` entry is read as `fullName` (or `name`), `slug`, `roleTitle` (or
+`role`), `bio`, `photoUrl`, `socialLinks`, `sortOrder`, plus the profile fields
+added for the leadership page: `summary`, `qualifications` and `expertise` (or
+`areasOfExpertise`) as string arrays, `quote`, `photoAlt`, `tier` (`board`,
+`executive` or `management`; anything else is ignored) and `featured` (the
+homepage spotlight). Those profile fields are optional: one the payload does
+not carry keeps the value set in the admin console, so a CMS model without them
+still syncs. Leaders can also be managed entirely from the console
+(`/admin/leadership`) without the CMS.
+
 ## Observability
 
 Every delivery writes a `cms_sync_log` row — model, entry, event, status, error

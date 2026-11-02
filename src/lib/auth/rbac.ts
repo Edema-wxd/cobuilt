@@ -21,6 +21,8 @@ export const PERMISSIONS = [
   'news:write',
   'news:publish',
   'news:delete',
+  'leadership:write',
+  'services:write',
   'forms:read',
   'forms:moderate',
   'users:read',
@@ -28,6 +30,9 @@ export const PERMISSIONS = [
   'analytics:read',
   'audit:read',
   'privacy:manage',
+  // Site-wide content set in the console: the homepage's copy, video,
+  // figures and sections. Admin only.
+  'settings:write',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -42,6 +47,8 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'news:read',
     'news:write',
     'news:publish',
+    'leadership:write',
+    'services:write',
     'forms:read',
   ],
   // Read-only dashboard access for CoBuilt stakeholders.

@@ -28,6 +28,9 @@ const NAV: NavEntry[] = [
   { label: 'Submissions', href: '/admin/submissions', needs: ['forms:read'] },
   { label: 'Projects', href: '/admin/projects', needs: ['projects:write'] },
   { label: 'News', href: '/admin/news', needs: ['news:write'] },
+  { label: 'Services', href: '/admin/services', needs: ['services:write'] },
+  { label: 'Leadership', href: '/admin/leadership', needs: ['leadership:write'] },
+  { label: 'Homepage', href: '/admin/homepage', needs: ['settings:write'] },
   { label: '3D tours', href: '/admin/tours', needs: ['tours:write'] },
   {
     label: 'Investor approval',

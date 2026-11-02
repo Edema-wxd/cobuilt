@@ -18,6 +18,15 @@ describe('RBAC', () => {
     expect(editor.has('projects:delete')).toBe(false);
     expect(editor.has('news:delete')).toBe(false);
     expect(editor.has('users:write')).toBe(false);
+    expect(editor.has('leadership:write')).toBe(true);
+    expect(effectivePermissions('viewer').has('leadership:write')).toBe(false);
+  });
+
+  it('lets admins and editors, and no one else, manage services', () => {
+    expect(hasPermission('admin', {}, 'services:write')).toBe(true);
+    expect(hasPermission('editor', {}, 'services:write')).toBe(true);
+    expect(hasPermission('viewer', {}, 'services:write')).toBe(false);
+    expect(hasPermission('investor', {}, 'services:write')).toBe(false);
   });
 
   it('gives a viewer read-only access', () => {
