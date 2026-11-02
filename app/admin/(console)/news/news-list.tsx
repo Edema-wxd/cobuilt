@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { NEWS_CATEGORY_LABELS, newsCategoryLabel } from '@/lib/news-categories';
 import type { serializeNewsSummaryForAdmin } from '@/lib/serializers';
 import {
   PageHeader,
@@ -29,16 +30,16 @@ import { publicationText } from '../projects/project-list';
 
 type ArticleSummary = ReturnType<typeof serializeNewsSummaryForAdmin>;
 
-/** The categories the public news filter is built around (schemas/news.ts). */
-export const CATEGORY_LABELS: Record<string, string> = {
-  press_release: 'Press release',
-  update: 'Update',
-  announcement: 'Announcement',
-};
+/**
+ * The five categories the media centre is built around, in its order
+ * (src/lib/news-categories.ts). `update` and `announcement` from before the
+ * spec's list are stored as project updates and company announcements now.
+ */
+export const CATEGORY_LABELS: Record<string, string> = NEWS_CATEGORY_LABELS;
 
 export function categoryLabel(value: string | null): string {
   if (!value) return '—';
-  return CATEGORY_LABELS[value] ?? value.replace(/[_-]+/g, ' ').replace(/^./, (c) => c.toUpperCase());
+  return newsCategoryLabel(value);
 }
 
 export default function NewsList() {

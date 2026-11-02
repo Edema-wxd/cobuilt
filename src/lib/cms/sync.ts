@@ -3,6 +3,7 @@ import { env } from '../env';
 import { logger } from '../logger';
 import { reportError } from '../monitoring';
 import { slugify } from '../slug';
+import { normalizeNewsCategory } from '../news-categories';
 import { enqueueSearch } from '../queues';
 import { invalidatePrefix } from '../cache';
 
@@ -174,7 +175,9 @@ async function handleUpsert(
         slug,
         readString(entry, 'content'),
         readString(entry, 'excerpt'),
-        readString(entry, 'category'),
+        // A CMS still sending `update` or "Press release" lands on the same
+        // category as the console's; an unknown one is kept as sent.
+        normalizeNewsCategory(readString(entry, 'category')),
         readString(entry, 'featuredImageUrl'),
         readString(entry, 'metaTitle'),
         readString(entry, 'metaDescription'),
