@@ -28,6 +28,7 @@ const SLUGGABLE_TABLES = new Set([
   'services',
   'tags',
   'videos',
+  'documents',
 ]);
 
 /**

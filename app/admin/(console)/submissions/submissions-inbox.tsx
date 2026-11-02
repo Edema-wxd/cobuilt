@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { serializeSubmission, serializeSubmissionSummary } from '@/lib/serializers';
+import { ENQUIRY_TYPES, enquiryTypeLabel } from '@/lib/enquiryTypes';
 import { ApiFailure, api } from '../../auth-client';
 import { useSession } from '../console-shell';
 import {
@@ -30,6 +31,9 @@ import {
  * The list arrives with contact details masked (docs/decisions.md §2.8).
  * Opening a submission reveals them and is itself written to the audit log,
  * so a submission is only fetched when someone chooses to open it.
+ *
+ * An enquiry carries the type chosen on the contact form (partnership, media,
+ * suppliers…), shown on its row and filterable, so it can be routed unopened.
  */
 
 type Summary = ReturnType<typeof serializeSubmissionSummary>;
@@ -55,6 +59,7 @@ export default function SubmissionsInbox() {
   const { user, can } = useSession();
   const [view, setView] = useState<View>('inbox');
   const [formType, setFormType] = useState('');
+  const [enquiryType, setEnquiryType] = useState('');
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -62,6 +67,8 @@ export default function SubmissionsInbox() {
     withQuery('/api/admin/forms', {
       flaggedAsSpam: VIEW_FILTER[view],
       formType,
+      // Only enquiries have a type; the filter narrows to them.
+      enquiryType: formType === 'inquiry' || formType === '' ? enquiryType : undefined,
       page,
       pageSize: 25,
     }),
@@ -117,6 +124,26 @@ export default function SubmissionsInbox() {
             </option>
           ))}
         </select>
+        {formType === 'inquiry' || formType === '' ? (
+          <>
+            <label className="sr-only" htmlFor="submissions-enquiry-type">
+              Enquiry type
+            </label>
+            <select
+              id="submissions-enquiry-type"
+              className={`${filterSelect} max-w-full`}
+              value={enquiryType}
+              onChange={(event) => changeFilter(() => setEnquiryType(event.target.value))}
+            >
+              <option value="">Every enquiry type</option>
+              {ENQUIRY_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {enquiryTypeLabel(type)}
+                </option>
+              ))}
+            </select>
+          </>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
@@ -158,6 +185,7 @@ export default function SubmissionsInbox() {
                           <span className={`block ${muted}`}>{row.email ?? '—'}</span>
                           <span className="mt-1 flex flex-wrap gap-1.5">
                             <Tag>{FORM_LABELS[row.formType] ?? row.formType}</Tag>
+                            {row.enquiryType ? <Tag>{enquiryTypeLabel(row.enquiryType)}</Tag> : null}
                             {row.flaggedAsSpam ? <Tag tone="bad">Spam</Tag> : null}
                             {row.anonymised ? <Tag>Anonymised</Tag> : null}
                           </span>
@@ -258,7 +286,10 @@ function SubmissionDetail({
         <div className="flex flex-col gap-5 px-5 py-5">
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Fact label="Name">{data.name ?? '—'}</Fact>
-            <Fact label="Form">{FORM_LABELS[data.formType] ?? data.formType}</Fact>
+            <Fact label="Form">
+              {FORM_LABELS[data.formType] ?? data.formType}
+              {data.enquiryType ? ` · ${enquiryTypeLabel(data.enquiryType)}` : ''}
+            </Fact>
             <Fact label="Email">
               {data.email ? (
                 <a className="text-rust underline hover:text-rust-hover" href={`mailto:${data.email}`}>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import SiteLayout from '../../../components/SiteLayout';
 import ModelViewer from './model-viewer';
+import ProjectDocuments, { type ProjectDocument } from './project-documents';
 import type { ModelFailure, ModelProgress } from './model-viewer';
 import { assessDevice, browserHints } from './tour-model';
 import { passportHref } from '../../../components/site';
@@ -149,6 +150,8 @@ export interface ProjectDetailProps {
   related: RelatedProject[];
   /** The project's published films, in the library's order; the block is left out when empty. */
   videos: ProjectVideo[];
+  /** Published downloads attached to the project at /admin/downloads. */
+  documents?: ProjectDocument[];
 }
 
 /**
@@ -267,6 +270,7 @@ export default function ProjectDetail({
   passport,
   related,
   videos,
+  documents = [],
 }: ProjectDetailProps) {
   const [activeTourId, setActiveTourId] = useState<string | null>(
     tours.find((tour) => tour.featured)?.id ?? tours[0]?.id ?? null,
@@ -471,6 +475,8 @@ export default function ProjectDetail({
                   </a>
                 ) : null}
               </div>
+
+              <ProjectDocuments documents={documents} />
             </div>
 
             {specs.length > 0 ? (

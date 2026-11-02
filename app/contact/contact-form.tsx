@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { field, fieldLabel, input } from '../../components/sections';
 import { btnOutline } from '../../components/ui';
+import { ENQUIRY_TYPES, ENQUIRY_TYPE_LABELS, isEnquiryType, type EnquiryType } from '@/lib/enquiryTypes';
+import Turnstile from './turnstile';
 
 /**
  * The enquiry form — `POST /api/forms/inquiry`.
@@ -13,21 +15,19 @@ import { btnOutline } from '../../components/ui';
  * (docs/design-handover.md §3.6).
  *
  * Shaped to `inquiryBody` in src/lib/schemas/forms.ts: name, email, optional
- * phone, optional subject, a message of at least ten characters, an explicit
+ * phone, the enquiry type, a message of at least ten characters, an explicit
  * NDPA consent, and the honeypot the server scores. The field rules below are
  * the schema's own minimums, so a submission the API would reject is caught
  * before the round trip.
+ *
+ * The enquiry type (general, partnership, media…) is the one field that
+ * routes the enquiry; it is stored with it and leads the staff email. A link
+ * to `/contact?type=partnership#enquiry` opens the form with it chosen, which
+ * is how the page's "Partnership enquiry" and the other routes reach it.
+ *
+ * With a Turnstile site key the form also carries Cloudflare's CAPTCHA
+ * (./turnstile.tsx), which the server checks; without one it is not loaded.
  */
-
-const SUBJECTS = [
-  'New project or development',
-  'Partnership or joint venture',
-  'Supplier or contractor',
-  'A question about a project record',
-  'Media enquiry',
-  'Careers',
-  'Something else',
-] as const;
 
 type FormState = 'idle' | 'sending' | 'done' | 'error';
 
@@ -54,18 +54,41 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
   );
 }
 
-export default function ContactForm() {
+export default function ContactForm({
+  hours,
+  turnstileSiteKey,
+}: {
+  /** The office hours, for the success state's "call us" line. */
+  hours: string;
+  /** Cloudflare Turnstile's public key; null leaves the CAPTCHA out. */
+  turnstileSiteKey: string | null;
+}) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [subject, setSubject] = useState<string>(SUBJECTS[0]);
+  const [enquiryType, setEnquiryType] = useState<EnquiryType>('general');
   const [body, setBody] = useState('');
   const [website, setWebsite] = useState('');
   const [state, setState] = useState<FormState>('idle');
   const [message, setMessage] = useState('');
+  const [token, setToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
+
+  // `?type=partnership` chooses the enquiry type, for links into the form.
+  useEffect(() => {
+    const type = new URLSearchParams(window.location.search).get('type');
+    if (isEnquiryType(type)) setEnquiryType(type);
+  }, []);
 
   async function send(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+
+    if (turnstileSiteKey && !token) {
+      setState('error');
+      setMessage('Wait for the check above the button to finish, then send again.');
+      return;
+    }
+
     setState('sending');
     setMessage('');
 
@@ -77,13 +100,16 @@ export default function ContactForm() {
           name,
           email,
           ...(phone.trim() ? { phone: phone.trim() } : {}),
-          subject,
+          enquiryType,
           message: body,
           consent: true,
           website,
+          ...(token ? { turnstileToken: token } : {}),
         }),
       });
       const payload = (await response.json().catch(() => null)) as ApiResponse | null;
+      // A token is good for one submission; whatever the outcome, get a fresh one.
+      if (turnstileSiteKey) setTurnstileReset((n) => n + 1);
 
       if (!response.ok) {
         setState('error');
@@ -117,8 +143,7 @@ export default function ContactForm() {
           {message}
         </p>
         <p className="text-[0.844rem] leading-[1.7] text-zinc-600">
-          If it is urgent, call the office on the number beside this form — Monday to Friday,
-          08:00–17:00 WAT.
+          If it is urgent, call the office on the number beside this form — {hours}.
         </p>
         <button
           className={`${btnOutline} self-start`}
@@ -195,19 +220,19 @@ export default function ContactForm() {
           />
         </div>
         <div className={field}>
-          <label className={fieldLabel} htmlFor="contact-subject">
-            What is this about
+          <label className={fieldLabel} htmlFor="contact-type">
+            Type of enquiry
           </label>
           <select
-            id="contact-subject"
+            id="contact-type"
             className={`${input} select-chevron cursor-pointer pr-10`}
-            name="subject"
-            value={subject}
-            onChange={(event) => setSubject(event.target.value)}
+            name="enquiryType"
+            value={enquiryType}
+            onChange={(event) => setEnquiryType(event.target.value as EnquiryType)}
           >
-            {SUBJECTS.map((option) => (
+            {ENQUIRY_TYPES.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {ENQUIRY_TYPE_LABELS[option]}
               </option>
             ))}
           </select>
@@ -266,6 +291,18 @@ export default function ContactForm() {
           <a href="/privacy">Privacy Policy</a> (NDPA), so that someone can reply to this enquiry.
         </label>
       </div>
+
+      {turnstileSiteKey ? (
+        <Turnstile
+          siteKey={turnstileSiteKey}
+          action="contact"
+          resetKey={turnstileReset}
+          onToken={(next) => {
+            setToken(next);
+            if (next && state === 'error') setMessage('');
+          }}
+        />
+      ) : null}
 
       {/* Charcoal, not white: white on #FF6600 is 2.94:1. */}
       <button

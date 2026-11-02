@@ -745,6 +745,95 @@ The channel's own URL is still unconfirmed (the header's "YouTube" link goes
 to the library for that reason), so the library links each film's watch page
 but not the channel.
 
+### 2.25 Resources and downloads, and the contact page's gaps
+
+The client's spec asks for a Resources section — company profile, capability
+statement, brochures, FAQs, policies and a download centre — with
+downloadable project profiles on project pages and download activity tracked
+as a business metric; and for the Contact page to carry an enquiry type
+(contact, partnership, general), a CAPTCHA, and details the business can
+change. Before this, the footer's "Downloads" entry had no page and a project
+had one `brochure_url`.
+
+**Documents are their own table** (migration 0021, `documents`): title, slug,
+description, a category (company profile, capability statement, brochure,
+project profile, policy, other), the file's URL, its UploadThing key when it
+was uploaded, its type and size, an optional project, published, sort order
+and a download count. `/admin/downloads` manages them behind a new
+`downloads:write` permission (admin and editor; deleting is admin-only, as for
+tours and services), and every write is audited and clears the `documents`
+cache. A document on a project is listed on that project's page as well as on
+`/resources`; it stays off both while its project is unpublished, so a project
+profile cannot reveal a draft. The project's existing `brochure_url` button is
+untouched: a brochure can move into the download centre at an editor's pace.
+
+**A file is an upload or a link.** Uploads are PDFs only, up to 32 MB, through
+a new UploadThing route (`document`) authorised exactly as `tourModel` is, and
+registered by key only once storage confirms the file — so a document can
+never point at an upload that did not finish (§2.2). A link must be https; its
+type is read from its extension and its size is left unknown rather than
+guessed, so the page shows "PDF" without a size for it. Replacing an uploaded
+file, or deleting its document, deletes the stored file.
+
+**Downloads are counted, and nothing about the person is.** Every download
+link on the site is `/api/documents/[id]/download`, which adds one to the
+document's total and to that day's count (`document_download_days`, a date and
+a number) and redirects to the file. No IP address, cookie, identifier or user
+agent is stored; the client IP is only the rate limiter's short-lived Redis
+key, as on every endpoint, on its own bucket of 30 per 10 minutes. The redirect
+is `no-store`, so neither a browser nor the CDN can serve it without counting.
+Self-declared crawlers are redirected but not counted, and the links are
+`rel="nofollow"`. A download does not move the row's `updated_at` (the trigger
+is skipped when only the count changes), so "last edited" keeps its meaning.
+The console shows each document's total and its last 30 days. The privacy
+policy needed no change for this: nothing personal is processed.
+
+**`/resources` is one page**, regenerated at most once a minute and empty-but-
+honest without a database: the download centre grouped by category, each file
+with its type and size; the way to `/faqs`; and the policies — the site's four
+legal pages, plus any document published in the policy category. `/downloads`
+redirects there. `components/site.ts` was owned by another change this round,
+so **the footer's "Downloads" entry still has no link**: it should become
+`{ label: 'Downloads', href: '/resources' }`.
+
+**The enquiry type replaced the free-text subject list**, so the form gained
+no field: general, a new project, partnership, contractors and suppliers,
+media, careers, or a question about a project record. It is stored with the
+submission (`metadata.enquiryType`; one from before reads as general), leads
+the staff email's subject line, and is shown and filterable in the inbox. The
+contact page's routes each link into the form with their type chosen
+(`/contact?type=partnership#enquiry`), which is how "Partnership enquiry" and
+"General enquiry" are reached without three forms to maintain.
+
+**The CAPTCHA is Cloudflare Turnstile**, because Cloudflare already fronts the
+site and is a listed processor, and because it usually passes without a puzzle.
+It is inert until `TURNSTILE_SECRET_KEY` and a site key
+(`NEXT_PUBLIC_TURNSTILE_SITE_KEY` or `TURNSTILE_SITE_KEY`) are set; set them
+together. Then it fails closed: no token is a 422, a refused token a 400, and
+Cloudflare unreachable a 503, and nothing is stored for any of them — a check
+that waves things through when unsure is not a check. Cloudflare's script is
+requested only on `/contact`, from a plain script tag (no new dependency), and
+the report-only CSP now allows it in `script-src`; `frame-src https:` already
+covered its frame. The honeypot, the heuristic score and Akismet still run
+behind it. The privacy policy's Cloudflare entry now says what Turnstile reads.
+It was checked in a browser with Cloudflare's always-pass test keys (widget,
+token, server verification, enquiry stored); the failure paths are covered by
+tests against a mocked siteverify.
+
+**Contact details are a `contact` document in `site_settings`** (no
+migration), edited at `/admin/contact` under the existing `settings:write`
+permission and audited like the homepage's: the address lines, up to four
+phone numbers and email addresses (each labelled), the WhatsApp Business
+number (blank hides WhatsApp), business hours as day/hours pairs, and the
+map's position. The last makes §2.17's map switchable from the console: once
+CoBuilt confirms the coordinates, an administrator enters them and the
+click-to-load OpenStreetMap appears. A key never saved — or no database —
+shows the constants in `components/site.ts`, which a unit test holds the
+fallback to. **The header and footer still read those constants**; moving
+them onto this document is a follow-up for whoever next owns
+`components/site.ts`, and until then a changed phone number shows on
+`/contact` but not in the header.
+
 ## 3. Still open
 
 Carried from §17, with a recommendation where the work surfaced one.

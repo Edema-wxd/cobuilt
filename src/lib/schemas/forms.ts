@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { email, honeypot, phone, queryBoolean, uuid } from './common';
+import { ENQUIRY_TYPES, ENQUIRY_TYPE_LABELS, type EnquiryType } from '../enquiryTypes';
 
 /**
  * Public form payloads. Every one carries a honeypot; the investment form also
@@ -7,15 +8,21 @@ import { email, honeypot, phone, queryBoolean, uuid } from './common';
  * for a follow-up (§11).
  */
 
+export { ENQUIRY_TYPES, ENQUIRY_TYPE_LABELS, type EnquiryType };
+
 export const inquiryBody = z.object({
   name: z.string().trim().min(2).max(255),
   email,
   phone: phone.optional(),
+  /** Defaults to a general enquiry, so a client that predates the field still works. */
+  enquiryType: z.enum(ENQUIRY_TYPES).default('general'),
   subject: z.string().trim().max(255).optional(),
   message: z.string().trim().min(10).max(5000),
   projectId: uuid.optional(),
   consent: z.literal(true, { message: 'Consent is required to submit this form' }),
   website: honeypot,
+  /** Cloudflare Turnstile's token; checked only while Turnstile is configured. */
+  turnstileToken: z.string().max(4096).optional(),
 });
 export type InquiryBody = z.infer<typeof inquiryBody>;
 
@@ -52,6 +59,7 @@ export type InvestmentBody = z.infer<typeof investmentBody>;
 
 export const listSubmissionsQuery = z.object({
   formType: z.enum(['inquiry', 'newsletter', 'investment']).optional(),
+  enquiryType: z.enum(ENQUIRY_TYPES).optional(),
   flaggedAsSpam: queryBoolean.optional(),
   processed: queryBoolean.optional(),
   page: z.coerce.number().int().min(1).default(1),

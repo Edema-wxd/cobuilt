@@ -55,6 +55,7 @@ export const EMPTY: ProjectDetailProps = {
   passport: null,
   related: [],
   videos: [],
+  documents: [],
 };
 
 export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
@@ -67,6 +68,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
   const toursRepo = await import('@/lib/repositories/tours');
   const passportRepo = await import('@/lib/repositories/passport');
   const videosRepo = await import('@/lib/repositories/videos');
+  const documentsRepo = await import('@/lib/repositories/documents');
   const { serializeProject, serializeTour, toDateOnly } = await import('@/lib/serializers');
 
   try {
@@ -75,7 +77,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
 
     const project = serializeProject(row);
 
-    const [services, tags, albums, tourRows, milestones, nearby, videos] = await Promise.all([
+    const [services, tags, albums, tourRows, milestones, nearby, videos, documents] = await Promise.all([
       projectsRepo.labelsByIds('services', project.serviceIds),
       projectsRepo.labelsByIds('tags', project.tagIds),
       projectsRepo.galleryForProject(project.id, project.galleryIds),
@@ -93,6 +95,9 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
       // The film list is a side panel: if it cannot be read, the page still
       // renders without it rather than as "couldn't be loaded".
       videosRepo.listForProject(row.id).catch(() => []),
+      // Downloads are an extra on this page: failing to read them hides the
+      // list rather than the project.
+      documentsRepo.listPublished({ projectId: project.id }).catch(() => []),
     ]);
 
     const total = milestones.length;
@@ -168,6 +173,13 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
           title,
           category,
           durationSeconds,
+        })),
+        documents: documents.map(({ id, title, fileType, fileSizeBytes, downloadUrl }) => ({
+          id,
+          title,
+          fileType,
+          fileSizeBytes,
+          downloadUrl,
         })),
       },
     };

@@ -25,6 +25,9 @@ export const PERMISSIONS = [
   'services:write',
   // The video library at /videos. Admin and editor; deleting is admin-only.
   'videos:write',
+  // The download centre at /resources: documents, uploads and their order.
+  // Admin and editor; deleting is admin-only, enforced by the route.
+  'downloads:write',
   'forms:read',
   'forms:moderate',
   'users:read',
@@ -52,6 +55,7 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'leadership:write',
     'services:write',
     'videos:write',
+    'downloads:write',
     'forms:read',
   ],
   // Read-only dashboard access for CoBuilt stakeholders.

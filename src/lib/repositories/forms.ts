@@ -68,6 +68,8 @@ export async function create(input: CreateSubmissionInput): Promise<FormSubmissi
 
 export interface ListSubmissionsOptions {
   formType?: FormType;
+  /** An enquiry's type, from `metadata.enquiryType`; an enquiry from before the field counts as general. */
+  enquiryType?: string;
   flaggedAsSpam?: boolean;
   processed?: boolean;
   page: number;
@@ -83,6 +85,12 @@ export async function list(
   if (options.formType) {
     params.push(options.formType);
     conditions.push(`form_type = $${params.length}`);
+  }
+  if (options.enquiryType) {
+    params.push(options.enquiryType);
+    conditions.push(
+      `form_type = 'inquiry' AND coalesce(metadata->>'enquiryType', 'general') = $${params.length}`,
+    );
   }
   if (options.flaggedAsSpam !== undefined) {
     params.push(options.flaggedAsSpam);

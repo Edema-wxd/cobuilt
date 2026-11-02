@@ -33,7 +33,7 @@ export default function Privacy() {
       eyebrow="Legal"
       title="Privacy Policy"
       standfirst="How CoBuilt Investment Partners collects, uses and retains personal data, and the rights you hold over it under the Nigeria Data Protection Act."
-      updated="26 October 2026"
+      updated="2 November 2026"
     >
       <section className={prose.section}>
         <h2 className={prose.sectionTitle}>Who we are</h2>
@@ -137,7 +137,10 @@ export default function Privacy() {
           </li>
           <li>
             <strong>Cloudflare</strong>, which delivers and protects the website and handles the IP
-            address of every visit.
+            address of every visit. On the contact page it also runs Turnstile, a check that tells a
+            person from an automated submission: it reads technical signals from your browser and
+            device, and your IP address, when the form loads and when you send it. It is used only
+            to stop spam, not for advertising or to follow you across sites.
           </li>
           <li>
             <strong>Our email delivery provider</strong>, which sends confirmation emails, replies

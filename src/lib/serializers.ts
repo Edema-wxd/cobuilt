@@ -9,6 +9,7 @@ import type {
 } from '@/types/models';
 import { normalizeNewsCategory } from './news-categories';
 import { maskEmail, maskPhone } from './privacy';
+import { isEnquiryType } from './enquiryTypes';
 
 /**
  * Row-to-DTO mapping.
@@ -313,6 +314,13 @@ export function serializeSubmissionSummary(row: FormSubmissionRow) {
   return {
     id: row.id,
     formType: row.form_type,
+    // What an enquiry is about; an enquiry from before the field reads as general.
+    enquiryType:
+      row.form_type === 'inquiry'
+        ? isEnquiryType(row.metadata?.enquiryType)
+          ? row.metadata.enquiryType
+          : 'general'
+        : null,
     name: row.name,
     email: maskEmail(row.email),
     phone: maskPhone(row.phone),
