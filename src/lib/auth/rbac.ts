@@ -23,6 +23,8 @@ export const PERMISSIONS = [
   'news:delete',
   'leadership:write',
   'services:write',
+  // Image gallery albums and their images, uploads included.
+  'gallery:write',
   'forms:read',
   'forms:moderate',
   'users:read',
@@ -49,6 +51,7 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'news:publish',
     'leadership:write',
     'services:write',
+    'gallery:write',
     'forms:read',
   ],
   // Read-only dashboard access for CoBuilt stakeholders.

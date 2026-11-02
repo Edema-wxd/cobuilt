@@ -4,19 +4,21 @@ import { env } from '../env';
 import { logger } from '../logger';
 import { bearerToken } from '../auth/jwt';
 import { authenticateBearer } from '../auth/session';
+import { GALLERY_UPLOAD } from '../gallery';
 
 /* UploadThingError is how middleware reports a rejection to the client. */
 /* eslint-disable @typescript-eslint/only-throw-error */
 
 /**
- * Object storage for 3D tour assets (§7), provided by UploadThing.
+ * Object storage for 3D tour assets (§7) and gallery photographs, provided by
+ * UploadThing.
  *
  * Uploads still go straight from the browser to storage rather than through an
  * API route: a 50 MB .glb would hold a worker for the whole transfer and hit
  * the default body limit (docs/decisions.md §2.2). The file router below is
  * the authorisation point: UploadThing only issues upload URLs for a request
  * its middleware lets through, then the browser registers the returned key
- * with POST /api/admin/tours.
+ * with POST /api/admin/tours, or POST /api/admin/gallery/[albumId]/images.
  */
 
 declare global {
@@ -35,6 +37,9 @@ export function isStorageConfigured(): boolean {
 
 /** File extensions accepted for tour models. */
 const MODEL_EXTENSIONS = ['glb', 'gltf', 'zip'];
+
+/** 16 MB, as GALLERY_UPLOAD.maxFileBytes; UploadThing takes the size as a literal. */
+const GALLERY_FILE_LIMIT = { maxFileSize: '16MB', maxFileCount: GALLERY_UPLOAD.maxFileCount } as const;
 
 const f = createUploadthing();
 
@@ -76,6 +81,60 @@ export const uploadRouter = {
     .onUploadComplete(({ metadata, file }) => {
       logger.info('Tour model uploaded', { userId: metadata.userId, key: file.key });
     }),
+
+  /**
+   * Gallery photographs, up to 20 at a time (docs/decisions.md §2.24). Gated
+   * exactly as `tourModel` is — a signed-in admin or editor holding the
+   * route's permission — by `gallery:write`. Only JPEG, PNG and WebP are
+   * accepted: they are what every browser displays and the image optimiser
+   * resizes, which a HEIC or TIFF original is not.
+   */
+  galleryImage: f(
+    // The ceiling UploadThing itself enforces per type; the middleware checks
+    // each file against GALLERY_UPLOAD too, and the batch as a whole.
+    {
+      'image/jpeg': GALLERY_FILE_LIMIT,
+      'image/png': GALLERY_FILE_LIMIT,
+      'image/webp': GALLERY_FILE_LIMIT,
+    },
+  )
+    .middleware(async ({ req, files }) => {
+      const token = bearerToken(req.headers.authorization);
+      if (!token) throw new UploadThingError('Sign in to upload.');
+
+      let auth;
+      try {
+        auth = await authenticateBearer(token);
+      } catch {
+        throw new UploadThingError('Your session has expired. Sign in again.');
+      }
+
+      const allowed =
+        (auth.role === 'admin' || auth.role === 'editor') && auth.permissions.has('gallery:write');
+      if (!allowed) throw new UploadThingError('Your role does not allow this.');
+
+      if (files.length > GALLERY_UPLOAD.maxFileCount) {
+        throw new UploadThingError(`Upload at most ${GALLERY_UPLOAD.maxFileCount} images at a time.`);
+      }
+      for (const file of files) {
+        const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+        const extensionOk = (GALLERY_UPLOAD.extensions as readonly string[]).includes(extension);
+        const typeOk = (GALLERY_UPLOAD.mimeTypes as readonly string[]).includes(file.type);
+        if (!extensionOk || !typeOk) {
+          throw new UploadThingError(`“${file.name}” is not a JPEG, PNG or WebP image.`);
+        }
+        if (file.size > GALLERY_UPLOAD.maxFileBytes) {
+          throw new UploadThingError(
+            `“${file.name}” exceeds the ${GALLERY_UPLOAD.maxFileBytes / 1024 / 1024} MB limit.`,
+          );
+        }
+      }
+
+      return { userId: auth.userId };
+    })
+    .onUploadComplete(({ metadata, file }) => {
+      logger.info('Gallery image uploaded', { userId: metadata.userId, key: file.key });
+    }),
 } satisfies FileRouter;
 
 export type UploadRouter = typeof uploadRouter;
@@ -112,4 +171,10 @@ export async function lookupFile(
 
 export async function deleteFile(key: string): Promise<void> {
   await utapi().deleteFiles(key);
+}
+
+/** Deletes several stored files in one request — an album's, when it is deleted. */
+export async function deleteFiles(keys: readonly string[]): Promise<void> {
+  if (keys.length === 0) return;
+  await utapi().deleteFiles([...keys]);
 }

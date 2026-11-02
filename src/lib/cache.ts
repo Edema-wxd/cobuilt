@@ -19,6 +19,7 @@ export const TTL = {
   news: 60,
   leadership: 60,
   services: 60,
+  gallery: 60,
   search: 300,
   facets: 60,
 } as const;

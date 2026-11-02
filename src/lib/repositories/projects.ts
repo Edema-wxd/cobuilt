@@ -438,7 +438,7 @@ export interface GalleryAlbum {
 }
 
 /**
- * Published photo albums for a project, oldest first.
+ * Published photo albums for a project, in the gallery's order.
  *
  * An album can be attached either way round: `gallery_albums.project_id`, which
  * the CMS mirror sets, or `projects.gallery_ids`, which is what the admin API
@@ -456,10 +456,14 @@ export async function galleryForProject(
     cover_image_url: string | null;
     image_urls: string[] | null;
   }>(
-    `SELECT id, title, description, cover_image_url, image_urls
-       FROM gallery_albums
-      WHERE published = TRUE AND (project_id = $1 OR id = ANY($2::uuid[]))
-      ORDER BY created_at ASC`,
+    // The images live in gallery_images (migration 0020), in the album's order.
+    `SELECT a.id, a.title, a.description, a.cover_image_url,
+            ARRAY(SELECT i.image_url FROM gallery_images i
+                   WHERE i.album_id = a.id
+                   ORDER BY i.sort_order, i.created_at) AS image_urls
+       FROM gallery_albums a
+      WHERE a.published = TRUE AND (a.project_id = $1 OR a.id = ANY($2::uuid[]))
+      ORDER BY a.sort_order ASC, a.created_at ASC`,
     [projectId, albumIds],
   );
 

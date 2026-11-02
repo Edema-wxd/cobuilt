@@ -163,6 +163,54 @@ async function seedServiceProjects(): Promise<void> {
   }
 }
 
+/**
+ * Two published albums in the image gallery, one documenting a sample project,
+ * made from the photographs already in public/images, so /gallery, an album's
+ * viewer and the project page's "Photo albums" render.
+ */
+async function seedGallery(): Promise<void> {
+  type Photo = [file: string, width: number, height: number, alt: string, caption: string | null];
+  const albums: Array<{ title: string; category: string; project: string | null; photos: Photo[] }> = [
+    {
+      title: 'Ocean Ridge: structure and site',
+      category: 'ongoing_projects',
+      project: 'ocean-ridge-residences',
+      photos: [
+        ['construction-site', 1000, 1500, 'Concrete frame of a multi-storey block under construction, with scaffolding and a tower crane', 'Superstructure, level four'],
+        ['apartment-blocks', 1024, 1024, 'Completed apartment blocks with balconies in a landscaped courtyard', null],
+        ['hero-aerial-estate', 960, 960, 'Aerial view of a residential estate with tree-lined roads and terraced houses', 'Masterplan context, looking north'],
+      ],
+    },
+    {
+      title: 'Show home launch',
+      category: 'events',
+      project: null,
+      photos: [
+        ['villa-and-pool', 735, 490, 'Two-storey villa with floor-to-ceiling windows beside a swimming pool at dusk', 'The show villa on launch evening'],
+      ],
+    },
+  ];
+
+  for (const [index, album] of albums.entries()) {
+    const row = await queryOne<{ id: string }>(
+      `INSERT INTO gallery_albums (title, slug, category, project_id, published, sort_order)
+       VALUES ($1, $2, $3, (SELECT id FROM projects WHERE slug = $4), TRUE, $5)
+       ON CONFLICT (slug) DO NOTHING
+       RETURNING id`,
+      [album.title, slugify(album.title), album.category, album.project, (index + 1) * 10],
+    );
+    if (!row) continue;
+
+    for (const [position, [file, width, height, alt, caption]] of album.photos.entries()) {
+      await query(
+        `INSERT INTO gallery_images (album_id, image_url, alt_text, caption, width, height, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [row.id, `/images/${file}.webp`, alt, caption, width, height, (position + 1) * 10],
+      );
+    }
+  }
+}
+
 async function seedNews(adminId: string): Promise<void> {
   const articles = [
     ['CoBuilt breaks ground on Ocean Ridge Residences', 'press_release'],
@@ -226,6 +274,7 @@ async function main(): Promise<void> {
   const adminId = await seedAdmin();
   await seedProjects(adminId);
   await seedServiceProjects();
+  await seedGallery();
   await seedNews(adminId);
   await seedFaqs();
 
