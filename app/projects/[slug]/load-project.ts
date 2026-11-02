@@ -54,6 +54,7 @@ export const EMPTY: ProjectDetailProps = {
   tours: [],
   passport: null,
   related: [],
+  albums: [],
 };
 
 export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
@@ -66,6 +67,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
   const toursRepo = await import('@/lib/repositories/tours');
   const passportRepo = await import('@/lib/repositories/passport');
   const { serializeProject, serializeTour, toDateOnly } = await import('@/lib/serializers');
+  const galleryRepo = await import('@/lib/repositories/gallery');
 
   try {
     const row = await projectsRepo.findBySlug(slug);
@@ -73,7 +75,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
 
     const project = serializeProject(row);
 
-    const [services, tags, albums, tourRows, milestones, nearby] = await Promise.all([
+    const [services, tags, albums, tourRows, milestones, nearby, photoAlbums] = await Promise.all([
       projectsRepo.labelsByIds('services', project.serviceIds),
       projectsRepo.labelsByIds('tags', project.tagIds),
       projectsRepo.galleryForProject(project.id, project.galleryIds),
@@ -88,6 +90,8 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
         pageSize: 4,
         sort: 'recent',
       }),
+      // "Photo albums": the project's albums in the image gallery.
+      galleryRepo.publishedForProject(project.id, project.galleryIds),
     ]);
 
     const total = milestones.length;
@@ -157,6 +161,14 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
             location: item.location_name ?? null,
             featuredImageUrl: item.featured_image_url,
           })),
+        albums: photoAlbums.map(({ id, slug, title, category, imageCount, cover }) => ({
+          id,
+          slug,
+          title,
+          category,
+          imageCount,
+          coverUrl: cover?.url ?? null,
+        })),
       },
     };
   } catch {

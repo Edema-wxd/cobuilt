@@ -53,6 +53,22 @@ const nextConfig = {
   poweredByHeader: false,
   // Server-only packages must not be traced into the edge/client bundles.
   serverExternalPackages: ['pg', 'ioredis', 'bullmq', 'winston', '@sentry/node'],
+  /**
+   * `next/image` resizes the gallery's photographs (docs/decisions.md §2.24):
+   * files on this site, and files stored with UploadThing. Any other host an
+   * editor links to is shown unoptimised (`isOptimisableImage` in
+   * src/lib/gallery.ts) rather than fetched by the server. An UploadThing URL
+   * names an immutable file, so a resized copy is kept for a month.
+   */
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'utfs.io', pathname: '/f/**' },
+      { protocol: 'https', hostname: '*.ufs.sh', pathname: '/f/**' },
+    ],
+    // 75 for grid tiles, 85 for the full-screen viewer.
+    qualities: [75, 85],
+    minimumCacheTTL: 2_678_400,
+  },
   async headers() {
     return [
       {

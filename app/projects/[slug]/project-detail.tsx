@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import SiteLayout from '../../../components/SiteLayout';
 import ModelViewer from './model-viewer';
+import PhotoAlbums, { type ProjectAlbum } from './photo-albums';
 import type { ModelFailure, ModelProgress } from './model-viewer';
 import { assessDevice, browserHints } from './tour-model';
 import { passportHref } from '../../../components/site';
@@ -137,6 +138,8 @@ export interface ProjectDetailProps {
   tours: Tour[];
   passport: PassportSummary | null;
   related: RelatedProject[];
+  /** Published image gallery albums for this project; the block is hidden when empty. */
+  albums?: ProjectAlbum[];
 }
 
 /**
@@ -254,6 +257,7 @@ export default function ProjectDetail({
   tours,
   passport,
   related,
+  albums = [],
 }: ProjectDetailProps) {
   const [activeTourId, setActiveTourId] = useState<string | null>(
     tours.find((tour) => tour.featured)?.id ?? tours[0]?.id ?? null,
@@ -720,6 +724,8 @@ export default function ProjectDetail({
             </div>
           </section>
         ) : null}
+
+        <PhotoAlbums albums={albums} projectSlug={project.slug} />
 
         {tours.length > 0 ? (
           <section id="tours" className="bg-ink py-11 text-white sm:py-14 md:py-18">
