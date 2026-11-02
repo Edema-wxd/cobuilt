@@ -33,8 +33,15 @@ export interface NavItem {
 }
 
 /**
- * The header navigation. Media, Careers and Contact are left out of the header;
- * Contact stays reachable through the "Discuss your project" button.
+ * The header navigation: the spec's nine top-level items. Eight are links;
+ * Contact is the orange "Discuss your project" button beside them, which goes
+ * to /contact, so it is not repeated as a ninth link. Media is the media
+ * centre (/media); it stays marked as current on /news and the article pages.
+ *
+ * Eight links fit inline from 1081px, the `lg` breakpoint, with room left
+ * between the logo and the nav: measured at 1081px and 1181px, where the type
+ * steps up. A further item would leave about 40px there. See
+ * docs/decisions.md §2.22.
  */
 export const NAV: NavItem[] = [
   { label: 'Home', href: '/' },
@@ -43,6 +50,8 @@ export const NAV: NavItem[] = [
   { label: 'Services', href: '/services' },
   { label: 'Projects', href: '/projects' },
   { label: 'Passport™', href: '/passport' },
+  { label: 'Media', href: '/media' },
+  { label: 'Careers', href: '/careers' },
 ];
 
 export interface FooterItem {
@@ -76,8 +85,9 @@ export const FOOTER_COLUMNS: Array<{ head: string; items: FooterItem[] }> = [
     head: 'Resources',
     items: [
       { label: 'News & insights', href: '/news' },
-      { label: 'Video library', href: '/leadership#video-library' },
-      { label: 'Downloads' },
+      { label: 'Video library', href: '/videos' },
+      { label: 'Image gallery', href: '/gallery' },
+      { label: 'Downloads', href: '/resources' },
       { label: 'FAQs', href: '/faqs' },
     ],
   },
