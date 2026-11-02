@@ -43,6 +43,7 @@ tags:
   - name: Virtual Tours
   - name: News
   - name: Services
+  - name: Videos
   - name: FAQs
   - name: Leadership
   - name: Search
@@ -479,6 +480,58 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ServiceDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/videos:
+    get:
+      tags: [Videos]
+      summary: List published videos
+      description: |
+        Published videos from the library, in the order set in the console, a
+        page at a time. `category` narrows to one category, `project` to one
+        live project's films (by its slug), and `q` matches words in the title,
+        the description or the linked project's name (`%` and `_` match
+        themselves). Drafts never appear here, whoever is asking. A video links
+        its project only while that project is published.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 24 } }
+        - { name: category, in: query, schema: { $ref: '#/components/schemas/VideoCategory' } }
+        - { name: project, in: query, description: A project's slug, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string, maxLength: 200 } }
+      responses:
+        '200':
+          description: Published videos in display order
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items: { $ref: '#/components/schemas/Video' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/videos/{slug}:
+    get:
+      tags: [Videos]
+      summary: Video detail with related videos
+      description: |
+        A published video and up to three related published videos: the same
+        live project's first, then the same category's. An unpublished video
+        is a 404.
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The video
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VideoDetail' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /api/search:
@@ -1320,6 +1373,130 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
 
+  /api/admin/videos:
+    get:
+      tags: [Videos]
+      summary: List every video, drafts included
+      description: Requires `admin` or `editor` with `videos:write`.
+      responses:
+        '200':
+          description: Every video in display order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/VideoAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Videos]
+      summary: Add a video
+      description: |
+        Requires `admin` or `editor` with `videos:write`. The video is added at
+        the end of the list, and is a draft unless `published` is true. A
+        missing slug is made from the title, and suffixed (`-2`) if taken. A
+        link that is not one YouTube video is a 422 on `youtubeUrl`; an
+        unknown or deleted project is a 422 on `projectId`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VideoInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VideoAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: That YouTube video is already in the library }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/videos/reorder:
+    post:
+      tags: [Videos]
+      summary: Set the display order
+      description: |
+        Requires `admin` or `editor` with `videos:write`. `ids` is every video,
+        once each, in the new order; a list that leaves one out or names one
+        that does not exist is a 422, because the screen it came from is out
+        of date.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              additionalProperties: false
+              properties:
+                ids: { type: array, items: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Every video in its new order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/VideoAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/videos/{videoId}:
+    parameters:
+      - { name: videoId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Videos]
+      summary: A video, whatever its state
+      description: Requires `admin` or `editor` with `videos:write`.
+      responses:
+        '200':
+          description: The video
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VideoAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Videos]
+      summary: Update, publish, feature or unpublish a video
+      description: |
+        Requires `admin` or `editor` with `videos:write`. Every field is
+        optional; the ones present are applied. `published: false` takes the
+        video off the public site and keeps it for later; `projectId: null`
+        unlinks its project.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VideoUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VideoAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Another video has that YouTube link or slug }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Videos]
+      summary: Delete a video
+      description: |
+        Requires `admin` with `videos:write`. Removes the library entry; the
+        film itself stays on YouTube. Cannot be undone; unpublishing is the
+        reversible alternative.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /api/users/{userId}:
     parameters:
       - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2144,6 +2321,98 @@ components:
       description: Any of the service fields, at least one; the ones present are applied.
       allOf:
         - $ref: '#/components/schemas/ServiceFields'
+        - minProperties: 1
+
+    VideoCategory:
+      type: string
+      enum: [project_documentary, construction_update, drone, leadership_interview, educational, corporate, event_highlights]
+
+    VideoProject:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        slug:             { type: string, description: 'The project page is /projects/{slug}' }
+        title:            { type: string }
+        featuredImageUrl: { type: string, nullable: true }
+
+    Video:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        slug:            { type: string, description: 'The page lives at /videos/{slug}' }
+        title:           { type: string }
+        description:     { type: string, description: Paragraphs separated by a blank line }
+        category:        { $ref: '#/components/schemas/VideoCategory' }
+        youtubeId:       { type: string, pattern: '^[A-Za-z0-9_-]{11}$', description: Embed from youtube-nocookie.com with this ID }
+        watchUrl:        { type: string, description: The canonical youtube.com watch link }
+        thumbnailUrl:
+          type: string
+          nullable: true
+          description: The editor's thumbnail, else the linked project's photograph, else null. Never YouTube's own.
+        durationSeconds: { type: integer, nullable: true }
+        recordedOn:      { type: string, format: date, nullable: true }
+        featured:        { type: boolean }
+        project:
+          nullable: true
+          description: The project the film documents, while that project is published
+          allOf:
+            - $ref: '#/components/schemas/VideoProject'
+
+    VideoDetail:
+      allOf:
+        - $ref: '#/components/schemas/Video'
+        - type: object
+          properties:
+            related: { type: array, maxItems: 3, items: { $ref: '#/components/schemas/Video' } }
+
+    VideoAdmin:
+      allOf:
+        - $ref: '#/components/schemas/Video'
+        - type: object
+          properties:
+            thumbnailUrl: { type: string, nullable: true, description: The editor's own thumbnail only }
+            projectId:    { type: string, format: uuid, nullable: true }
+            project:
+              nullable: true
+              description: The linked project whatever its state
+              allOf:
+                - $ref: '#/components/schemas/VideoProject'
+                - type: object
+                  properties:
+                    isPublished: { type: boolean, description: False projects are not linked on the public site }
+            published:    { type: boolean }
+            sortOrder:    { type: integer }
+            createdAt:    { type: string, format: date-time }
+            updatedAt:    { type: string, format: date-time }
+
+    VideoFields:
+      type: object
+      description: Unknown fields are refused with a 422.
+      properties:
+        youtubeUrl:
+          type: string
+          maxLength: 512
+          description: A watch, youtu.be, embed, Shorts or live link to one YouTube video. Only the video ID is kept.
+        title:           { type: string, minLength: 2, maxLength: 255 }
+        slug:            { type: string, description: 'The page lives at /videos/{slug}' }
+        description:     { type: string, maxLength: 5000, default: '' }
+        category:        { $ref: '#/components/schemas/VideoCategory' }
+        projectId:       { type: string, format: uuid, nullable: true, default: null }
+        thumbnailUrl:    { type: string, maxLength: 512, nullable: true, default: null, description: https only }
+        durationSeconds: { type: integer, minimum: 1, maximum: 86400, nullable: true, default: null }
+        recordedOn:      { type: string, format: date, nullable: true, default: null }
+        featured:        { type: boolean, default: false, description: The first featured video leads /videos }
+        published:       { type: boolean, default: false }
+
+    VideoInput:
+      allOf:
+        - $ref: '#/components/schemas/VideoFields'
+        - required: [youtubeUrl, title, category]
+
+    VideoUpdate:
+      description: Any of the video fields, at least one; the ones present are applied.
+      allOf:
+        - $ref: '#/components/schemas/VideoFields'
         - minProperties: 1
 
     SearchResponse:

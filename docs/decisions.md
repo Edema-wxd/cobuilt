@@ -686,6 +686,65 @@ insights, Video library (`/videos`), Image gallery (`/gallery`), Downloads
 goes to `/videos` instead of `/leadership#video-library`. Those three pages are
 built separately; this change only links to them.
 
+### 2.23 The video library is managed in the console, and loads nothing from YouTube until play
+
+The client's spec asks for a video library tied to the official YouTube
+channel: seven categories (project documentaries, construction updates, drone
+videos, leadership interviews, educational, corporate, event highlights),
+thumbnails, search and filters, related videos, and films that link back to
+their project. Until now there was a still placeholder in the leadership
+page's "Video library" band. `/videos` and `/videos/[slug]` are the library,
+managed at `/admin/videos` behind a new `videos:write` permission (admin and
+editor; deleting is admin-only, like services). Public reads are `/api/videos`
+(category, project and text filters) and `/api/videos/[slug]`; every write is
+audited and clears the `videos` cache keys.
+
+**A row is a pointer, not a copy.** Migration 0019 adds `videos` with the
+11-character YouTube ID, never a link or embed code: the API takes whatever
+form of link an editor pastes, keeps the ID with the homepage's rule
+(`src/lib/youtube.ts`, so a channel, playlist or another site is a 422), and
+the embed is rebuilt from it on `youtube-nocookie.com`. A film can point at
+one project (`ON DELETE SET NULL`), and is linked from the public site only
+while that project is live. The project's Passport timeline links from 0012
+are left alone: those are evidence attached to the record, and a library film
+is editorial content with its own page and order.
+
+**No YouTube thumbnails, anywhere.** `i.ytimg.com` would have been the easy
+way to "automatically display thumbnails", but it is a request to Google for
+every card on the page, before the visitor has chosen to watch anything — the
+thing §2.17 and §2.19 were built to avoid, and on an index of a dozen films
+it is a dozen of them. Each card instead shows the editor's own https
+thumbnail if one is set, else the linked project's photograph, else a house
+still, with a play badge drawn over it. That is still automatic for most
+films, since most are tied to a project. The player is the homepage's
+click-to-load component (`app/home-video.tsx`, which now takes a poster), so
+the first request to YouTube is the visitor's press, with the captions note
+under it. The console does not preview from YouTube either.
+
+**The index is server-rendered whole and filtered in the browser.** Unlike
+`/news` and `/projects` (§2.9), a library is a few dozen films, so the page
+renders every published one and narrows them on the client. The page stays
+prerendered and regenerates once a minute, works with JavaScript off (every
+film listed), and a filter is instant. The filters still mirror the query
+string (`?category=drone&project=…&q=…`), read after mount rather than through
+`useSearchParams`, which would make the page dynamic. The API's filters do the
+same job for other clients, with pagination. Without a database the page says
+the library could not be loaded rather than that it is empty.
+
+**The first featured film leads.** Editors can feature several; the page takes
+the first, published, in the console's order, and the first film otherwise.
+Related videos are the same live project's first, then the same category's,
+up to three. The leadership page's band shows the three latest leadership
+interviews by recording date, or a card into the library while there are
+none; the `#video-library` anchor the footer and header use still lands on it.
+Each project page lists its published films in a compact "Videos" block,
+left out when there are none, and a failure to read them hides the block
+rather than the page.
+
+The channel's own URL is still unconfirmed (the header's "YouTube" link goes
+to the library for that reason), so the library links each film's watch page
+but not the channel.
+
 ## 3. Still open
 
 Carried from §17, with a recommendation where the work surfaced one.

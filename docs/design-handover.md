@@ -371,8 +371,10 @@ nothing at all.
   founding story on a site about documented delivery is the one thing this page
   cannot do. It is a page section away when the client provides it.
 - **`/leadership`** — **built.** Profile cards with a remit, the philosophy as
-  four management rules, and a video band (`/leadership#video-library`; the
-  footer and the utility strip's YouTube link now go to `/videos` instead). The portrait slot still says what it is waiting
+  four management rules, and a video band (`/leadership#video-library`): the
+  three latest leadership interviews from `/videos`, or a card into the
+  library while there are none; the footer and the utility strip's YouTube
+  link go to `/videos` itself. The portrait slot still says what it is waiting
   for rather than holding a stock face, and the roles whose profiles are
   unapproved are listed honestly in a card of the same shape — see §5.2. The
   treatment is built; the content drops in. Profiles are now published from
@@ -420,7 +422,9 @@ admin console is what makes the site maintainable without a developer.
   delete), Passport™ milestones per project, news (list, create, edit, delete;
   the five media-centre categories),
   leadership profiles (publish, order, homepage spotlight), homepage settings
-  (hero copy, featured video, figures, optional sections), 3D tours (upload,
+  (hero copy, featured video, figures, optional sections), the video library
+  (add by YouTube link, category, project, thumbnail, order, publish,
+  feature), 3D tours (upload,
   edit, delete), investor-content approval, users and roles,
   and the audit log. Editors send only the fields that changed, and any change
   to an investor figure withdraws its approval after a confirmation. A record
@@ -433,9 +437,15 @@ admin console is what makes the site maintainable without a developer.
   More routes now call `notFound()` — an unknown service slug, an unknown
   article — so this is more visible than it was.
 - **Social preview images** — **built.** A branded card per page, and an item's own photography wins where it has some. See docs/decisions.md §2.18.
-- **A video library page — `/videos`** — the footer, the utility strip and the
-  media centre link to it, and it is built separately. The home page embeds
-  one video an administrator chooses.
+- **A video library page** — **built.** `/videos` leads with the featured film
+  in the homepage's click-to-load player, then a grid of cards (still, play
+  badge, category, date, length, project link) with category pills, a project
+  picker and search; `/videos/[slug]` is the player, the description, the
+  facts (category, project, recorded, length) and up to three related films.
+  Cards show the editor's thumbnail or the project's photograph, never
+  YouTube's, so nothing reaches YouTube before play. Project pages list their
+  films in a "Videos" block. Managed at `/admin/videos`; see
+  `docs/decisions.md` §2.23.
 
 ---
 
