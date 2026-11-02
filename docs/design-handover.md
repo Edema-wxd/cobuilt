@@ -342,8 +342,8 @@ Cloudflare's check sits above the send button (usually a tick that passes by
 itself), and if its script cannot load the form says so and points to the
 phone and email. The address, phone numbers, emails, WhatsApp number,
 business hours (now their own block under the address) and the map position
-come from `/admin/contact`; the header and footer still carry the built-in
-details.
+come from `/admin/contact`, and so do the header's phone and email, the
+footer's address and hours, and the landing page's tap-to-call line.
 
 **Map: built, waiting on a location.** A click-to-load OpenStreetMap panel sits
 under the address. Nothing is requested from the map server until the visitor

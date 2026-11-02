@@ -829,10 +829,11 @@ map's position. The last makes §2.17's map switchable from the console: once
 CoBuilt confirms the coordinates, an administrator enters them and the
 click-to-load OpenStreetMap appears. A key never saved — or no database —
 shows the constants in `components/site.ts`, which a unit test holds the
-fallback to. **The header and footer still read those constants**; moving
-them onto this document is a follow-up for whoever next owns
-`components/site.ts`, and until then a changed phone number shows on
-`/contact` but not in the header.
+fallback to. **The header, footer and the landing page's tap-to-call read the
+same document**: the root layout loads it on the server and hands it to them
+through `components/ContactDetails.tsx`, so the layout sets a one-minute
+`revalidate` and a change at `/admin/contact` shows site-wide within the
+minute. The legal pages keep quoting the built-in address in their text.
 
 ## 3. Still open
 

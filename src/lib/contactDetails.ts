@@ -5,9 +5,9 @@ import { ADDRESS_LINES, EMAIL, OFFICE_LOCATION, PHONE, WHATSAPP_HREF } from '../
  * The contact details as built, and the links made from them.
  *
  * `components/site.ts` holds the office's phone, email, WhatsApp link and
- * address as constants, which the header and footer still read. The contact
- * page now reads the console's `contact` settings instead
- * (docs/decisions.md §2.25), and these constants are its fallback: a key
+ * address as constants. The contact page, header, footer and landing page now
+ * read the console's `contact` settings instead (docs/decisions.md §2.25,
+ * `components/ContactDetails.tsx`), and these constants are their fallback: a key
  * never saved, or no database, shows exactly the details the site launched
  * with. Kept free of Zod so the console's client code can use the link
  * builders.
