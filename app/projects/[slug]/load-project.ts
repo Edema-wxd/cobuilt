@@ -54,6 +54,7 @@ export const EMPTY: ProjectDetailProps = {
   tours: [],
   passport: null,
   related: [],
+  documents: [],
 };
 
 export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
@@ -65,6 +66,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
   const projectsRepo = await import('@/lib/repositories/projects');
   const toursRepo = await import('@/lib/repositories/tours');
   const passportRepo = await import('@/lib/repositories/passport');
+  const documentsRepo = await import('@/lib/repositories/documents');
   const { serializeProject, serializeTour, toDateOnly } = await import('@/lib/serializers');
 
   try {
@@ -73,7 +75,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
 
     const project = serializeProject(row);
 
-    const [services, tags, albums, tourRows, milestones, nearby] = await Promise.all([
+    const [services, tags, albums, tourRows, milestones, nearby, documents] = await Promise.all([
       projectsRepo.labelsByIds('services', project.serviceIds),
       projectsRepo.labelsByIds('tags', project.tagIds),
       projectsRepo.galleryForProject(project.id, project.galleryIds),
@@ -88,6 +90,9 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
         pageSize: 4,
         sort: 'recent',
       }),
+      // Downloads are an extra on this page: failing to read them hides the
+      // list rather than the project.
+      documentsRepo.listPublished({ projectId: project.id }).catch(() => []),
     ]);
 
     const total = milestones.length;
@@ -157,6 +162,13 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
             location: item.location_name ?? null,
             featuredImageUrl: item.featured_image_url,
           })),
+        documents: documents.map(({ id, title, fileType, fileSizeBytes, downloadUrl }) => ({
+          id,
+          title,
+          fileType,
+          fileSizeBytes,
+          downloadUrl,
+        })),
       },
     };
   } catch {

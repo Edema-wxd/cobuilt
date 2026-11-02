@@ -38,6 +38,46 @@ const MODEL_EXTENSIONS = ['glb', 'gltf', 'zip'];
 
 const f = createUploadthing();
 
+/*
+ * Download centre documents (docs/decisions.md §2.25): one PDF per upload,
+ * for admins and editors holding `downloads:write`, registered afterwards
+ * with POST /api/admin/documents.
+ */
+
+/** The largest document accepted. A company profile with photography is rarely over 20 MB. */
+export const MAX_DOCUMENT_UPLOAD_BYTES = 32 * 1024 * 1024;
+
+/** The middleware for the `document` route. Exported for its tests. */
+export async function authoriseDocumentUpload(
+  authorization: string | null | undefined,
+  files: ReadonlyArray<{ name: string; size: number }>,
+): Promise<{ userId: string }> {
+  const token = bearerToken(authorization);
+  if (!token) throw new UploadThingError('Sign in to upload.');
+
+  let auth;
+  try {
+    auth = await authenticateBearer(token);
+  } catch {
+    throw new UploadThingError('Your session has expired. Sign in again.');
+  }
+
+  const allowed =
+    (auth.role === 'admin' || auth.role === 'editor') && auth.permissions.has('downloads:write');
+  if (!allowed) throw new UploadThingError('Your role does not allow this.');
+
+  for (const file of files) {
+    if (file.name.split('.').pop()?.toLowerCase() !== 'pdf') {
+      throw new UploadThingError('The document must be a PDF.');
+    }
+    if (file.size > MAX_DOCUMENT_UPLOAD_BYTES) {
+      throw new UploadThingError(`File exceeds the ${MAX_DOCUMENT_UPLOAD_BYTES / 1024 / 1024} MB limit.`);
+    }
+  }
+
+  return { userId: auth.userId };
+}
+
 export const uploadRouter = {
   tourModel: f(
     // Individual files are capped by the middleware against MAX_TOUR_UPLOAD_BYTES;
@@ -75,6 +115,12 @@ export const uploadRouter = {
     })
     .onUploadComplete(({ metadata, file }) => {
       logger.info('Tour model uploaded', { userId: metadata.userId, key: file.key });
+    }),
+
+  document: f({ pdf: { maxFileSize: '32MB', maxFileCount: 1 } })
+    .middleware(({ req, files }) => authoriseDocumentUpload(req.headers.authorization, files))
+    .onUploadComplete(({ metadata, file }) => {
+      logger.info('Document uploaded', { userId: metadata.userId, key: file.key });
     }),
 } satisfies FileRouter;
 
