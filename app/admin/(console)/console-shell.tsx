@@ -31,6 +31,7 @@ const NAV: NavEntry[] = [
   { label: 'Services', href: '/admin/services', needs: ['services:write'] },
   { label: 'Leadership', href: '/admin/leadership', needs: ['leadership:write'] },
   { label: 'Homepage', href: '/admin/homepage', needs: ['settings:write'] },
+  { label: 'Contact details', href: '/admin/contact', needs: ['settings:write'] },
   { label: 'Downloads', href: '/admin/downloads', needs: ['downloads:write'] },
   { label: '3D tours', href: '/admin/tours', needs: ['tours:write'] },
   {

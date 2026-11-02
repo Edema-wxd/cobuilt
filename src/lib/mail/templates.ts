@@ -64,14 +64,21 @@ export function inquiryNotification(input: {
   name: string;
   email: string;
   phone?: string | null;
+  /** The enquiry type's label, chosen on the contact form; absent on jobs queued before it existed. */
+  enquiryType?: string | null;
   subject?: string | null;
   message: string;
 }): EmailMessage {
-  const title = `New website enquiry from ${input.name}`;
+  // The type leads the subject line, so a partnership or media enquiry can be
+  // routed from the inbox list without opening it.
+  const title = input.enquiryType
+    ? `${input.enquiryType}: new website enquiry from ${input.name}`
+    : `New website enquiry from ${input.name}`;
   const adminUrl = `${env.NEXT_PUBLIC_WEBSITE_URL}/admin/forms/${input.submissionId}`;
 
   const text = `New enquiry received.
 
+Type:    ${input.enquiryType ?? '-'}
 Name:    ${input.name}
 Email:   ${input.email}
 Phone:   ${input.phone ?? '-'}
@@ -89,6 +96,7 @@ Review: ${adminUrl}`;
     html: layout(
       title,
       `<table style="width:100%;font-size:14px;border-collapse:collapse;">
+         <tr><td style="padding:4px 0;color:#78716c;">Type</td><td>${escape(input.enquiryType ?? '-')}</td></tr>
          <tr><td style="padding:4px 0;color:#78716c;">Name</td><td>${escape(input.name)}</td></tr>
          <tr><td style="padding:4px 0;color:#78716c;">Email</td><td>${escape(input.email)}</td></tr>
          <tr><td style="padding:4px 0;color:#78716c;">Phone</td><td>${escape(input.phone ?? '-')}</td></tr>

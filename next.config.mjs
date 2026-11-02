@@ -22,10 +22,14 @@ function originOf(url) {
  * Inline scripts are allowed because the App Router streams its payload in
  * them. Frames allow any https origin because a 3D tour can be a Matterport or
  * custom viewer page, and images and media allow https for the storage CDN.
+ *
+ * Cloudflare Turnstile, the contact form's CAPTCHA, loads its script from
+ * challenges.cloudflare.com and runs in a frame from there; `frame-src https:`
+ * already covers the frame. Without Turnstile keys it is never requested.
  */
 const pageCsp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
