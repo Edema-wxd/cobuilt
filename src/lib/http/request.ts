@@ -57,3 +57,8 @@ export function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
   return env.ALLOWED_ORIGINS.includes(origin);
 }
+
+/** A URL's path without its query string, which can carry single-use tokens. */
+export function pathOnly(url: string | undefined): string | undefined {
+  return url?.split('?')[0];
+}

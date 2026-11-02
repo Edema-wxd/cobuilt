@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createRoute, noContent } from '@/lib/http/route';
+import { createRoute, noContent, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { TTL, key, remember, invalidatePrefix } from '@/lib/cache';
 import { notFound, conflict } from '@/lib/http/errors';
@@ -40,7 +40,7 @@ export default createRoute({
     query: params.extend({ includeUnpublished: queryBoolean.default(false) }),
     rateLimit: RATE_LIMITS.api,
     auth: 'optional',
-    cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
+    cache: CONTENT_CACHE,
     handler: async ({ query, auth }) => {
       const canSeeDrafts =
         query.includeUnpublished && (auth?.role === 'admin' || auth?.role === 'editor');

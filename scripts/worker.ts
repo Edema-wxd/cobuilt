@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import './loadEnv';
 import { Worker } from 'bullmq';
 import { QUEUE_NAMES, queueConnection, getQueue } from '../src/lib/queues/index';
 import {

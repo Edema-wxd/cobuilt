@@ -956,6 +956,84 @@ paths:
               schema: { type: object }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  /api/admin/data-subjects/export:
+    post:
+      tags: [Data protection]
+      summary: Subject access request for someone without an account (NDPA)
+      description: |
+        Returns form submissions, the newsletter record, chat events and
+        WhatsApp messages held for an email address and/or phone number, as a
+        JSON attachment. POST so the identifiers stay out of URLs and access
+        logs. Phone numbers match on digits, in both local (0801...) and
+        international (234801...) form. If a staff account uses the email, its
+        id is returned; export it with `/api/users/{userId}/export`. Requires
+        `privacy:manage`; audited with masked identifiers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DataSubject' }
+      responses:
+        '200':
+          description: A JSON attachment
+          content:
+            application/json:
+              schema: { type: object }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/data-subjects/erase:
+    post:
+      tags: [Data protection]
+      summary: Erasure request for someone without an account (NDPA)
+      description: |
+        In one transaction, anonymises matching form submissions and deletes
+        the newsletter record, chat events and WhatsApp messages. A staff
+        account under the same email is not touched; its id is returned so it
+        can be closed with `DELETE /api/users/{userId}`. Requires
+        `privacy:manage`; audited with masked identifiers and counts.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DataSubject' }
+      responses:
+        '200':
+          description: What was erased
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:                 { type: boolean }
+                  submissionsAnonymised:   { type: integer }
+                  newsletterRemoved:       { type: integer }
+                  chatEventsDeleted:       { type: integer }
+                  whatsappMessagesDeleted: { type: integer }
+                  accountId:               { type: [string, 'null'], format: uuid }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/csp-report:
+    post:
+      tags: [System]
+      summary: Content Security Policy violation reports
+      description: |
+        Receives the reports browsers send under the page Content Security
+        Policy, in the legacy `report-uri` shape or the Reporting API's. Each
+        violation is logged with its directive, the blocked origin and the page
+        path only. Rate limited per client; always answers 204.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/csp-report:
+            schema: { type: object }
+          application/reports+json:
+            schema: { type: array, items: { type: object } }
+      responses:
+        '204': { description: Received }
+
   /api/analytics/pageview:
     post:
       tags: [System]
@@ -1156,6 +1234,13 @@ components:
     Role:
       type: string
       enum: [admin, editor, viewer, investor]
+
+    DataSubject:
+      type: object
+      description: At least one of `email` and `phone` is required.
+      properties:
+        email: { type: string, format: email }
+        phone: { type: string, example: '0801 234 5678' }
 
     ProjectStatus:
       type: string

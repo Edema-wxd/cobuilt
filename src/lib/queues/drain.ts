@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Worker, type Job } from 'bullmq';
 import { waitUntil } from '@vercel/functions';
 import { logger } from '../logger';
+import { reportError } from '../monitoring';
 import { QUEUE_NAMES, queueConnection, type QueueName } from './index';
 import { processEmailJob, processMaintenanceJob, processSearchJob } from './processors';
 
@@ -75,6 +76,10 @@ export async function drainQueue(
           attempt: job.attemptsMade,
           error: failure.message,
         });
+        // Retries are expected; only a job that has run out of them is an incident.
+        if ((await job.getState()) === 'failed') {
+          reportError(failure, { queue: name, jobName: job.name, jobId: job.id });
+        }
       }
     }
   } finally {
@@ -95,6 +100,7 @@ export function drainAfterResponse(name: QueueName): void {
         queue: name,
         error: error instanceof Error ? error.message : String(error),
       });
+      reportError(error, { queue: name, source: 'drain-after-response' });
     }),
   );
 }

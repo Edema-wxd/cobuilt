@@ -1,8 +1,9 @@
 import { createRemoteJWKSet, errors as joseErrors, jwtVerify } from 'jose';
 import { env } from '../env';
-import { isPgError, PG_ERROR, query, queryOne } from '../db';
+import { query, queryOne } from '../db';
 import { forbidden, serviceUnavailable, unauthorized } from '../http/errors';
 import { logger } from '../logger';
+import { reportError } from '../monitoring';
 import type { UserRow } from '@/types/models';
 import { effectivePermissions, type Permission, type Role } from './rbac';
 
@@ -61,6 +62,7 @@ export async function verifyNeonToken(token: string): Promise<NeonIdentity> {
     if (error instanceof joseErrors.JWTExpired) throw unauthorized('Token expired');
     if (error instanceof joseErrors.JWKSTimeout || error instanceof TypeError) {
       logger.error('Neon Auth JWKS unreachable', { error: String(error) });
+      reportError(error, { source: 'neon-auth-jwks' });
       throw serviceUnavailable('Sign-in is temporarily unavailable');
     }
     throw unauthorized('Invalid token');
@@ -116,27 +118,7 @@ export async function resolveAccount(identity: NeonIdentity): Promise<AccountRow
   );
   if (claimed) return claimed;
 
-  if (!env.ALLOW_PUBLIC_REGISTRATION) {
-    throw forbidden('No CoBuilt account exists for this email. Ask an administrator to create one.');
-  }
-
-  // Bootstrap: the first account in a fresh environment is the administrator.
-  try {
-    const created = await queryOne<AccountRow>(
-      `INSERT INTO users (email, full_name, role, auth_user_id, email_verified)
-       VALUES ($1, $2, CASE WHEN EXISTS (
-                SELECT 1 FROM users WHERE role = 'admin' AND is_active AND deleted_at IS NULL
-              ) THEN 'viewer'::user_role ELSE 'admin'::user_role END, $3, TRUE)
-       RETURNING ${COLUMNS}`,
-      [identity.email, identity.name, identity.id],
-    );
-    return created!;
-  } catch (error) {
-    if (isPgError(error, PG_ERROR.UNIQUE_VIOLATION)) {
-      throw forbidden('This email already belongs to another CoBuilt account');
-    }
-    throw error;
-  }
+  throw forbidden('No CoBuilt account exists for this email. Ask an administrator to create one.');
 }
 
 /** Verifies a bearer token and resolves the account behind it. */

@@ -17,6 +17,9 @@ jest.mock('@/lib/queues/processors', () => ({
   processMaintenanceJob: jest.fn(),
 }));
 
+const reportError = jest.fn();
+jest.mock('@/lib/monitoring', () => ({ reportError: (...args: unknown[]) => reportError(...args) }));
+
 describeWithRedis('drainQueue (BullMQ manual processing)', () => {
   let redis: Redis;
   let queue: Queue;
@@ -32,6 +35,7 @@ describeWithRedis('drainQueue (BullMQ manual processing)', () => {
   beforeEach(async () => {
     await redis.flushdb();
     processEmailJob.mockReset();
+    reportError.mockReset();
   });
 
   afterAll(async () => {
@@ -65,6 +69,8 @@ describeWithRedis('drainQueue (BullMQ manual processing)', () => {
 
     expect(result).toEqual({ queue: 'email', completed: 0, failed: 1 });
     expect(await queue.getDelayedCount()).toBe(1);
+    // A retry is expected, not an incident.
+    expect(reportError).not.toHaveBeenCalled();
   });
 
   it('fails a job for good once its attempts are used up', async () => {
@@ -74,6 +80,11 @@ describeWithRedis('drainQueue (BullMQ manual processing)', () => {
     await drainQueue('email', { budgetMs: 5_000 });
 
     expect(await queue.getFailedCount()).toBe(1);
+    expect(reportError).toHaveBeenCalledTimes(1);
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'bad address' }),
+      expect.objectContaining({ queue: 'email', jobName: 'inquiry-confirmation' }),
+    );
   });
 
   it('does nothing on an empty queue', async () => {

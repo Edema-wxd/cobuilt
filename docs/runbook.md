@@ -172,18 +172,22 @@ record.
 email address, anonymises every submission from it and removes the newsletter
 record. Both actions are written to the audit log.
 
-For someone who never held an account — an enquirer asking for erasure — there
-is no user row, so anonymise by address:
+For someone who never held an account, such as an enquirer or a WhatsApp
+contact, an admin uses the data subject endpoints. Both take an email, a phone
+number, or both, need the `privacy:manage` permission, and are audited with
+masked identifiers:
 
-```sql
-UPDATE form_submissions
-   SET name = NULL, email = NULL, phone = NULL, message = NULL,
-       ip_address = NULL, user_agent = NULL, metadata = '{}'::jsonb,
-       anonymised_at = NOW()
- WHERE lower(email) = lower('<address>') AND anonymised_at IS NULL;
-
-DELETE FROM newsletter_subscribers WHERE lower(email) = lower('<address>');
 ```
+POST /api/admin/data-subjects/export    { "email": "...", "phone": "..." }
+POST /api/admin/data-subjects/erase     { "email": "...", "phone": "..." }
+```
+
+Export returns everything held (form submissions, newsletter record, chat and
+WhatsApp messages) as JSON to send to the person. Erase anonymises their form
+submissions and deletes the rest, in one transaction. Phone numbers match on
+digits in either 0801... or 234801... form. If a staff account uses the same
+email, its id comes back as `accountId`; close it with
+`DELETE /api/users/<accountId>`.
 
 ### Approving investor content
 

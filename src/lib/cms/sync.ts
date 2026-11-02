@@ -1,6 +1,7 @@
 import { query, queryOne } from '../db';
 import { env } from '../env';
 import { logger } from '../logger';
+import { reportError } from '../monitoring';
 import { slugify } from '../slug';
 import { enqueueSearch } from '../queues';
 import { invalidatePrefix } from '../cache';
@@ -74,6 +75,7 @@ export async function applyWebhook(
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     logger.error('CMS sync failed', { model, entryId, event: payload.event, error: reason });
+    reportError(error, { source: 'cms-sync', model, entryId, event: payload.event });
     return await log(payload, deliveryId, {
       status: 'failed',
       model,

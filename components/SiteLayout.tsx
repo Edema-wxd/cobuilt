@@ -3,6 +3,7 @@ import BrandIntro from './BrandIntro';
 import CookieBanner from './CookieBanner';
 import MotionObserver from './MotionObserver';
 import NavProgress from './NavProgress';
+import PageViews from './PageViews';
 import SiteFooter from './SiteFooter';
 import SiteHeader from './SiteHeader';
 
@@ -40,6 +41,7 @@ export default function SiteLayout({ current, preloadImage, children }: Props) {
       {children}
       <SiteFooter />
       <CookieBanner />
+      <PageViews />
     </>
   );
 }

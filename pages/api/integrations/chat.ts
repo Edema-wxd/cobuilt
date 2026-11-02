@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
+import { reportError } from '@/lib/monitoring';
 import { query } from '@/lib/db';
 import { parseJson, readRawBody, verifyHmac } from '@/lib/http/rawBody';
 import { header } from '@/lib/http/request';
@@ -86,5 +87,6 @@ export default async function handler(
     logger.error('Failed to process chat webhook', {
       error: error instanceof Error ? error.message : String(error),
     });
+    reportError(error, { source: 'chat-webhook' });
   }
 }

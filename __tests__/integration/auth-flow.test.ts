@@ -1,6 +1,6 @@
 import { describeWithDatabase, resetDatabase, truncateAll } from '../setup/database';
 import { pool, queryOne } from '@/lib/db';
-import { env } from '@/lib/env';
+import { inviteAdmin } from '@/lib/auth/bootstrap';
 import * as users from '@/lib/repositories/users';
 import * as forms from '@/lib/repositories/forms';
 import { resolveAccount, type NeonIdentity } from '@/lib/auth/session';
@@ -79,23 +79,23 @@ describeWithDatabase('authentication flows', () => {
     });
   });
 
-  describe('bootstrap sign-up (ALLOW_PUBLIC_REGISTRATION)', () => {
-    const mutable = env as { ALLOW_PUBLIC_REGISTRATION: boolean };
-    afterEach(() => {
-      mutable.ALLOW_PUBLIC_REGISTRATION = false;
+  describe('inviting an administrator from the command line', () => {
+    it('creates an admin account that links on the first verified sign-in', async () => {
+      const result = await inviteAdmin({ email: 'First@CoBuilt.test', fullName: 'First Admin' });
+      expect(result).toMatchObject({ status: 'invited', email: 'first@cobuilt.test' });
+
+      const account = await resolveAccount(
+        identity({ id: '5b7a2d84-6f1e-4c53-8d0a-3a9e1f7c2b90', email: 'first@cobuilt.test' }),
+      );
+      expect(account.role).toBe('admin');
     });
 
-    it('makes the first account an administrator and later ones viewers', async () => {
-      await truncateAll();
-      mutable.ALLOW_PUBLIC_REGISTRATION = true;
-
-      const first = await resolveAccount(identity({ email: 'first@cobuilt.test' }));
-      expect(first.role).toBe('admin');
-
-      const second = await resolveAccount(
-        identity({ id: '5b7a2d84-6f1e-4c53-8d0a-3a9e1f7c2b90', email: 'second@cobuilt.test' }),
-      );
-      expect(second.role).toBe('viewer');
+    it('leaves an existing account untouched', async () => {
+      expect(await inviteAdmin({ email: 'editor@cobuilt.test', fullName: 'Someone' })).toEqual({
+        status: 'exists',
+        email: 'editor@cobuilt.test',
+        role: 'editor',
+      });
     });
   });
 

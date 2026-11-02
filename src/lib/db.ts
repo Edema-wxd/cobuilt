@@ -1,6 +1,7 @@
 import { Pool, type PoolClient, type QueryResultRow } from 'pg';
 import { env, isProduction } from './env';
 import { logger } from './logger';
+import { reportError } from './monitoring';
 
 /**
  * PostgreSQL access. A single pool is shared per process and cached on
@@ -24,6 +25,7 @@ function createPool(): Pool {
   // Node treats it as an unhandled 'error' event and kills the process.
   pool.on('error', (err) => {
     logger.error('Idle PostgreSQL client error', { error: err.message });
+    reportError(err, { source: 'pg-pool' });
   });
 
   return pool;

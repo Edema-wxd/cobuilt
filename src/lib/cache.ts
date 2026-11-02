@@ -7,13 +7,18 @@ import { logger } from './logger';
  * correctness.
  */
 
+/**
+ * Writes through the API clear these keys, but a row changed directly in the
+ * database (or by a script) is only picked up when its entry expires, so
+ * public content is held for a minute, matching CONTENT_CACHE.
+ */
 export const TTL = {
-  projectList: 600, // 10 min
-  projectDetail: 900, // 15 min
-  passport: 300, // 5 min — milestones change more often than project copy
-  news: 600,
+  projectList: 60,
+  projectDetail: 60,
+  passport: 60,
+  news: 60,
   search: 300,
-  facets: 900,
+  facets: 60,
 } as const;
 
 export async function get<T>(key: string): Promise<T | null> {

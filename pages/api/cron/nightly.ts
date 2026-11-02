@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
+import { reportError } from '@/lib/monitoring';
 import { safeCompare } from '@/lib/auth/password';
 import { bearerToken } from '@/lib/auth/jwt';
 import { QUEUE_NAMES } from '@/lib/queues';
@@ -50,6 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         queue: name,
         error: error instanceof Error ? error.message : String(error),
       });
+      reportError(error, { queue: name, source: 'nightly-drain' });
     }
   }
 

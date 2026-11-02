@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createRoute } from '@/lib/http/route';
+import { createRoute, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { notFound } from '@/lib/http/errors';
 import * as projects from '@/lib/repositories/projects';
@@ -16,7 +16,7 @@ export default createRoute({
     query: z.object({ idOrSlug: z.string().min(1).max(255) }),
     rateLimit: RATE_LIMITS.api,
     auth: 'optional',
-    cache: { sMaxAge: 3600 },
+    cache: CONTENT_CACHE,
     handler: async ({ query, auth }) => {
       const isStaff = auth?.role === 'admin' || auth?.role === 'editor';
 

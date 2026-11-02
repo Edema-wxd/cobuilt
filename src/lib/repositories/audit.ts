@@ -1,5 +1,6 @@
 import { query, queryOne } from '../db';
 import { logger } from '../logger';
+import { reportError } from '../monitoring';
 import type { Paginated } from '@/types/models';
 import { paginate } from '@/types/models';
 
@@ -51,6 +52,7 @@ export async function record(entry: AuditEntry): Promise<void> {
       entityType: entry.entityType,
       error: error instanceof Error ? error.message : String(error),
     });
+    reportError(error, { source: 'audit', action: entry.action });
   }
 }
 
@@ -115,6 +117,8 @@ export const AUDIT_ACTIONS = {
   USER_ROLE_CHANGED: 'user.role_changed',
   USER_DELETED: 'user.deleted',
   USER_DATA_EXPORTED: 'user.data_exported',
+  DATA_SUBJECT_EXPORTED: 'data_subject.exported',
+  DATA_SUBJECT_ERASED: 'data_subject.erased',
   FORM_SPAM_FLAGGED: 'form.spam_flagged',
   LOGIN_SUCCEEDED: 'auth.login_succeeded',
   LOGIN_FAILED: 'auth.login_failed',

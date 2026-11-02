@@ -20,7 +20,8 @@ import {
 } from './errors';
 import { applyCors } from './cors';
 import { assertCsrf } from './csrf';
-import { getClientIp, getUserAgent } from './request';
+import { getClientIp, getUserAgent, pathOnly } from './request';
+import { reportError } from '../monitoring';
 
 /**
  * The single request pipeline every API route runs through.
@@ -53,6 +54,13 @@ export interface CachePolicy {
   /** Seconds a stale response may still be served while revalidating. */
   staleWhileRevalidate?: number;
 }
+
+/**
+ * Public content (projects, Passport, news, FAQs). No CDN purge runs when an
+ * editor publishes, so this is how long a change can take to appear: a minute,
+ * then one more request while the CDN refetches.
+ */
+export const CONTENT_CACHE: CachePolicy = { sMaxAge: 60, staleWhileRevalidate: 300 };
 
 export interface MethodConfig<TBody = unknown, TQuery = unknown> {
   handler: (ctx: RouteContext<TBody, TQuery>) => unknown;
@@ -147,7 +155,7 @@ export function createRoute(
       logger.http('request', {
         requestId,
         method: req.method,
-        path: req.url,
+        path: pathOnly(req.url),
         status: res.statusCode,
         durationMs: Date.now() - startedAt,
       });
@@ -266,6 +274,10 @@ function respondWithError(
 ): void {
   if (res.writableEnded) return;
 
+  // The cache policy was applied before the handler ran; an error must never
+  // be stored and served to everyone in its place.
+  res.setHeader('Cache-Control', 'no-store');
+
   if (error instanceof ApiError) {
     for (const [name, value] of Object.entries(error.headers ?? {})) {
       res.setHeader(name, value);
@@ -298,10 +310,11 @@ function respondWithError(
   logger.error('Unhandled route error', {
     requestId,
     method: req.method,
-    path: req.url,
+    path: pathOnly(req.url),
     error: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,
   });
+  reportError(error, { requestId, method: req.method, path: pathOnly(req.url) });
 
   res.status(500).json({
     error: {

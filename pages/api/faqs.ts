@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createRoute } from '@/lib/http/route';
+import { createRoute, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { TTL, key, remember } from '@/lib/cache';
 import * as faqs from '@/lib/repositories/faqs';
@@ -14,7 +14,7 @@ export default createRoute({
   GET: {
     query: z.object({ category: z.string().trim().max(100).optional() }),
     rateLimit: RATE_LIMITS.api,
-    cache: { sMaxAge: 3600, staleWhileRevalidate: 600 },
+    cache: CONTENT_CACHE,
     handler: async ({ query }) => {
       const results = await remember(key('faqs:list', query), TTL.news, () =>
         faqs.listPublished(query.category),

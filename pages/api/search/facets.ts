@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createRoute } from '@/lib/http/route';
+import { createRoute, CONTENT_CACHE } from '@/lib/http/route';
 import { RATE_LIMITS } from '@/lib/rateLimit';
 import { TTL, key, remember } from '@/lib/cache';
 import { query as sql } from '@/lib/db';
@@ -13,7 +13,7 @@ export default createRoute({
   GET: {
     query: z.object({ type: z.enum(['project', 'news']).default('project') }),
     rateLimit: RATE_LIMITS.api,
-    cache: { sMaxAge: 3600, staleWhileRevalidate: 1800 },
+    cache: CONTENT_CACHE,
     handler: async ({ query }) =>
       remember(key('search:facets', query), TTL.facets, async () => {
         if (query.type === 'news') {

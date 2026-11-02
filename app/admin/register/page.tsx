@@ -11,8 +11,8 @@ export const metadata: Metadata = {
  * Where an invited person sets their password. Anyone can complete the form —
  * Neon Auth hosts the identity — but only an address an administrator invited
  * (see /admin/users/new) is linked to a role; everyone else is turned away at
- * the API. On a fresh environment with ALLOW_PUBLIC_REGISTRATION set, the first
- * verified sign-up becomes the administrator.
+ * the API. The first administrator in a fresh environment is invited with
+ * `npm run user:invite-admin`.
  */
 export default function RegisterPage() {
   return (
