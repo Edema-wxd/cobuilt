@@ -315,10 +315,23 @@ The form's success state replaces the form rather than sitting under it, so a
 sent enquiry cannot be resubmitted by habit; the failure states distinguish a
 rate limit, a 5xx and a rejected field.
 
+**Enquiry type, CAPTCHA and managed details** (`docs/decisions.md` §2.25).
+"Type of enquiry" (general, new project, partnership, contractors and
+suppliers, media, careers, a project record) replaced the subject list, so
+the form has no more fields than before; each of the six route cards below
+the form links into it with its type chosen. When Turnstile keys are set,
+Cloudflare's check sits above the send button (usually a tick that passes by
+itself), and if its script cannot load the form says so and points to the
+phone and email. The address, phone numbers, emails, WhatsApp number,
+business hours (now their own block under the address) and the map position
+come from `/admin/contact`; the header and footer still carry the built-in
+details.
+
 **Map: built, waiting on a location.** A click-to-load OpenStreetMap panel sits
 under the address. Nothing is requested from the map server until the visitor
 asks. It stays hidden until CoBuilt confirms the office's coordinates, because
-the published address does not geocode. See docs/decisions.md §2.17.
+the published address does not geocode; an administrator can now enter them
+at `/admin/contact`. See docs/decisions.md §2.17.
 
 #### 3.7 3D virtual tours — **built**
 
@@ -377,8 +390,17 @@ nothing at all.
 - **Contact — `/contact`** — **built**; see §3.6.
 - **`/governance`** — in the footer with no page behind it. Given the brand
   position, this one matters more than it looks.
-- **`/downloads`** — company profile, brochures, certificates. Needs a file list
-  pattern with type and size.
+- **Resources — `/resources`** — **built** (`/downloads` redirects to it). The
+  download centre grouped by category (company profile, capability statement,
+  brochures, project profiles, other), each file a row with a mono type tile,
+  title, description, "PDF · 2.4 MB" and a Download button; then the way to
+  `/faqs`; then the policies — the four legal pages as cards, plus any policy
+  published as a document. Documents are managed at `/admin/downloads`; every
+  download goes through a counted endpoint. A project's own documents are
+  listed under the hero actions on its page, as compact links with type and
+  size, hidden when there are none. See `docs/decisions.md` §2.25. The
+  footer's "Downloads" entry still needs pointing at `/resources` in
+  `components/site.ts`.
 - **`/faqs`** — **built.** Grouped by category, each entry a native disclosure with a stable `#id` anchor that search results link to. Read from the new `GET /api/faqs`.
 - **Investor information** — where the regulatory position lives in full. No
   call to action beyond registering interest.
@@ -400,8 +422,10 @@ admin console is what makes the site maintainable without a developer.
   inbox (spam flagging, masked contact details), projects (list, create, edit,
   delete), Passport™ milestones per project, news (list, create, edit, delete),
   leadership profiles (publish, order, homepage spotlight), homepage settings
-  (hero copy, featured video, figures, optional sections), 3D tours (upload,
-  edit, delete), investor-content approval, users and roles,
+  (hero copy, featured video, figures, optional sections), contact details
+  (address, phones, emails, WhatsApp, hours, map position), downloads (PDF
+  upload or link, category, project, order, publish, download counts), 3D
+  tours (upload, edit, delete), investor-content approval, users and roles,
   and the audit log. Editors send only the fields that changed, and any change
   to an investor figure withdraws its approval after a confirmation. A record
   mirrored from the CMS carries a notice that the CMS will overwrite console

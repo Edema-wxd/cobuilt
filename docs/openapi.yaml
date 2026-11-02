@@ -45,6 +45,7 @@ tags:
   - name: Services
   - name: FAQs
   - name: Leadership
+  - name: Downloads
   - name: Search
   - name: Forms
   - name: Authentication
@@ -471,6 +472,59 @@ paths:
               schema: { $ref: '#/components/schemas/ServiceDetail' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /api/documents:
+    get:
+      tags: [Downloads]
+      summary: List published documents (the download centre)
+      description: |
+        Every published document, in the order set in the console: company
+        profile, capability statement, brochures, project profiles, policies
+        and others. A document attached to a project that is not live is left
+        out. Unpaginated. `downloadUrl` is the counted endpoint below; the
+        file's own address is not published. Cached for a minute.
+      security: []
+      parameters:
+        - name: category
+          in: query
+          schema: { $ref: '#/components/schemas/DocumentCategory' }
+        - name: project
+          in: query
+          description: A project's id or slug. An unknown or unpublished project gives an empty list.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Published documents in display order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/Document' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/documents/{id}/download:
+    get:
+      tags: [Downloads]
+      summary: Download a document (counted)
+      description: |
+        Counts one download — the document's total and the day's count, and
+        nothing about who downloaded — then redirects to the file. Never
+        cached. Self-declared crawlers are redirected without being counted.
+        Rate limited to 30 per 10 minutes per IP on its own bucket.
+      security: []
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '302':
+          description: Redirect to the file
+          headers:
+            Location: { schema: { type: string, format: uri } }
+        '404': { description: No published document with that id }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
   /api/search:
     get:
       tags: [Search]
@@ -545,7 +599,14 @@ paths:
       description: |
         Rate limited to 5 per hour per IP. Submissions scored as spam receive an
         identical response to clean ones, and are stored for review without
-        notifying anyone.
+        notifying anyone. `enquiryType` is stored with the submission and leads
+        the staff notification.
+
+        While Cloudflare Turnstile is configured (`TURNSTILE_SECRET_KEY`), a
+        `turnstileToken` from the widget is required and verified with
+        Cloudflare before anything is stored: missing is a 422, refused is a
+        400, and Cloudflare unreachable is a 503. Without the key the field is
+        ignored.
       security: []
       requestBody:
         required: true
@@ -562,8 +623,10 @@ paths:
                 properties:
                   success:      { type: boolean }
                   submissionId: { type: string, format: uuid }
+        '400': { description: The Turnstile check was refused }
         '422': { $ref: '#/components/responses/ValidationFailed' }
         '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { description: The Turnstile check could not be completed }
 
   /api/forms/investment:
     post:
@@ -817,6 +880,7 @@ paths:
       description: Contact details are masked here; the detail endpoint reveals them.
       parameters:
         - { name: formType,      in: query, schema: { type: string, enum: [inquiry, newsletter, investment] } }
+        - { name: enquiryType,   in: query, description: Enquiries of this type only; one from before the field counts as general, schema: { $ref: '#/components/schemas/EnquiryType' } }
         - { name: flaggedAsSpam, in: query, schema: { type: boolean } }
         - { name: processed,     in: query, schema: { type: boolean } }
         - $ref: '#/components/parameters/Page'
@@ -943,16 +1007,62 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
 
+  /api/admin/settings/contact:
+    get:
+      tags: [Admin]
+      summary: Contact page details
+      description: |
+        Requires `admin` with `settings:write`. Never saved, it returns the
+        details as built (components/site.ts), which is also what the contact
+        page shows.
+      responses:
+        '200':
+          description: The details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContactSettingsView' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    put:
+      tags: [Admin]
+      summary: Replace the contact page details
+      description: |
+        Requires `admin` with `settings:write`. The whole document is sent and
+        replaces what is stored. Audited as `settings.updated` (entity
+        `contact`) with the fields that changed. `/contact` regenerates within
+        a minute; `revalidated` says whether it was regenerated at once. The
+        header and footer do not read this document yet.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContactSettings' }
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ContactSettingsView'
+                  - type: object
+                    properties:
+                      revalidated: { type: boolean }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
   /api/uploadthing:
     get:
       tags: [Virtual Tours]
       summary: UploadThing upload endpoint
       description: |
         Used by the UploadThing client, not called directly. `POST` requests an
-        upload URL for the `tourModel` route and is authorised by the console's
-        bearer token and the `tours:write` permission; UploadThing also calls it
-        back when an upload completes. The request and response shapes are
-        UploadThing's own.
+        upload URL for a route, authorised by the console's bearer token:
+        `tourModel` (a .glb, .gltf or .zip; `tours:write`) or `document` (one
+        PDF up to 32 MB; `downloads:write`), each for admins and editors.
+        UploadThing also calls it back when an upload completes. The request
+        and response shapes are UploadThing's own.
       responses:
         '200': { description: Route configuration }
     post:
@@ -1309,6 +1419,137 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/documents:
+    get:
+      tags: [Downloads]
+      summary: List every document, drafts included
+      description: Requires `admin` or `editor` with `downloads:write`. Display order, with download counts.
+      responses:
+        '200':
+          description: Every document in display order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/DocumentAdmin' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Downloads]
+      summary: Add a document
+      description: |
+        Requires `admin` or `editor` with `downloads:write`. Give exactly one
+        of `fileKey` — a PDF already uploaded through `/api/uploadthing`
+        (route `document`), accepted only once storage confirms it, with the
+        size storage reports — or `fileUrl`, an https link to a file hosted
+        elsewhere, whose type is read from its extension and whose size is
+        left null. Added at the end of the list, as a draft unless `published`
+        is true. Audited as `document.created`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DocumentInput' }
+      responses:
+        '201':
+          description: Added
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentAdmin' }
+        '400': { description: No uploaded file found for that key }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '503': { description: Object storage is not configured }
+
+  /api/admin/documents/reorder:
+    post:
+      tags: [Downloads]
+      summary: Set the display order
+      description: |
+        Requires `admin` or `editor` with `downloads:write`. `ids` is every
+        document, once each, in the new order; the public page keeps this order
+        within each category. A list that leaves one out or names one that does
+        not exist is a 422. Audited as `document.reordered`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              additionalProperties: false
+              properties:
+                ids: { type: array, items: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Every document in its new order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/DocumentAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/documents/{documentId}:
+    parameters:
+      - { name: documentId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Downloads]
+      summary: One document
+      description: Requires `admin` or `editor` with `downloads:write`.
+      responses:
+        '200':
+          description: The document
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Downloads]
+      summary: Update, publish, unpublish or replace the file
+      description: |
+        Requires `admin` or `editor` with `downloads:write`. Every field is
+        optional. A new `fileKey` or `fileUrl` replaces the file, and an
+        uploaded file it replaces is deleted from storage. Audited as
+        `document.updated`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DocumentUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DocumentAdmin' }
+        '400': { description: No uploaded file found for that key }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Another document has that slug }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Downloads]
+      summary: Delete a document
+      description: |
+        Requires `admin` with `downloads:write`. Deletes its uploaded file
+        from storage too, and its download counts. Cannot be undone;
+        unpublishing is the reversible alternative. Audited as
+        `document.deleted`.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /api/users/{userId}:
     parameters:
@@ -2151,6 +2392,17 @@ components:
         projectId: { type: string, format: uuid }
         consent:   { type: boolean, enum: [true], description: NDPA consent, required }
         website:   { $ref: '#/components/schemas/Honeypot' }
+        enquiryType: { $ref: '#/components/schemas/EnquiryType' }
+        turnstileToken:
+          type: string
+          maxLength: 4096
+          description: Cloudflare Turnstile's token. Required, and verified, only while Turnstile is configured.
+
+    EnquiryType:
+      type: string
+      enum: [general, project, partnership, suppliers, media, careers, project_record]
+      default: general
+      description: What an enquiry is about, chosen on the contact form.
 
     InvestmentInput:
       type: object
@@ -2220,6 +2472,136 @@ components:
             locations: { type: integer }
         updatedAt: { type: string, format: date-time, nullable: true }
         updatedBy: { type: string, nullable: true, description: Full name of whoever saved last }
+
+    ContactSettings:
+      type: object
+      required: [addressLines, phones, emails, whatsapp, hours, location]
+      properties:
+        addressLines:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: { type: string, maxLength: 120 }
+        phones:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items:
+            type: object
+            required: [label, number]
+            properties:
+              label:  { type: string, maxLength: 60 }
+              number: { type: string, description: 'Digits, spaces and the usual separators; 7 to 20 characters' }
+        emails:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items:
+            type: object
+            required: [label, address]
+            properties:
+              label:   { type: string, maxLength: 60 }
+              address: { type: string, format: email }
+        whatsapp:
+          type: string
+          nullable: true
+          description: The WhatsApp Business number, with its country code; null hides WhatsApp.
+        hours:
+          type: array
+          minItems: 1
+          maxItems: 7
+          items:
+            type: object
+            required: [days, hours]
+            properties:
+              days:  { type: string, maxLength: 60, example: Monday to Friday }
+              hours: { type: string, maxLength: 60, example: '08:00–17:00 WAT' }
+        location:
+          type: object
+          nullable: true
+          description: The office's confirmed position for the click-to-load map; null hides the map.
+          required: [lat, lng]
+          properties:
+            lat: { type: number, minimum: -90, maximum: 90 }
+            lng: { type: number, minimum: -180, maximum: 180 }
+
+    ContactSettingsView:
+      type: object
+      properties:
+        settings:  { $ref: '#/components/schemas/ContactSettings' }
+        updatedAt: { type: string, format: date-time, nullable: true }
+        updatedBy: { type: string, nullable: true, description: Full name of whoever saved last }
+
+    DocumentCategory:
+      type: string
+      enum: [company_profile, capability_statement, brochure, project_profile, policy, other]
+
+    Document:
+      type: object
+      properties:
+        id:            { type: string, format: uuid }
+        title:         { type: string }
+        slug:          { type: string }
+        description:   { type: string, nullable: true }
+        category:      { $ref: '#/components/schemas/DocumentCategory' }
+        fileType:      { type: string, nullable: true, description: 'Lowercase extension, such as pdf; null when a link names none' }
+        fileSizeBytes: { type: integer, nullable: true, description: Known for uploads; null for a link }
+        downloadUrl:   { type: string, description: 'The counted download endpoint, /api/documents/{id}/download' }
+        project:
+          type: object
+          nullable: true
+          properties:
+            id:    { type: string, format: uuid }
+            title: { type: string }
+            slug:  { type: string }
+
+    DocumentAdmin:
+      allOf:
+        - $ref: '#/components/schemas/Document'
+        - type: object
+          properties:
+            fileUrl:   { type: string, format: uri, description: Where the download redirects }
+            fileKey:   { type: string, nullable: true, description: 'The UploadThing key, when uploaded' }
+            project:
+              type: object
+              nullable: true
+              properties:
+                id:          { type: string, format: uuid }
+                title:       { type: string }
+                slug:        { type: string }
+                isPublished: { type: boolean, description: A published document on an unpublished project stays off the site }
+            published:     { type: boolean }
+            sortOrder:     { type: integer }
+            downloadCount: { type: integer }
+            downloadsLast30Days: { type: integer, description: On list reads only }
+            createdAt:     { type: string, format: date-time }
+            updatedAt:     { type: string, format: date-time, description: Last edited; a download does not change it }
+
+    DocumentFields:
+      type: object
+      additionalProperties: false
+      properties:
+        title:       { type: string, minLength: 2, maxLength: 255 }
+        slug:        { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        description: { type: string, maxLength: 600, nullable: true }
+        category:    { $ref: '#/components/schemas/DocumentCategory' }
+        fileKey:     { type: string, maxLength: 512, description: A finished upload's key; not with fileUrl }
+        fileUrl:     { type: string, format: uri, maxLength: 512, description: An https link; not with fileKey }
+        projectId:   { type: string, format: uuid, nullable: true }
+        published:   { type: boolean }
+
+    DocumentInput:
+      allOf:
+        - $ref: '#/components/schemas/DocumentFields'
+        - type: object
+          required: [title, category]
+          description: Exactly one of fileKey and fileUrl.
+
+    DocumentUpdate:
+      allOf:
+        - $ref: '#/components/schemas/DocumentFields'
+        - type: object
+          minProperties: 1
 
     User:
       type: object
