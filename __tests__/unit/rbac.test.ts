@@ -29,6 +29,13 @@ describe('RBAC', () => {
     expect(hasPermission('investor', {}, 'services:write')).toBe(false);
   });
 
+  it('lets admins and editors, and no one else, manage the video library', () => {
+    expect(hasPermission('admin', {}, 'videos:write')).toBe(true);
+    expect(hasPermission('editor', {}, 'videos:write')).toBe(true);
+    expect(hasPermission('viewer', {}, 'videos:write')).toBe(false);
+    expect(hasPermission('investor', {}, 'videos:write')).toBe(false);
+  });
+
   it('gives a viewer read-only access', () => {
     const viewer = effectivePermissions('viewer');
     expect(viewer.has('projects:read')).toBe(true);

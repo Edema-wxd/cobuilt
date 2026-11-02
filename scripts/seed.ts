@@ -163,6 +163,43 @@ async function seedServiceProjects(): Promise<void> {
   }
 }
 
+/**
+ * A handful of library videos across categories, two linked to a project, so
+ * /videos, its filters, a video page, a project's "Videos" block and the
+ * leadership page's interviews all render. The IDs are placeholders in
+ * YouTube's format, not real films: the player shows YouTube's "unavailable"
+ * card if pressed.
+ */
+async function seedVideos(): Promise<void> {
+  const videos: Array<[title: string, youtubeId: string, category: string, project: string | null, recorded: string, featured: boolean]> = [
+    ['Ocean Ridge Residences: one year on site', 'CoBuiltDem1', 'project_documentary', 'ocean-ridge-residences', '2026-06-12', true],
+    ['Ocean Ridge: superstructure update', 'CoBuiltDem2', 'construction_update', 'ocean-ridge-residences', '2026-09-03', false],
+    ['Kingsway Commercial Centre from the air', 'CoBuiltDem3', 'drone', 'kingsway-commercial-centre', '2026-04-20', false],
+    ['Why we publish every milestone', 'CoBuiltDem4', 'leadership_interview', null, '2026-08-14', false],
+    ['What a Project Passport records', 'CoBuiltDem5', 'educational', null, '2026-05-02', false],
+  ];
+
+  for (const [index, [title, youtubeId, category, project, recorded, featured]] of videos.entries()) {
+    await query(
+      `INSERT INTO videos (youtube_id, title, slug, description, category, project_id, recorded_on, featured, published, sort_order, duration_seconds)
+       VALUES ($1, $2, $3, $4, $5, (SELECT id FROM projects WHERE slug = $6), $7, $8, TRUE, $9, $10)
+       ON CONFLICT (youtube_id) DO NOTHING`,
+      [
+        youtubeId,
+        title,
+        slugify(title),
+        `${title}. A development placeholder describing the film, so the page and the library search have text to work with.`,
+        category,
+        project,
+        recorded,
+        featured,
+        (index + 1) * 10,
+        180 + index * 75,
+      ],
+    );
+  }
+}
+
 async function seedNews(adminId: string): Promise<void> {
   const articles = [
     ['CoBuilt breaks ground on Ocean Ridge Residences', 'press_release'],
@@ -226,6 +263,7 @@ async function main(): Promise<void> {
   const adminId = await seedAdmin();
   await seedProjects(adminId);
   await seedServiceProjects();
+  await seedVideos();
   await seedNews(adminId);
   await seedFaqs();
 
