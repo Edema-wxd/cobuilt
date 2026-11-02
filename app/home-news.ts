@@ -1,3 +1,4 @@
+import { normalizeNewsCategory } from '@/lib/news-categories';
 import type { HomeArticle } from './home-page';
 
 /** How many of the most recent articles the landing page shows. */
@@ -30,7 +31,7 @@ export async function loadHomeNews(): Promise<HomeArticle[]> {
       slug: row.slug,
       title: row.title,
       excerpt: row.excerpt,
-      category: row.category,
+      category: normalizeNewsCategory(row.category),
       published: row.published_at ? published.format(new Date(row.published_at)) : null,
       image: row.featured_image_url,
     }));

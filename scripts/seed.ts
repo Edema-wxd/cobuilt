@@ -164,16 +164,21 @@ async function seedServiceProjects(): Promise<void> {
 }
 
 async function seedNews(adminId: string): Promise<void> {
+  // One or more in each of the media centre's five categories, so /media and
+  // the /news filters have something to show (src/lib/news-categories.ts).
   const articles = [
     ['CoBuilt breaks ground on Ocean Ridge Residences', 'press_release'],
-    ['Project Passport: transparency as a construction standard', 'update'],
-    ['CoBuilt appoints new Head of Delivery', 'announcement'],
+    ['Project Passport: transparency as a construction standard', 'project_update'],
+    ['CoBuilt appoints new Head of Delivery', 'company_announcement'],
+    ['Why a published programme is a delivery discipline', 'thought_leadership'],
+    ['How building approvals work in Lagos State', 'industry_insight'],
+    ['Superstructure complete at Ocean Ridge Residences', 'project_update'],
   ];
 
-  for (const [title, category] of articles) {
+  for (const [index, [title, category]] of articles.entries()) {
     await query(
       `INSERT INTO news_articles (title, slug, content, excerpt, category, author_id, published_at, tags)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW() - make_interval(days => $8::int), $7)
        ON CONFLICT (slug) DO NOTHING`,
       [
         title,
@@ -183,6 +188,8 @@ async function seedNews(adminId: string): Promise<void> {
         category,
         adminId,
         ['cobuilt', category === 'press_release' ? 'press' : 'company'],
+        // A day apart, so "newest first" has an order to show.
+        index,
       ],
     );
   }

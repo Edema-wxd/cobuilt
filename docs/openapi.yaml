@@ -338,7 +338,13 @@ paths:
       summary: List news articles
       security: []
       parameters:
-        - { name: category, in: query, schema: { type: string } }
+        - name: category
+          in: query
+          description: |
+            One of `NewsCategory`, or a CMS category of its own. The launch-era
+            names `update` and `announcement` select project updates and company
+            announcements, and spelling is forgiven (`Press release`).
+          schema: { type: string, maxLength: 100 }
         - { name: tag,      in: query, schema: { type: string } }
         - { name: q,        in: query, schema: { type: string } }
         - $ref: '#/components/parameters/Page'
@@ -410,9 +416,13 @@ paths:
     get:
       tags: [News]
       summary: Articles in a category
+      description: |
+        `category` is read as `/api/news?category=` reads it: `update` and
+        `announcement` answer as `project_update` and `company_announcement`,
+        and the response's `category` is the normalised value.
       security: []
       parameters:
-        - { name: category, in: path, required: true, schema: { type: string } }
+        - { name: category, in: path, required: true, schema: { type: string, maxLength: 100 } }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -1876,6 +1886,17 @@ components:
         featured:     { type: boolean }
         published:    { type: boolean }
 
+    NewsCategory:
+      type: string
+      enum: [press_release, project_update, thought_leadership, industry_insight, company_announcement]
+      description: |
+        The media centre's five categories, in the order the site shows them.
+        `update` and `announcement`, the launch-era names, are accepted
+        wherever a category is sent and stored as `project_update` and
+        `company_announcement`; migration 0018 renamed the stored rows. The
+        column itself is free text, so a category the CMS sends of its own is
+        kept as sent and returned as a plain string.
+
     NewsSummary:
       type: object
       properties:
@@ -1883,7 +1904,10 @@ components:
         title:            { type: string }
         slug:             { type: string }
         excerpt:          { type: string, nullable: true }
-        category:         { type: string, nullable: true }
+        category:
+          type: string
+          nullable: true
+          description: A `NewsCategory` value, or a CMS category of its own. Never a launch-era name.
         tags:             { type: array, items: { type: string } }
         author:           { type: string, nullable: true }
         featuredImageUrl: { type: string, nullable: true }
@@ -1914,7 +1938,14 @@ components:
         slug:             { type: string }
         content:          { type: string }
         excerpt:          { type: string, maxLength: 300, nullable: true }
-        category:         { type: string, nullable: true }
+        category:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: |
+            A `NewsCategory` value; the console offers only these. `update`,
+            `announcement` and other spellings of the five are stored in their
+            canonical form; any other value is kept as sent. Blank clears it.
         featuredImageUrl: { type: string, nullable: true }
         tags:             { type: array, items: { type: string } }
         metaTitle:        { type: string, nullable: true }

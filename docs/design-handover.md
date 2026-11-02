@@ -3,10 +3,10 @@
 What still needs designing on the CoBuilt Investment Partners website, the rules
 those designs have to hold to, and the data each page can actually show.
 
-Sixteen pages are live: the landing page, the projects index, a project detail
+Seventeen pages are live: the landing page, the projects index, a project detail
 page, a project's Passport record, About, Leadership, Services and the six
-service pages behind it, Passport™, the media centre and its article page,
-Contact, Careers, and four legal pages. The backend covers more still — 41 API
+service pages behind it, Passport™, the media centre (`/media`), its news list
+and article page, Contact, Careers, and four legal pages. The backend covers more still — 41 API
 routes, several with no interface yet. This document is the list of what to
 design next, in the order worth building.
 
@@ -32,9 +32,11 @@ information request only… An Investor Portal will be introduced once all
 required regulatory approvals and licences are in place."*
 
 **The header navigation, in this order:** Home, About, Leadership,
-Services, Projects, Passport™. Media, Careers and Contact are deliberately
-left out of the header (Careers stays in the footer). The header also carries
-a "Discuss your project" button and a search entry point.
+Services, Projects, Passport™, Media, Careers — eight links, inside the spec's
+eight-to-nine. Contact is the header's "Discuss your project" button, which
+goes to `/contact`, rather than a ninth link beside it; a ninth item would
+crowd the inline nav at 1081px (`docs/decisions.md` §2.22). The header also
+carries a search entry point.
 
 **Tagline:** "Building Trust Through Every Brick". It is not editable copy.
 
@@ -272,17 +274,33 @@ already scroll horizontally.
 
 Needs an empty state ("no projects match these filters") and a loading state.
 
-#### 3.4 News & insights — `/news`, `/news/[slug]` — **built**
+#### 3.4 Media centre — `/media`, `/news`, `/news/[slug]` — **built**
 
-Implemented at `app/news/`. The index reads `/api/news` on the client, with
-category pills from `/api/search/facets?type=news`, free-text search,
-pagination and designed loading, empty and error states; the article page is
-server-rendered for its SEO fields and link previews, with related articles
-from the repository's tag-overlap ranking.
+`/media` (`app/media/`) is the section's front page, as the spec's Media →
+News, Videos, Gallery, Articles: four cards opening news and articles
+(`/news`), the video library (`/videos`), the image gallery (`/gallery`) and
+downloads (`/resources`); then the newest three articles in each category, a
+row per category linking to its filtered list; then the press desk, which goes
+to `/contact`. Server-rendered and regenerated each minute; a category with
+nothing published is left out, and with nothing at all the page shows an
+empty state. The video, gallery and download pages are built separately.
+
+Articles have five categories, the spec's: press release, project update,
+thought leadership, industry insight and company announcement
+(`src/lib/news-categories.ts`). The launch values `update` and `announcement`
+are read as project update and company announcement everywhere, including old
+`/news?category=update` links. See `docs/decisions.md` §2.22.
+
+`/news` (`app/news/`) reads `/api/news` on the client, with the five category
+pills in order (each shown once something is published in it), free-text
+search, pagination and designed loading, empty and error states; the article
+page is server-rendered for its SEO fields and link previews, with related
+articles from the repository's tag-overlap ranking. Breadcrumbs run Home /
+Media / News & articles / the article.
 
 `/news/category/[category]` is deliberately not a route: the category is a
-filter on the index (`/news?category=update`), so there is one list and one
-empty state. The API route of that name is untouched.
+filter on the index (`/news?category=project_update`), so there is one list
+and one empty state. The API route of that name is untouched.
 
 The article prose style is `components/ArticleBody.tsx` — a 760px measure at
 17px, airier than the legal pages. It renders CMS text without
@@ -353,8 +371,8 @@ nothing at all.
   founding story on a site about documented delivery is the one thing this page
   cannot do. It is a page section away when the client provides it.
 - **`/leadership`** — **built.** Profile cards with a remit, the philosophy as
-  four management rules, and the video library the footer links to
-  (`/leadership#video-library`). The portrait slot still says what it is waiting
+  four management rules, and a video band (`/leadership#video-library`; the
+  footer and the utility strip's YouTube link now go to `/videos` instead). The portrait slot still says what it is waiting
   for rather than holding a stock face, and the roles whose profiles are
   unapproved are listed honestly in a card of the same shape — see §5.2. The
   treatment is built; the content drops in. Profiles are now published from
@@ -373,12 +391,13 @@ nothing at all.
   Passport is, the eight mandatory entries, the four milestone states with
   "delayed" treated as a fact rather than an alarm, what evidence attaches, and
   how to read the provenance. The record itself is §3.1.
-- **Media — `/news`** — **built**; see §3.4.
+- **Media — `/media`, with `/news` beneath it** — **built**; see §3.4.
 - **Contact — `/contact`** — **built**; see §3.6.
 - **`/governance`** — in the footer with no page behind it. Given the brand
   position, this one matters more than it looks.
-- **`/downloads`** — company profile, brochures, certificates. Needs a file list
-  pattern with type and size.
+- **Downloads — `/resources`** — company profile, brochures, certificates.
+  Needs a file list pattern with type and size. Built separately; the footer's
+  Downloads entry and the media centre link to it.
 - **`/faqs`** — **built.** Grouped by category, each entry a native disclosure with a stable `#id` anchor that search results link to. Read from the new `GET /api/faqs`.
 - **Investor information** — where the regulatory position lives in full. No
   call to action beyond registering interest.
@@ -398,7 +417,8 @@ admin console is what makes the site maintainable without a developer.
   fresh environment is invited with `npm run user:invite-admin`.
 - **Admin console — `/admin` — built.** Overview with analytics, submissions
   inbox (spam flagging, masked contact details), projects (list, create, edit,
-  delete), Passport™ milestones per project, news (list, create, edit, delete),
+  delete), Passport™ milestones per project, news (list, create, edit, delete;
+  the five media-centre categories),
   leadership profiles (publish, order, homepage spotlight), homepage settings
   (hero copy, featured video, figures, optional sections), 3D tours (upload,
   edit, delete), investor-content approval, users and roles,
@@ -413,8 +433,9 @@ admin console is what makes the site maintainable without a developer.
   More routes now call `notFound()` — an unknown service slug, an unknown
   article — so this is more visible than it was.
 - **Social preview images** — **built.** A branded card per page, and an item's own photography wins where it has some. See docs/decisions.md §2.18.
-- **A video library page** — the footer links to one. The home page now embeds
-  one video an administrator chooses; a library of several still needs a page.
+- **A video library page — `/videos`** — the footer, the utility strip and the
+  media centre link to it, and it is built separately. The home page embeds
+  one video an administrator chooses.
 
 ---
 

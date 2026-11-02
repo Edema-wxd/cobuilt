@@ -380,7 +380,7 @@ of them now reach a page:
 | Leadership | `/leadership` | Static at launch; `leadership` table since §2.20 |
 | Services | `/services`, `/services/[slug]` | PostgreSQL, managed in the console (§2.21); `app/services/services.ts` as fallback |
 | Passport™ | `/passport` | Static |
-| Media | `/news`, `/news/[slug]` | `/api/news` |
+| Media | `/news`, `/news/[slug]`; `/media` since §2.22 | `/api/news`; `/media` reads the repository |
 | Contact | `/contact` | Posts to `/api/forms/inquiry` |
 
 **Contact and newsletter are separate, and separately consented.** `/contact`
@@ -616,6 +616,75 @@ query fails — including in a build with no database. The pages regenerate at
 most once a minute, like the landing page, and the API's Redis entries are
 cleared on every write. Copy that counted the services ("Six disciplines") now
 counts what is published.
+
+### 2.22 The media centre has a front page, five categories, and a place in the header
+
+The client's spec has a Media Centre — news, articles, press releases, project
+updates, thought leadership, industry insights and company announcements, with
+search and category filters — arranged as Media → News, Videos, Gallery,
+Articles. The site had `/news` with three categories, and Media was missing
+from the header.
+
+**Five categories, and the old names still work.** `src/lib/news-categories.ts`
+holds the list — `press_release`, `project_update`, `thought_leadership`,
+`industry_insight`, `company_announcement` — with their labels, and has no
+imports so the public pages, the console and the API share it. Two launch
+values were the same things under shorter names, so they are mapped rather
+than refused: `update` is a project update and `announcement` a company
+announcement. The mapping is applied wherever a category arrives — the API
+body and query string (`/news?category=update` links shared before the rename
+still select the right pill), `/api/news/by-category/update`, the CMS sync and
+the repository's writes — and the serializer reads any stray stored value the
+same way. Other spellings of the five ("Press release", `press-release`) are
+folded in too.
+
+**Migration 0018 renames the stored rows; the column stays free text.** The
+category was never enforced in the database, but several readers compare it
+exactly — the category facet, related-article ranking, the search filters
+(Meilisearch and PostgreSQL) — and would have split a category in two. The
+migration rewrites the two old values once, with the `updated_at` trigger held
+off so no article claims an edit it never had. There is no CHECK constraint:
+the CMS may send a category of its own, and the console already keeps such a
+value selectable rather than discarding it, so the API still accepts and
+stores one as sent. Only the five are offered in the editor. After deploying,
+run `npm run search:reindex` if Meilisearch is configured, so its copies carry
+the new names; the facet cache expires on its own.
+
+**`/media` is the section's front page; `/news` stays the list.** `/media` is
+server-rendered (`export const revalidate = 60`) from one query
+(`news.latestPerCategory`, a window function rather than five round trips):
+the newest three published articles in each category, in the order above, each
+row linking to that category's filtered list on `/news`. Articles with no
+category, or a CMS one, share a final "More news" row. A category with nothing
+published is left out, and with nothing at all — or no database, as in the
+build — the page shows its empty state, never a 500 (`app/media/load-media.ts`
+returns an empty list and logs). Above the rows, four cards open the
+collections: news and articles (`/news`), the video library (`/videos`), the
+image gallery (`/gallery`) and downloads (`/resources`); the page closes with
+the press desk, which goes to `/contact`. `/news` keeps its client-side list
+(§2.9); its pills are now the five in order, shown when a category has
+something published or is the one selected, followed by any CMS category.
+
+**Breadcrumbs place everything under Media.** `/media` is Home / Media;
+`/news` is Home / Media / News & articles; an article is Home / Media / News &
+articles / its title (it had a trail before, but its Media crumb went to
+`/news`). The header marks Media as current on all three.
+
+**The header has eight links, and Contact is the button.** The spec allows
+eight or nine top-level items. Media and Careers were added; Contact was not,
+because "Discuss your project" — the header's orange button, non-negotiable in
+the handover — already goes to `/contact`, and a Contact link beside it would
+be the same destination twice. With eight links the inline nav (from 1081px)
+leaves 136px between the logo and the first link at 1081px and 123px from
+1181px, where the type steps up; a ninth link would leave about 40px there,
+which reads as crowded. The phone menu takes the eight and the button without
+scrolling at 390×844.
+
+**Footer and utility links point at the new pages.** Resources is News &
+insights, Video library (`/videos`), Image gallery (`/gallery`), Downloads
+(`/resources`, previously unlinked) and FAQs; the utility strip's YouTube link
+goes to `/videos` instead of `/leadership#video-library`. Those three pages are
+built separately; this change only links to them.
 
 ## 3. Still open
 

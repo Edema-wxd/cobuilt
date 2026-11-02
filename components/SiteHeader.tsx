@@ -79,13 +79,13 @@ export default function SiteHeader({ current = '/' }: Props) {
             {/*
               The company's LinkedIn and YouTube accounts are not confirmed, so
               these resolve to the pages that carry the same thing on this site
-              — the contact channels, and the video library — rather than to a
-              guessed external URL.
+              — the contact channels, and the video library at /videos — rather
+              than to a guessed external URL.
             */}
             <a className={utilityLink} href="/contact">
               LinkedIn
             </a>
-            <a className={utilityLink} href="/leadership#video-library">
+            <a className={utilityLink} href="/videos">
               YouTube
             </a>
             <a className="text-orange-on-dark" href="/search">

@@ -58,7 +58,8 @@ describeWithDatabase('landing page content', () => {
       const news = await loadHomeNews();
 
       expect(news.map((a) => a.slug)).toEqual(['newest', 'newer', 'older']);
-      expect(news[0]).toMatchObject({ category: 'update', excerpt: 'Standfirst' });
+      // Stored under the launch-era name, shown under the new one (decisions §2.22).
+      expect(news[0]).toMatchObject({ category: 'project_update', excerpt: 'Standfirst' });
       expect(news[0]!.published).toMatch(/^\d{2} [A-Z][a-z]{2} \d{4}$/);
     });
 

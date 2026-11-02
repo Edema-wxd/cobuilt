@@ -7,6 +7,7 @@ import type {
   TourRow,
   UserRow,
 } from '@/types/models';
+import { normalizeNewsCategory } from './news-categories';
 import { maskEmail, maskPhone } from './privacy';
 
 /**
@@ -209,7 +210,8 @@ export function serializeNews(row: NewsRow) {
     slug: row.slug,
     excerpt: row.excerpt,
     content: row.content,
-    category: row.category,
+    // Canonical even for a row written around the API (news-categories.ts).
+    category: normalizeNewsCategory(row.category),
     tags: row.tags ?? [],
     author: row.author_name ?? null,
     featuredImageUrl: row.featured_image_url,

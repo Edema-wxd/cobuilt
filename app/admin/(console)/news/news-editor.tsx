@@ -50,7 +50,7 @@ interface FormState {
 const EMPTY: FormState = {
   title: '',
   slug: '',
-  category: 'update',
+  category: 'project_update',
   excerpt: '',
   content: '',
   featuredImageUrl: '',
@@ -201,7 +201,7 @@ function ArticleForm({
   }
 
   const canDelete = user.role === 'admin' && can('news:delete');
-  // A category set in the CMS that is not one of the standard three stays selectable.
+  // A category set in the CMS that is not one of the standard five stays selectable.
   const categories =
     form.category && !(form.category in CATEGORY_LABELS)
       ? { ...CATEGORY_LABELS, [form.category]: categoryLabel(form.category) }
@@ -259,12 +259,17 @@ function ArticleForm({
               aria-describedby="n-slug-hint"
             />
           </Field>
-          <Field id="n-category" label="Category">
+          <Field
+            id="n-category"
+            label="Category"
+            hint="Each category has its own row on the media centre (/media) and its own filter on /news."
+          >
             <select
               id="n-category"
               className={selectInput}
               value={form.category}
               onChange={(event) => set('category', event.target.value)}
+              aria-describedby="n-category-hint"
             >
               <option value="">None</option>
               {Object.entries(categories).map(([value, label]) => (
