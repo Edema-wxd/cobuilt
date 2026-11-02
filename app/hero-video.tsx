@@ -23,7 +23,7 @@ import { media } from '../components/ui';
  * The poster is the server render and the LCP element. The video is only
  * mounted in the browser, once it is known that the visitor has not asked for
  * reduced motion or reduced data, so neither of them downloads a byte of it.
- * See docs/decisions.md §2.19.
+ * See docs/decisions.md §2.22.
  */
 
 type Cut = 'desktop' | 'mobile';

@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import CountUp from '../components/CountUp';
 import SiteLayout from '../components/SiteLayout';
 import HeroVideo from './hero-video';
 import { PHONE, PHONE_HREF, passportHref } from '../components/site';
-import { SERVICES, serviceHref } from './services/services';
+import HomeVideo from './home-video';
+import { cssUrl } from './projects/[slug]/project-shared';
+import type { ServiceCard } from './services/load-services';
+import { serviceHref } from './services/services';
 import {
   cardBody,
   cardTitle,
@@ -35,16 +38,22 @@ import {
 /**
  * Public landing page — Direction 3c, the Corporate Digital Standards build.
  *
- * The project cards are the most recently published projects, loaded on the
- * server by app/home-projects.ts and passed in; with none published, or no
- * database, the section shows an empty state rather than sample projects. The
- * only call from the browser is the "Register your interest" form, which posts
- * to `/api/forms/newsletter` (CSRF-exempt, rate limited, double opt-in).
- * Milestone content here is still illustrative.
+ * Everything that changes is loaded on the server by app/page.tsx and passed
+ * in: the most recently published projects (app/home-projects.ts), the latest
+ * news (app/home-news.ts), the leadership spotlight (app/home-leadership.ts),
+ * and the administrator's settings from /admin/homepage with the statistics
+ * (app/home-settings.ts) — hero copy, the featured video, figure overrides and
+ * which optional sections show. The only call from the browser is the
+ * "Register your interest" form, which posts to `/api/forms/newsletter`
+ * (CSRF-exempt, rate limited, double opt-in). Milestone content here is still
+ * illustrative.
  *
  * The page is cut for conversion: every section either builds the case (proof,
- * what we do, how we document it) or asks for the enquiry. Story, values,
- * leadership, video and news live on their own pages, reachable from the nav.
+ * what we do, how we document it) or asks for the enquiry. The video,
+ * leadership and news bands the client's spec asks for sit late and compact,
+ * after the case is made, and each one is left out entirely when it has
+ * nothing to show — so a fresh database, or none, still renders a clean page.
+ * Story and values live on their own pages, reachable from the nav.
  *
  * Two constraints from the brief are deliberate and should survive edits:
  * the page carries no investment call to action — every investor path resolves
@@ -69,12 +78,71 @@ const IMAGES = {
   apartments: '/images/apartment-blocks.webp',
 } as const;
 
-const STATS: Array<{ value: number; plus?: boolean; label: string }> = [
-  { value: 5, plus: true, label: 'Projects delivered' },
-  { value: 3, label: 'Projects under development' },
-  { value: 30, plus: true, label: 'Units developed' },
-  { value: 5, plus: true, label: 'Locations' },
-];
+/** One figure in the stat band: counted from live projects, or set by an administrator. */
+export interface HomeStat {
+  key: string;
+  value: number;
+  /** Shown as "30+": the figure is a floor, not an exact count. */
+  plus: boolean;
+  label: string;
+}
+
+/** What /admin/homepage controls, resolved on the server (app/home-settings.ts). */
+export interface HomeSettings {
+  /** Null shows the headline as built. `*phrase*` marks the accent italic. */
+  heroHeadline: string | null;
+  heroSubheading: string | null;
+  /** Null when no video is set or the section is switched off. */
+  video: { id: string; title: string } | null;
+  /** Figures of 0 are already left out; an empty list hides the band. */
+  stats: HomeStat[];
+  showNews: boolean;
+  showLeadership: boolean;
+}
+
+export interface HomeArticle {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  category: string | null;
+  /** Already formatted on the server, e.g. "02 Sep 2026". */
+  published: string | null;
+  image: string | null;
+}
+
+export interface HomeLeader {
+  id: string;
+  slug: string;
+  name: string;
+  role: string | null;
+  summary: string | null;
+  photo: string | null;
+}
+
+/** The md column count matches the figures shown, so three figures never leave a gap. */
+const STAT_COLUMNS: Record<number, string> = {
+  1: 'md:grid-cols-1',
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-3',
+  4: 'md:grid-cols-4',
+};
+
+/** `press_release` reads as a database value; this is the same thing in English. */
+function categoryLabel(value: string): string {
+  return value.replace(/[_-]+/g, ' ').replace(/^./, (character) => character.toUpperCase());
+}
+
+/** An administrator's headline, with the `*phrase*` they marked set in the accent italic. */
+function Accented({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/\*([^*]+)\*/).map((part, index) =>
+        index % 2 === 1 ? <em key={index}>{part}</em> : <Fragment key={index}>{part}</Fragment>,
+      )}
+    </>
+  );
+}
 
 type ProjectStatus = 'ongoing' | 'completed' | 'future';
 
@@ -159,7 +227,19 @@ function describeFailure(status: number, payload: ApiResponse | null): string {
   );
 }
 
-export default function HomePage({ projects }: { projects: HomeProject[] }) {
+export default function HomePage({
+  projects,
+  services,
+  news,
+  leaders,
+  settings,
+}: {
+  projects: HomeProject[];
+  services: ServiceCard[];
+  news: HomeArticle[];
+  leaders: HomeLeader[];
+  settings: HomeSettings;
+}) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [website, setWebsite] = useState('');
@@ -200,6 +280,16 @@ export default function HomePage({ projects }: { projects: HomeProject[] }) {
     }
   }
 
+  // The optional bands below "How it works" (white) alternate grey and white
+  // among those actually shown, so leaving one out never sets two bands of the
+  // same ground side by side.
+  const optional = [
+    settings.video ? 'video' : null,
+    leaders.length > 0 ? 'leadership' : null,
+    news.length > 0 ? 'news' : null,
+  ].filter((name): name is string => name !== null);
+  const band = (name: string) => (optional.indexOf(name) % 2 === 0 ? sectionMuted : sectionLight);
+
   return (
     <SiteLayout current="/">
       <main id="top">
@@ -218,11 +308,17 @@ export default function HomePage({ projects }: { projects: HomeProject[] }) {
             <div className="intro flex flex-col gap-4.5 text-left sm:gap-6 lg:max-w-170">
               <p className={eyebrowOnDark}>Building Trust Through Every Brick</p>
               <h1 className="text-[length:clamp(2rem,9.5vw,2.5rem)] leading-[1.05] text-white sm:text-[length:clamp(2.25rem,5vw,3.75rem)] sm:leading-[1.02] [&_em]:text-orange-on-dark">
-                Every family deserves a home that feels like <em>coming home</em>.
+                {settings.heroHeadline ? (
+                  <Accented text={settings.heroHeadline} />
+                ) : (
+                  <>
+                    Every family deserves a home that feels like <em>coming home</em>.
+                  </>
+                )}
               </h1>
               <p className="max-w-135 text-base leading-[1.65] text-zinc-100 sm:text-[1.0625rem] sm:leading-[1.7]">
-                Residential, commercial and mixed-use developments across Nigeria, delivered on a
-                published programme and documented at every milestone.
+                {settings.heroSubheading ??
+                  'Residential, commercial and mixed-use developments across Nigeria, delivered on a published programme and documented at every milestone.'}
               </p>
               {/* Stacked full width on a phone, so the primary action is never stranded on its own row. */}
               <div className="flex flex-col gap-2.5 pt-1.5 sm:flex-row sm:flex-wrap sm:gap-3 sm:pt-1">
@@ -255,23 +351,26 @@ export default function HomePage({ projects }: { projects: HomeProject[] }) {
           </div>
         </section>
 
-        <section className="bg-orange" aria-label="CoBuilt at a glance">
-          <div
-            className={`${container} reveal-stagger grid grid-cols-2 gap-x-4 gap-y-6 py-8 sm:gap-7 sm:py-10.5 md:grid-cols-4 md:gap-8`}
-          >
-            {STATS.map((stat) => (
-              <div key={stat.label} className="flex flex-col gap-1.5">
-                <p className="text-[2.25rem] leading-none font-light tracking-[-0.03em] text-ink sm:text-[2.625rem]">
-                  <CountUp value={stat.value} />
-                  {stat.plus ? <span className="text-[1.5rem]">+</span> : null}
-                </p>
-                <p className="text-[0.688rem] leading-[1.4] tracking-[0.12em] text-ink uppercase sm:leading-[1.6] sm:tracking-[0.18em]">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Counted from the published record (or set at /admin/homepage); no band rather than zeros. */}
+        {settings.stats.length > 0 ? (
+          <section className="bg-orange" aria-label="CoBuilt at a glance">
+            <div
+              className={`${container} reveal-stagger grid grid-cols-2 gap-x-4 gap-y-6 py-8 sm:gap-7 sm:py-10.5 md:gap-8 ${STAT_COLUMNS[settings.stats.length] ?? 'md:grid-cols-4'}`}
+            >
+              {settings.stats.map((stat) => (
+                <div key={stat.key} className="flex flex-col gap-1.5">
+                  <p className="text-[2.25rem] leading-none font-light tracking-[-0.03em] text-ink sm:text-[2.625rem]">
+                    <CountUp value={stat.value} />
+                    {stat.plus ? <span className="text-[1.5rem]">+</span> : null}
+                  </p>
+                  <p className="text-[0.688rem] leading-[1.4] tracking-[0.12em] text-ink uppercase sm:leading-[1.6] sm:tracking-[0.18em]">
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className={sectionLight} id="projects">
           <div className={container}>
@@ -390,45 +489,51 @@ export default function HomePage({ projects }: { projects: HomeProject[] }) {
           </div>
         </section>
 
-        <section className={sectionMuted} id="services">
-          <div className={container}>
-            <div className={`${sectionHead} mb-8 max-w-165 sm:mb-11`}>
-              <p className={eyebrow}>Our services</p>
-              <h2 className={titleLg}>What we do</h2>
-            </div>
+        {services.length > 0 ? (
+          <section className={sectionMuted} id="services">
+            <div className={container}>
+              <div className={`${sectionHead} mb-8 max-w-165 sm:mb-11`}>
+                <p className={eyebrow}>Our services</p>
+                <h2 className={titleLg}>What we do</h2>
+              </div>
 
-            {/* The 1px gap over a grey ground draws the rules between cards. */}
-            <div className="reveal grid grid-cols-1 gap-px border border-zinc-300 bg-zinc-300 sm:grid-cols-2 md:grid-cols-3">
-              {SERVICES.map((service) => (
-                <article
-                  key={service.slug}
-                  className={`flex flex-col gap-3 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
-                >
-                  <span
-                    className={`${glyph} ${service.informational ? 'text-zinc-500' : 'text-orange'}`}
-                    aria-hidden="true"
+              {/*
+                Each card draws its own right and bottom rules, so a short last
+                row stays white rather than showing the grey ground (the count
+                is whatever is published at /admin/services).
+              */}
+              <div className="reveal grid grid-cols-1 border-t border-l border-zinc-300 sm:grid-cols-2 md:grid-cols-3">
+                {services.map((service) => (
+                  <article
+                    key={service.slug}
+                    className={`flex flex-col gap-3 border-r border-b border-zinc-300 p-6 sm:p-8.5 ${service.informational ? 'bg-zinc-50' : 'bg-white'}`}
                   >
-                    ◈
-                  </span>
-                  <h3 className={`${cardTitle} tracking-[0.16em]`}>{service.title}</h3>
-                  <p className={cardBody}>{service.summary}</p>
-                  {service.informational ? (
-                    <p className="mt-1.5 self-start border border-zinc-400 px-2.5 py-1.5 text-[0.656rem] font-bold tracking-[0.16em] text-zinc-700 uppercase">
-                      Informational
-                    </p>
-                  ) : (
-                    <a
-                      className={`${uppercaseLink} -mt-1.75 -mb-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:mt-1.5 sm:mb-0 sm:block sm:min-h-0 sm:self-auto`}
-                      href={serviceHref(service.slug)}
+                    <span
+                      className={`${glyph} ${service.informational ? 'text-zinc-500' : 'text-orange'}`}
+                      aria-hidden="true"
                     >
-                      Learn more →
-                    </a>
-                  )}
-                </article>
-              ))}
+                      ◈
+                    </span>
+                    <h3 className={`${cardTitle} tracking-[0.16em]`}>{service.title}</h3>
+                    <p className={cardBody}>{service.summary}</p>
+                    {service.informational ? (
+                      <p className="mt-1.5 self-start border border-zinc-400 px-2.5 py-1.5 text-[0.656rem] font-bold tracking-[0.16em] text-zinc-700 uppercase">
+                        Informational
+                      </p>
+                    ) : (
+                      <a
+                        className={`${uppercaseLink} -mt-1.75 -mb-3.25 inline-flex min-h-target items-center self-start text-[0.719rem] sm:mt-1.5 sm:mb-0 sm:block sm:min-h-0 sm:self-auto`}
+                        href={serviceHref(service.slug)}
+                      >
+                        Learn more →
+                      </a>
+                    )}
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         <section
           className="grid grid-cols-1 bg-ink lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"
@@ -517,13 +622,147 @@ export default function HomePage({ projects }: { projects: HomeProject[] }) {
                 </li>
               ))}
             </ol>
+            {/* The spec's third primary action; step 01 is exactly this. */}
             <div className="mt-8 flex sm:mt-11">
               <a className={`${btnOrange} w-full sm:w-auto`} href="/contact">
-                Start with an enquiry
+                Contact us
               </a>
             </div>
           </div>
         </section>
+
+        {settings.video ? (
+          <section className={band('video')} id="video" aria-labelledby="video-title">
+            <div
+              className={`${container} grid grid-cols-1 items-start gap-7 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-11`}
+            >
+              {/* Beside the player from lg; above it on a phone, so the heading comes first. */}
+              <div className={`${sectionHead} lg:order-2`}>
+                <p className={eyebrow}>Project video</p>
+                <h2 className={titleMd} id="video-title">
+                  Watch the work
+                </h2>
+                <p className={cardBody}>
+                  Film from site, from the official CoBuilt YouTube channel. The dated record behind
+                  it is in each project&rsquo;s Passport™.
+                </p>
+              </div>
+              <div className="reveal lg:order-1">
+                <HomeVideo id={settings.video.id} title={settings.video.title} />
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {leaders.length > 0 ? (
+          <section className={band('leadership')} id="leadership" aria-labelledby="leadership-title">
+            <div className={container}>
+              <div className="mb-7 flex flex-wrap items-end justify-between gap-5 sm:mb-9 sm:gap-8">
+                <div className={`${sectionHead} max-w-150`}>
+                  <p className={eyebrow}>Leadership</p>
+                  <h2 className={titleMd} id="leadership-title">
+                    The people accountable for the record
+                  </h2>
+                </div>
+                <a className={`${btnOutline} w-full sm:w-auto`} href="/leadership">
+                  Meet the leadership
+                </a>
+              </div>
+
+              <div className="reveal-stagger grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-3">
+                {leaders.map((leader) => (
+                  <article
+                    key={leader.id}
+                    className="flex items-start gap-4 border border-line bg-white p-5 sm:p-6"
+                  >
+                    {leader.photo ? (
+                      <div
+                        className={`${media} size-18 flex-none sm:size-20`}
+                        style={{ backgroundImage: cssUrl(leader.photo) }}
+                        role="img"
+                        aria-label={`Portrait of ${leader.name}`}
+                      />
+                    ) : (
+                      // No stock face: the slot says nothing rather than something untrue.
+                      <div
+                        className="flex size-18 flex-none items-center justify-center bg-line text-[1.25rem] text-zinc-500 sm:size-20"
+                        aria-hidden="true"
+                      >
+                        ◈
+                      </div>
+                    )}
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                      <h3 className="text-[1.125rem] leading-[1.3] font-normal text-ink">
+                        {leader.name}
+                      </h3>
+                      {leader.role ? (
+                        <p className="text-[0.688rem] tracking-[0.14em] text-zinc-600 uppercase">
+                          {leader.role}
+                        </p>
+                      ) : null}
+                      {leader.summary ? (
+                        <p className="mt-1 text-[0.844rem] leading-[1.65] text-zinc-600">
+                          {leader.summary}
+                        </p>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {news.length > 0 ? (
+          <section className={band('news')} id="news" aria-labelledby="news-title">
+            <div className={container}>
+              <div className="mb-7 flex flex-wrap items-end justify-between gap-5 sm:mb-9 sm:gap-8">
+                <div className={`${sectionHead} max-w-150`}>
+                  <p className={eyebrow}>News &amp; insights</p>
+                  <h2 className={titleMd} id="news-title">
+                    Latest from CoBuilt
+                  </h2>
+                </div>
+                <a className={`${btnOutline} w-full sm:w-auto`} href="/news">
+                  View all news
+                </a>
+              </div>
+
+              <div className="reveal-stagger grid grid-cols-1 gap-9 sm:grid-cols-2 sm:gap-6 md:grid-cols-3">
+                {news.map((article) => (
+                  <article key={article.id} className="flex flex-col gap-3">
+                    <a className="group flex flex-col gap-3" href={`/news/${article.slug}`}>
+                      <div className="overflow-hidden">
+                        <div
+                          className={`${media} aspect-[16/10] transition-transform duration-700 ease-settle group-hover:scale-104 sm:aspect-auto sm:h-52`}
+                          // A missing featured image is ordinary CMS data: the house still, unlabelled.
+                          style={{ backgroundImage: cssUrl(article.image ?? IMAGES.apartments) }}
+                          {...(article.image
+                            ? { role: 'img', 'aria-label': article.title }
+                            : { 'aria-hidden': true })}
+                        />
+                      </div>
+                      <p className="flex flex-wrap gap-x-3 gap-y-1 text-[0.688rem] tracking-[0.16em] text-zinc-600 uppercase">
+                        {article.category ? (
+                          <span className="text-rust">{categoryLabel(article.category)}</span>
+                        ) : null}
+                        {article.published ? <span>{article.published}</span> : null}
+                      </p>
+                      <h3 className="text-[1.1875rem] leading-[1.35] font-normal tracking-normal text-ink group-hover:text-rust">
+                        {article.title}
+                      </h3>
+                    </a>
+                    {article.excerpt ? (
+                      <p className="line-clamp-3 text-[0.875rem] leading-[1.65] text-zinc-600">
+                        {article.excerpt}
+                      </p>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="bg-line py-13 sm:py-19" id="register">
           <div

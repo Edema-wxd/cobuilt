@@ -471,3 +471,30 @@ export async function galleryForProject(
     imageUrls: row.image_urls ?? [],
   }));
 }
+
+export interface PortfolioCounts {
+  completed: number;
+  ongoing: number;
+  locations: number;
+}
+
+/**
+ * The homepage's figures, counted from live projects: delivered, under
+ * development, and the distinct locations they stand in. There is no units
+ * column, so units are only ever set by an administrator.
+ */
+export async function portfolioCounts(): Promise<PortfolioCounts> {
+  const row = await queryOne<{ completed: string; ongoing: string; locations: string }>(
+    `SELECT count(*) FILTER (WHERE p.status = 'completed')::text AS completed,
+            count(*) FILTER (WHERE p.status = 'ongoing')::text AS ongoing,
+            count(DISTINCT p.location_id)::text AS locations
+       FROM projects p
+      WHERE p.deleted_at IS NULL AND p.published_at IS NOT NULL AND p.published_at <= NOW()`,
+  );
+
+  return {
+    completed: Number(row?.completed ?? 0),
+    ongoing: Number(row?.ongoing ?? 0),
+    locations: Number(row?.locations ?? 0),
+  };
+}

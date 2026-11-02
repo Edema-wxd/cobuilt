@@ -1,17 +1,27 @@
 import type { Metadata } from 'next';
 import HomePage from './home-page';
+import { loadHomeLeaders } from './home-leadership';
+import { loadHomeNews } from './home-news';
 import { loadHomeProjects } from './home-projects';
+import { loadHomeSettings } from './home-settings';
+import { loadServiceCards } from './services/load-services';
 
 /**
  * Public landing page — `/`.
  *
  * The page body is a client component: it holds the portfolio filter and the
  * "Register your interest" form. This file carries the metadata, which only a
- * server component can export, and loads the published projects it shows.
+ * server component can export, and loads what the page shows: published
+ * projects and services, the latest news, the leadership spotlight, and the
+ * settings set at /admin/homepage with the statistics.
+ *
+ * Each loader catches its own failure and returns its empty or as-built
+ * value, so the build — which has no database — and an outage both render.
  */
 
-// Regenerated at most once a minute, so a newly published project reaches the
-// landing page in the same minute it reaches /projects.
+// Regenerated at most once a minute, so a newly published project, article or
+// settings change reaches the landing page within the minute. A settings save
+// also asks for regeneration at once (pages/api/admin/settings/homepage.ts).
 export const revalidate = 60;
 
 export const metadata: Metadata = {
@@ -23,5 +33,21 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  return <HomePage projects={await loadHomeProjects()} />;
+  const [settings, projects, services, news, leaders] = await Promise.all([
+    loadHomeSettings(),
+    loadHomeProjects(),
+    loadServiceCards(),
+    loadHomeNews(),
+    loadHomeLeaders(),
+  ]);
+
+  return (
+    <HomePage
+      settings={settings}
+      projects={projects}
+      services={services}
+      news={settings.showNews ? news : []}
+      leaders={settings.showLeadership ? leaders : []}
+    />
+  );
 }
