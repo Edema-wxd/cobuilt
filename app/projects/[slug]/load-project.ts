@@ -54,6 +54,7 @@ export const EMPTY: ProjectDetailProps = {
   tours: [],
   passport: null,
   related: [],
+  videos: [],
 };
 
 export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
@@ -65,6 +66,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
   const projectsRepo = await import('@/lib/repositories/projects');
   const toursRepo = await import('@/lib/repositories/tours');
   const passportRepo = await import('@/lib/repositories/passport');
+  const videosRepo = await import('@/lib/repositories/videos');
   const { serializeProject, serializeTour, toDateOnly } = await import('@/lib/serializers');
 
   try {
@@ -73,7 +75,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
 
     const project = serializeProject(row);
 
-    const [services, tags, albums, tourRows, milestones, nearby] = await Promise.all([
+    const [services, tags, albums, tourRows, milestones, nearby, videos] = await Promise.all([
       projectsRepo.labelsByIds('services', project.serviceIds),
       projectsRepo.labelsByIds('tags', project.tagIds),
       projectsRepo.galleryForProject(project.id, project.galleryIds),
@@ -88,6 +90,9 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
         pageSize: 4,
         sort: 'recent',
       }),
+      // The film list is a side panel: if it cannot be read, the page still
+      // renders without it rather than as "couldn't be loaded".
+      videosRepo.listForProject(row.id).catch(() => []),
     ]);
 
     const total = milestones.length;
@@ -157,6 +162,13 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
             location: item.location_name ?? null,
             featuredImageUrl: item.featured_image_url,
           })),
+        videos: videos.map(({ id, slug, title, category, durationSeconds }) => ({
+          id,
+          slug,
+          title,
+          category,
+          durationSeconds,
+        })),
       },
     };
   } catch {
