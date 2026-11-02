@@ -56,6 +56,7 @@ export const EMPTY: ProjectDetailProps = {
   related: [],
   videos: [],
   documents: [],
+  albums: [],
 };
 
 export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
@@ -70,6 +71,7 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
   const videosRepo = await import('@/lib/repositories/videos');
   const documentsRepo = await import('@/lib/repositories/documents');
   const { serializeProject, serializeTour, toDateOnly } = await import('@/lib/serializers');
+  const galleryRepo = await import('@/lib/repositories/gallery');
 
   try {
     const row = await projectsRepo.findBySlug(slug);
@@ -77,28 +79,31 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
 
     const project = serializeProject(row);
 
-    const [services, tags, albums, tourRows, milestones, nearby, videos, documents] = await Promise.all([
-      projectsRepo.labelsByIds('services', project.serviceIds),
-      projectsRepo.labelsByIds('tags', project.tagIds),
-      projectsRepo.galleryForProject(project.id, project.galleryIds),
-      toursRepo.listForProject(project.id),
-      row.passport_enabled ? passportRepo.listForProject(project.id) : Promise.resolve([]),
-      projectsRepo.listProjects({
-        // "More in Lagos" is the index filtered by this project's location, so
-        // no related-projects field is needed. One extra row is requested to
-        // cover this project being among them.
-        ...(row.location_id ? { location: row.location_id } : {}),
-        page: 1,
-        pageSize: 4,
-        sort: 'recent',
-      }),
-      // The film list is a side panel: if it cannot be read, the page still
-      // renders without it rather than as "couldn't be loaded".
-      videosRepo.listForProject(row.id).catch(() => []),
-      // Downloads are an extra on this page: failing to read them hides the
-      // list rather than the project.
-      documentsRepo.listPublished({ projectId: project.id }).catch(() => []),
-    ]);
+    const [services, tags, albums, tourRows, milestones, nearby, videos, documents, photoAlbums] =
+      await Promise.all([
+        projectsRepo.labelsByIds('services', project.serviceIds),
+        projectsRepo.labelsByIds('tags', project.tagIds),
+        projectsRepo.galleryForProject(project.id, project.galleryIds),
+        toursRepo.listForProject(project.id),
+        row.passport_enabled ? passportRepo.listForProject(project.id) : Promise.resolve([]),
+        projectsRepo.listProjects({
+          // "More in Lagos" is the index filtered by this project's location, so
+          // no related-projects field is needed. One extra row is requested to
+          // cover this project being among them.
+          ...(row.location_id ? { location: row.location_id } : {}),
+          page: 1,
+          pageSize: 4,
+          sort: 'recent',
+        }),
+        // The film list is a side panel: if it cannot be read, the page still
+        // renders without it rather than as "couldn't be loaded".
+        videosRepo.listForProject(row.id).catch(() => []),
+        // Downloads are an extra on this page: failing to read them hides the
+        // list rather than the project.
+        documentsRepo.listPublished({ projectId: project.id }).catch(() => []),
+        // "Photo albums": the project's albums in the image gallery.
+        galleryRepo.publishedForProject(project.id, project.galleryIds),
+      ]);
 
     const total = milestones.length;
     const completed = milestones.filter((milestone) => milestone.status === 'completed').length;
@@ -180,6 +185,14 @@ export const loadProject = cache(async (slug: string): Promise<LoadResult> => {
           fileType,
           fileSizeBytes,
           downloadUrl,
+        })),
+        albums: photoAlbums.map(({ id, slug, title, category, imageCount, cover }) => ({
+          id,
+          slug,
+          title,
+          category,
+          imageCount,
+          coverUrl: cover?.url ?? null,
         })),
       },
     };

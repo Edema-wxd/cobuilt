@@ -6,7 +6,8 @@ those designs have to hold to, and the data each page can actually show.
 Seventeen pages are live: the landing page, the projects index, a project detail
 page, a project's Passport record, About, Leadership, Services and the six
 service pages behind it, Passport™, the media centre (`/media`), its news list
-and article page, Contact, Careers, and four legal pages. The backend covers more still — 41 API
+and article page, the image gallery and its album pages, Contact, Careers,
+and four legal pages. The backend covers more still — 41 API
 routes, several with no interface yet. This document is the list of what to
 design next, in the order worth building.
 
@@ -149,7 +150,8 @@ Header with disclosure menu · utility strip · footer with four link columns ·
 legal bar · cookie banner with per-category panel · buttons (orange, white,
 outline-on-dark, outline) · eyebrow · stat band · service card grid · project
 card with status badge and progress bar · filter pills (scrolling row on
-phones) · milestone list · value/step columns with dividing rules · news card ·
+phones) · milestone list · value/step columns with dividing rules · news card · album card ·
+full-screen photo viewer (`app/gallery/[slug]/album-viewer.tsx`) ·
 form fields with NDPA consent · regulatory notice block · prose page shell with
 section rules, tables and note blocks.
 
@@ -262,7 +264,9 @@ fields. An `investor` block (amount, expected ROI, highlights) exists but is
 **null until legal approves it per project** — design for both states, and
 remember §1: no investment CTA even when it is populated.
 
-Also available: 3D virtual tours (see 3.7).
+Also available: 3D virtual tours (see 3.7), and the project's photo albums
+in the image gallery — a compact "Photo albums" band of cards linking into
+`/gallery/[slug]`, left out when the project has none (§3.8).
 
 #### 3.3 Projects index — `/projects` — **built**
 
@@ -373,6 +377,33 @@ How each open question was resolved (docs/decisions.md §2.16):
   unreadable file, device out of graphics memory). Each offers the gallery and
   Back, and the download failure also offers Try again.
 
+#### 3.8 Image gallery — `/gallery`, `/gallery/[slug]` — **built**
+
+Albums managed and uploaded at `/admin/gallery`, organised by the client's six
+categories: completed projects, ongoing projects, future concepts, events, team
+activities, corporate branding. See `docs/decisions.md` §2.24.
+
+- **Index**: the album grid (cover, category eyebrow, title, a two-line
+  description, photograph count and project), with category pills — the
+  projects index's pattern, one scrolling row on a phone — and a project
+  select. Only filters with albums behind them are offered, each with its
+  count. Filtering is instant and kept in the query string. Empty and "no
+  match" states are built, and so is the state for a database that is down.
+- **Album**: the hero carries the category, title, description and a mono rule
+  with the count and the project's link, under breadcrumbs (Home / Gallery /
+  album). Photographs sit in fixed 4:3 tiles, two to four across, with the
+  caption beneath where there is one.
+- **Viewer**: full screen on `ink-deep`, so white text needs no scrim. A bar
+  with the album's title, "3 / 12" and a close button; previous and next at
+  the sides; the caption and date taken in a band beneath. Keyboard (arrows,
+  Home, End, Escape), swipe, and focus held inside it; all controls 48px.
+- **Data**: per album, title, description, category, project, cover and
+  count; per image, URL, **alt text (required)**, caption, pixel size and
+  date taken. There is no photographer credit or licence field — say if the
+  client needs one.
+- Not in the header navigation (§1); the footer's media links are the way in,
+  and each project page links its albums.
+
 ### Tier 2 — mandated by the navigation
 
 These are nav or footer items that currently point at a homepage anchor or
@@ -446,12 +477,16 @@ admin console is what makes the site maintainable without a developer.
   (add by YouTube link, category, project, thumbnail, order, publish,
   feature), contact details (address, phones, emails, WhatsApp, hours, map
   position), downloads (PDF upload or link, category, project, order,
-  publish, download counts), 3D tours (upload, edit, delete),
+  publish, download counts), 3D tours (upload, edit, delete), the image
+  gallery (albums: create, order, publish, delete; photographs: upload with
+  progress or add by link, alt text — required — caption and date, order,
+  cover, delete),
   investor-content approval, users and roles,
   and the audit log. Editors send only the fields that changed, and any change
   to an investor figure withdraws its approval after a confirmation. A record
   mirrored from the CMS carries a notice that the CMS will overwrite console
-  edits. Gallery albums are still attached only from the CMS.
+  edits. An album is attached to a project from the album's own form in
+  `/admin/gallery`, not from the project editor.
 
 ### Small gaps worth folding in
 

@@ -43,6 +43,7 @@ tags:
   - name: Virtual Tours
   - name: News
   - name: Services
+  - name: Gallery
   - name: Videos
   - name: FAQs
   - name: Leadership
@@ -588,6 +589,58 @@ paths:
         '422': { $ref: '#/components/responses/ValidationFailed' }
         '429': { $ref: '#/components/responses/RateLimited' }
 
+  /api/gallery:
+    get:
+      tags: [Gallery]
+      summary: List published photo albums
+      description: |
+        Published albums that hold at least one image, in the order set in the
+        console. Filter by `category` (one of the six) and by `project` (a
+        project's slug or id; only a live project's albums are filed under
+        it). `facets` lists the categories and live projects that have albums,
+        with counts, so a client offers only filters that return something.
+        Drafts never appear here, whoever is asking.
+      security: []
+      parameters:
+        - { name: category, in: query, schema: { $ref: '#/components/schemas/GalleryCategory' } }
+        - { name: project, in: query, schema: { type: string }, description: A project's slug or id }
+        - $ref: '#/components/parameters/Page'
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 24 } }
+      responses:
+        '200':
+          description: Albums in display order, with the filters' options
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items: { $ref: '#/components/schemas/GalleryAlbumSummary' }
+                      facets: { $ref: '#/components/schemas/GalleryFacets' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/gallery/{slug}:
+    get:
+      tags: [Gallery]
+      summary: A published album with its images
+      description: |
+        The album and its images in order, each with its alt text, caption,
+        pixel size (when known) and date taken. A draft, or an album with no
+        images yet, is a 404.
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The album
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GalleryAlbum' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /api/search:
     get:
       tags: [Search]
@@ -1120,12 +1173,13 @@ paths:
       tags: [Virtual Tours]
       summary: UploadThing upload endpoint
       description: |
-        Used by the UploadThing client, not called directly. `POST` requests an
-        upload URL for a route, authorised by the console's bearer token:
-        `tourModel` (a .glb, .gltf or .zip; `tours:write`) or `document` (one
-        PDF up to 32 MB; `downloads:write`), each for admins and editors.
-        UploadThing also calls it back when an upload completes. The request
-        and response shapes are UploadThing's own.
+        Used by the UploadThing client, not called directly. `POST` requests
+        upload URLs for a route, authorised by the console's bearer token:
+        `tourModel` (a .glb, .gltf or .zip; `tours:write`), `document` (one PDF
+        up to 32 MB; `downloads:write`) or `galleryImage` (up to 20 JPEG, PNG or
+        WebP images of 16 MB each; `gallery:write`), each for admins and
+        editors. UploadThing also calls it back when an upload completes. The
+        request and response shapes are UploadThing's own.
       responses:
         '200': { description: Route configuration }
     post:
@@ -1733,6 +1787,237 @@ paths:
         from storage too, and its download counts. Cannot be undone;
         unpublishing is the reversible alternative. Audited as
         `document.deleted`.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/gallery:
+    get:
+      tags: [Gallery]
+      summary: List every album, drafts and empty ones included
+      description: Requires `admin` or `editor` with `gallery:write`.
+      responses:
+        '200':
+          description: Every album in display order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/GalleryAlbumAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Gallery]
+      summary: Create an album
+      description: |
+        Requires `admin` or `editor` with `gallery:write`. The album is added at
+        the end of the list, and is a draft unless `published` is true. A
+        missing slug is made from the title, and suffixed (`-2`) if taken.
+        Images are added once it exists. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GalleryAlbumInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GalleryAlbumAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: Another album has that slug }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/gallery/reorder:
+    post:
+      tags: [Gallery]
+      summary: Set the display order of the albums
+      description: |
+        Requires `admin` or `editor` with `gallery:write`. `ids` is every
+        album, once each, in the new order; a list that leaves one out or
+        names one that does not exist is a 422.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdOrder' }
+      responses:
+        '200':
+          description: Every album in its new order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/GalleryAlbumAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/gallery/{albumId}:
+    parameters:
+      - { name: albumId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Gallery]
+      summary: An album with every image
+      description: Requires `admin` or `editor` with `gallery:write`.
+      responses:
+        '200':
+          description: The album
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GalleryAlbumAdminDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Gallery]
+      summary: Update, publish or unpublish an album, or set its cover
+      description: |
+        Requires `admin` or `editor` with `gallery:write`. Every field is
+        optional; the ones present are applied. `coverImageId` must be one of
+        the album's own images (null falls back to the first). Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GalleryAlbumUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GalleryAlbumAdminDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Another album has that slug }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Gallery]
+      summary: Delete an album
+      description: |
+        Requires `admin` with `gallery:write`. Deletes the album, its images and
+        their uploaded files in storage, and removes it from any project's
+        `galleryIds`. Cannot be undone; unpublishing is the reversible
+        alternative. Audited.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/gallery/{albumId}/images:
+    parameters:
+      - { name: albumId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [Gallery]
+      summary: Add images to an album
+      description: |
+        Requires `admin` or `editor` with `gallery:write`. Up to 20 images,
+        appended in order, all or none. Each is either `fileKey` — a file just
+        uploaded through `/api/uploadthing`'s `galleryImage` route, accepted
+        only once it is confirmed in storage — or `imageUrl`, an https URL or a
+        path on this site. Alt text is required on every image. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [images]
+              additionalProperties: false
+              properties:
+                images:
+                  type: array
+                  minItems: 1
+                  maxItems: 20
+                  items: { $ref: '#/components/schemas/GalleryImageInput' }
+      responses:
+        '201':
+          description: The images added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/GalleryImageAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: That uploaded file is already in the gallery }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '503': { description: Object storage is not configured (uploads only) }
+
+  /api/admin/gallery/{albumId}/images/reorder:
+    parameters:
+      - { name: albumId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [Gallery]
+      summary: Set the order of an album's images
+      description: |
+        Requires `admin` or `editor` with `gallery:write`. `ids` is every image
+        in the album, once each, in the new order; anything else is a 422.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdOrder' }
+      responses:
+        '200':
+          description: The album's images in their new order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/GalleryImageAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/gallery/{albumId}/images/{imageId}:
+    parameters:
+      - { name: albumId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: imageId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [Gallery]
+      summary: Update an image's alt text, caption or date
+      description: |
+        Requires `admin` or `editor` with `gallery:write`. Alt text can be
+        changed but not cleared. The file itself is fixed. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                altText: { type: string, minLength: 3, maxLength: 300 }
+                caption: { type: string, maxLength: 500, nullable: true }
+                takenOn: { type: string, format: date, nullable: true }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GalleryImageAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Gallery]
+      summary: Delete an image
+      description: |
+        Requires `admin` or `editor` with `gallery:write`. An uploaded image's
+        file is deleted from storage too. Audited.
       responses:
         '204': { description: Deleted }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -2655,6 +2940,159 @@ components:
       allOf:
         - $ref: '#/components/schemas/VideoFields'
         - minProperties: 1
+
+    GalleryCategory:
+      type: string
+      enum: [completed_projects, ongoing_projects, future_concepts, events, team_activities, corporate_branding]
+
+    GalleryImage:
+      type: object
+      properties:
+        id:      { type: string, format: uuid }
+        url:     { type: string, description: 'An UploadThing URL, an https link, or a path on this site' }
+        alt:     { type: string, description: Descriptive alt text; always present }
+        caption: { type: string, nullable: true }
+        width:   { type: integer, nullable: true, description: Pixels, when known }
+        height:  { type: integer, nullable: true }
+        takenOn: { type: string, format: date, nullable: true }
+
+    GalleryImageAdmin:
+      allOf:
+        - $ref: '#/components/schemas/GalleryImage'
+        - type: object
+          properties:
+            fileKey:   { type: string, nullable: true, description: The UploadThing key of an uploaded file }
+            sortOrder: { type: integer }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    GalleryImageInput:
+      type: object
+      description: Exactly one of `fileKey` and `imageUrl`. Unknown fields are refused with a 422.
+      required: [altText]
+      additionalProperties: false
+      properties:
+        fileKey:  { type: string, maxLength: 512 }
+        imageUrl: { type: string, maxLength: 1024, description: 'https://…, or a path on this site starting with /' }
+        altText:  { type: string, minLength: 3, maxLength: 300 }
+        caption:  { type: string, maxLength: 500, nullable: true }
+        width:    { type: integer, minimum: 1 }
+        height:   { type: integer, minimum: 1 }
+        takenOn:  { type: string, format: date, nullable: true }
+
+    GalleryAlbumSummary:
+      type: object
+      properties:
+        id:          { type: string, format: uuid }
+        slug:        { type: string }
+        title:       { type: string }
+        description: { type: string, nullable: true }
+        category:    { $ref: '#/components/schemas/GalleryCategory' }
+        project:
+          type: object
+          nullable: true
+          description: The project the album documents, while that project is live
+          properties:
+            id:    { type: string, format: uuid }
+            slug:  { type: string }
+            title: { type: string }
+        cover:
+          type: object
+          nullable: true
+          description: The chosen cover image, else the album's first
+          properties:
+            url:    { type: string }
+            alt:    { type: string }
+            width:  { type: integer, nullable: true }
+            height: { type: integer, nullable: true }
+        imageCount: { type: integer }
+        updatedAt:  { type: string, format: date-time }
+
+    GalleryAlbum:
+      allOf:
+        - $ref: '#/components/schemas/GalleryAlbumSummary'
+        - type: object
+          properties:
+            images: { type: array, items: { $ref: '#/components/schemas/GalleryImage' } }
+
+    GalleryFacets:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              value: { $ref: '#/components/schemas/GalleryCategory' }
+              count: { type: integer }
+        projects:
+          type: array
+          items:
+            type: object
+            properties:
+              id:    { type: string, format: uuid }
+              slug:  { type: string }
+              title: { type: string }
+              count: { type: integer }
+
+    GalleryAlbumAdmin:
+      allOf:
+        - $ref: '#/components/schemas/GalleryAlbumSummary'
+        - type: object
+          properties:
+            project:
+              type: object
+              nullable: true
+              description: Named whether or not the project is live
+              properties:
+                id:          { type: string, format: uuid }
+                slug:        { type: string }
+                title:       { type: string }
+                isPublished: { type: boolean }
+            published:    { type: boolean }
+            sortOrder:    { type: integer }
+            coverImageId: { type: string, format: uuid, nullable: true }
+            createdAt:    { type: string, format: date-time }
+
+    GalleryAlbumAdminDetail:
+      allOf:
+        - $ref: '#/components/schemas/GalleryAlbumAdmin'
+        - type: object
+          properties:
+            images: { type: array, items: { $ref: '#/components/schemas/GalleryImageAdmin' } }
+
+    GalleryAlbumFields:
+      type: object
+      description: Unknown fields are refused with a 422.
+      properties:
+        title:       { type: string, minLength: 2, maxLength: 255 }
+        slug:        { type: string, description: 'The album lives at /gallery/{slug}' }
+        description: { type: string, maxLength: 2000, nullable: true }
+        category:    { $ref: '#/components/schemas/GalleryCategory' }
+        projectId:   { type: string, format: uuid, nullable: true }
+        published:   { type: boolean, default: false }
+
+    GalleryAlbumInput:
+      allOf:
+        - $ref: '#/components/schemas/GalleryAlbumFields'
+        - required: [title, category]
+
+    GalleryAlbumUpdate:
+      description: Any of the album fields, or `coverImageId`, at least one; the ones present are applied.
+      allOf:
+        - $ref: '#/components/schemas/GalleryAlbumFields'
+        - type: object
+          minProperties: 1
+          properties:
+            coverImageId: { type: string, format: uuid, nullable: true }
+
+    IdOrder:
+      type: object
+      description: Every item, once each, in the new order.
+      required: [ids]
+      additionalProperties: false
+      properties:
+        ids: { type: array, minItems: 1, items: { type: string, format: uuid } }
 
     SearchResponse:
       type: object

@@ -43,6 +43,13 @@ describe('RBAC', () => {
     expect(hasPermission('investor', {}, 'downloads:write')).toBe(false);
   });
 
+  it('lets admins and editors, and no one else, manage the image gallery', () => {
+    expect(hasPermission('admin', {}, 'gallery:write')).toBe(true);
+    expect(hasPermission('editor', {}, 'gallery:write')).toBe(true);
+    expect(hasPermission('viewer', {}, 'gallery:write')).toBe(false);
+    expect(hasPermission('investor', {}, 'gallery:write')).toBe(false);
+  });
+
   it('gives a viewer read-only access', () => {
     const viewer = effectivePermissions('viewer');
     expect(viewer.has('projects:read')).toBe(true);

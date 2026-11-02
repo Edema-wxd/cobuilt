@@ -21,6 +21,7 @@ export const TTL = {
   services: 60,
   videos: 60,
   documents: 60,
+  gallery: 60,
   search: 300,
   facets: 60,
 } as const;

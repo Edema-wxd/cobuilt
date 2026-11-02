@@ -745,6 +745,87 @@ The channel's own URL is still unconfirmed (the header's "YouTube" link goes
 to the library for that reason), so the library links each film's watch page
 but not the channel.
 
+### 2.24 The image gallery is uploaded and managed in the console
+
+The client's spec asks for an image gallery organised by completed projects,
+ongoing projects, future concepts, events, team activities and corporate
+branding, with albums, a project filter, a lightbox, high-resolution images
+optimised for performance, and descriptive alt text on every image. `/gallery`
+lists the published albums with category and project filters,
+`/gallery/[slug]` shows an album's photographs and opens them in a viewer, and
+`/admin/gallery` manages them behind a new `gallery:write` permission (admin
+and editor; deleting an album is admin-only, as for tours and services). Public
+reads are `/api/gallery` and `/api/gallery/[slug]`, under `CONTENT_CACHE` and a
+one-minute Redis entry that every write clears; every write is audited.
+
+**The existing `gallery_albums` table was extended, not replaced.** 0004 created
+it as a CMS mirror attached to projects, with its images as an array of URLs,
+and projects already point at albums both ways (§2.10). A URL cannot carry alt
+text, a caption or its own order, so migration 0020 moves the images into
+`gallery_images` — `alt_text` is `NOT NULL` and must not be blank — and drops
+the array. The URLs already held move across with an indexed description
+("{album}, photograph 2"), the same one the project page gave them, until an
+editor writes a real one; existing albums take a category from their project's
+stage, or Events without one. An album's project link became `ON DELETE SET
+NULL`: an album outlives a hard-deleted project rather than taking its
+photographs, and their stored files, with it. Each album resolves to one
+project (its own `project_id`, else a project whose `gallery_ids` holds it), so
+the card, the project filter and its counts cannot disagree.
+
+**Images are uploaded, the first upload route for images.** Projects, news and
+leadership still take image URLs. A `galleryImage` route on the UploadThing
+router takes JPEG, PNG and WebP, up to 16 MB each and 20 at a time, gated
+exactly as `tourModel` is: a signed-in admin or editor holding the route's
+permission, checked in the middleware, which is the only place UploadThing
+asks. `tourModel` is unchanged. The browser uploads straight to storage with a
+progress bar, then registers the keys with `POST
+/api/admin/gallery/[id]/images`, which accepts a key only once storage
+confirms the file — the tour flow (§2.2). The console asks for each file's alt
+text before the upload starts, so nothing reaches the site undescribed, and
+reads each image's pixel size in the browser. Deleting an image deletes its
+stored file; deleting an album deletes all of its files. An image can also be
+added by link: an https URL, or a path on this site (`/images/…`), which is
+also how the development seed and the browser checks add photographs without a
+storage token. http is refused, as for portraits (§2.20).
+
+**`next/image` does the optimising.** It was not used anywhere before. Every
+gallery image sits in a fixed 4:3 frame (`object-cover`; the viewer uses
+`object-contain`), so nothing moves when it arrives; it is served as WebP at
+the width the slot needs (`sizes`), lazily below the fold, with the first row
+fetched eagerly. `next.config.mjs` gains an `images` block only:
+`remotePatterns` for UploadThing (`utfs.io`, `*.ufs.sh`), the two qualities
+used, and a month's cache for resized copies, since an UploadThing URL names an
+immutable file. A linked image on any other host is shown unoptimised rather
+than fetched by the server for an arbitrary editor-supplied host. The CSP
+already allows `img-src https:`, and the optimiser serves from this origin.
+
+**The viewer is a modal dialog.** Focus moves to its close button and is held
+inside it; Escape closes it and focus returns to the photograph's tile; the
+arrow keys, Home and End move between photographs, as does a horizontal swipe;
+every control is 48px and visible over the photograph. Each photograph carries
+its alt text, with its caption and date beneath, and each move is announced.
+The tiles are links to the image file, so without JavaScript a photograph still
+opens full size. On cards (the gallery grid, a project's albums) the cover is
+decorative, `alt=""`, because the album's title already names the link; each
+photograph is described where it is shown on its own.
+
+**The gallery page filters in the browser.** It is prerendered with every
+published album (a gallery is tens of albums, not thousands), regenerated at
+most once a minute, and filters instantly with no request. The filters are
+mirrored into the query string so a filtered view can be shared, and read back
+once the page is interactive, so a shared link shows every album for a moment
+before it narrows. Only filters with albums behind them are offered. An album
+appears publicly only when it is published and holds at least one image; the
+console says so ("Published · hidden until it has a photograph"). Without a
+database the pages say the gallery couldn't be loaded rather than failing or
+answering 404, and the build prerenders no albums; each renders on its first
+request.
+
+**A project page links its albums.** "Photo albums" on `/projects/[slug]` lists
+the project's published albums, each linking into the gallery; it is hidden
+when there are none. The page's own gallery band now reads its images from
+`gallery_images`, in the gallery's order, and is otherwise unchanged.
+
 ### 2.25 Resources and downloads, and the contact page's gaps
 
 The client's spec asks for a Resources section — company profile, capability
