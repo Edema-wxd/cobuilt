@@ -1,4 +1,5 @@
 import { OG_CONTENT_TYPE, OG_SIZE, ogCard } from '../../../components/og';
+import { newsCategoryLabel } from '@/lib/news-categories';
 import { loadArticle } from './load-article';
 
 /**
@@ -30,7 +31,9 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   if (!article) return ogCard({ eyebrow: 'Media centre', title: 'News and insights from CoBuilt' });
 
   return ogCard({
-    eyebrow: ['Media centre', article.category].filter(Boolean).join(' · '),
+    eyebrow: ['Media centre', article.category ? newsCategoryLabel(article.category) : null]
+      .filter(Boolean)
+      .join(' · '),
     title: article.title,
     detail: formatDate(article.publishedAt),
   });

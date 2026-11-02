@@ -68,6 +68,32 @@ export async function list(options: ListNewsOptions): Promise<Paginated<NewsRow>
   return paginate(rows, Number(total?.count ?? 0), options.page, options.pageSize);
 }
 
+/**
+ * The newest published articles in each category, at most `perCategory` of
+ * each, for the media centre's landing page. One query rather than one per
+ * category: the rows are numbered within their category and cut there.
+ * Uncategorised articles come back as their own group, with a null category.
+ */
+export async function latestPerCategory(perCategory: number): Promise<NewsRow[]> {
+  const { rows } = await query<NewsRow>(
+    `SELECT * FROM (
+       SELECT ${COLUMNS},
+              row_number() OVER (
+                PARTITION BY n.category
+                ORDER BY n.published_at DESC, n.created_at DESC
+              ) AS category_rank
+         ${FROM_CLAUSE}
+        WHERE n.deleted_at IS NULL
+          AND n.published_at IS NOT NULL AND n.published_at <= NOW()
+     ) ranked
+      WHERE category_rank <= $1
+      ORDER BY published_at DESC, created_at DESC`,
+    [perCategory],
+  );
+
+  return rows;
+}
+
 export async function findBySlug(
   slug: string,
   options: { includeUnpublished?: boolean } = {},

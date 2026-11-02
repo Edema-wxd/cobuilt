@@ -20,12 +20,18 @@ import {
   eyebrow,
   media,
 } from '../../components/ui';
+import {
+  NEWS_CATEGORIES,
+  newsCategoryLabel,
+  normalizeNewsCategory,
+} from '@/lib/news-categories';
 
 /**
- * Media centre — `/news`.
+ * News and articles — `/news`, under the media centre (`/media`).
  *
  * The nav's Media item and the landing page's "More news" button both pointed
- * at the newsletter form. This is the page they meant.
+ * at the newsletter form. This is the list they meant; `/media` is now the
+ * section's front page, and links here by category.
  *
  * Like the projects index, the list is read from the API in the browser rather
  * than on the server: `/api/news` needs PostgreSQL, and a checkout without a
@@ -34,9 +40,11 @@ import {
  * filtered view is shareable and the back button works.
  *
  * `/news/category/[category]` from the handover is not a separate route: the
- * category is a filter on this page (`/news?category=update`), which keeps one
- * list implementation and one empty state. The API route of that name still
- * exists for clients that want it.
+ * category is a filter on this page (`/news?category=project_update`), which
+ * keeps one list implementation and one empty state. The API route of that name
+ * still exists for clients that want it. The five categories are the spec's
+ * (src/lib/news-categories.ts); a link with a launch-era name such as
+ * `?category=update` selects the category it became.
  */
 
 const PAGE_SIZE = 9;
@@ -76,11 +84,28 @@ const fieldLabel = 'text-[0.688rem] font-semibold uppercase tracking-[0.14em] te
 const control =
   'min-h-11.5 w-full rounded-none border border-zinc-500 bg-white px-3.5 text-base text-ink sm:text-[0.875rem]';
 
-/** `press_release` reads as a database value; this is the same thing in English. */
-function categoryLabel(value: string): string {
-  return value
-    .replace(/[_-]+/g, ' ')
-    .replace(/^./, (character) => character.toUpperCase());
+/**
+ * The category pills: the spec's five in their order, then any category of the
+ * CMS's own. Facet values are normalised and summed, so a launch-era spelling
+ * still counts towards its category. A category with nothing published is left
+ * out — a filter that returns nothing is a dead end — unless it is the one
+ * selected, which keeps a shared link's pill on screen.
+ */
+function categoryOptions(facets: Facet[], selected: string): Facet[] {
+  const counts = new Map<string, number>();
+  for (const facet of facets) {
+    const value = normalizeNewsCategory(facet.value);
+    if (value) counts.set(value, (counts.get(value) ?? 0) + facet.count);
+  }
+
+  const known: readonly string[] = NEWS_CATEGORIES;
+  const ordered = [
+    ...known,
+    ...[...counts.keys()].filter((value) => !known.includes(value)).sort(),
+  ];
+  return ordered
+    .map((value) => ({ value, count: counts.get(value) ?? 0 }))
+    .filter((option) => option.count > 0 || option.value === selected);
 }
 
 /** "02 Sep 2026", the form the landing page's news cards use. */
@@ -125,12 +150,13 @@ export default function NewsIndex() {
 
   const param = useCallback((key: string) => searchParams?.get(key) ?? '', [searchParams]);
 
-  const category = param('category');
+  // Normalised, so `?category=update` lights the "Project update" pill.
+  const category = normalizeNewsCategory(param('category')) ?? '';
   const tag = param('tag');
   const q = param('q');
   const page = toPage(param('page'));
 
-  const [categories, setCategories] = useState<Facet[]>([]);
+  const [facets, setFacets] = useState<Facet[]>([]);
   const [data, setData] = useState<ArticlePage | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [attempt, setAttempt] = useState(0);
@@ -174,7 +200,7 @@ export default function NewsIndex() {
     fetch('/api/search/facets?type=news', { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload: { categories?: Facet[] } | null) => {
-        if (payload?.categories) setCategories(payload.categories);
+        if (payload?.categories) setFacets(payload.categories);
       })
       .catch(() => {
         // The category pills fall back to "All"; the list still loads.
@@ -216,18 +242,24 @@ export default function NewsIndex() {
   const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const lastRow = Math.min(page * PAGE_SIZE, total);
   const filtered = Boolean(category || tag || q);
+  const categories = categoryOptions(facets, category);
 
   return (
-    <SiteLayout current="/news">
+    <SiteLayout current="/media">
       <main>
         <PageHero
-          eyebrow="Media centre"
+          eyebrow="News & articles"
           title={
             <>
               Company updates, project news and <em>thinking</em>.
             </>
           }
-          standfirst="Press releases, project updates and announcements in one place. Project progress itself is recorded in each development’s Project Passport™."
+          standfirst="Press releases, project updates, thought leadership, industry insight and company announcements, in one place. Project progress itself is recorded in each development’s Project Passport™."
+          trail={[
+            { label: 'Home', href: '/' },
+            { label: 'Media', href: '/media' },
+            { label: 'News & articles' },
+          ]}
           actions={
             <>
               <a className={btnWhite} href="/#register">
@@ -264,7 +296,7 @@ export default function NewsIndex() {
                   aria-pressed={category === option.value}
                   onClick={() => setQuery({ category: option.value, page: '1' })}
                 >
-                  {categoryLabel(option.value)}
+                  {newsCategoryLabel(option.value)}
                   <span
                     className={`font-normal ${category === option.value ? 'text-zinc-200' : 'text-zinc-600'}`}
                   >
@@ -282,7 +314,7 @@ export default function NewsIndex() {
               }}
             >
               <label className={fieldLabel} htmlFor="news-q">
-                Search the media centre
+                Search news and articles
               </label>
               <input
                 id="news-q"
@@ -410,7 +442,7 @@ export default function NewsIndex() {
                       </div>
                       <p className="flex flex-wrap gap-x-3 gap-y-1 text-[0.688rem] tracking-[0.16em] text-zinc-500 uppercase">
                         {article.category ? (
-                          <span className="text-rust">{categoryLabel(article.category)}</span>
+                          <span className="text-rust">{newsCategoryLabel(article.category)}</span>
                         ) : null}
                         <span>{formatDate(article.publishedAt)}</span>
                       </p>
