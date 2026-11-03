@@ -617,6 +617,23 @@ most once a minute, like the landing page, and the API's Redis entries are
 cleared on every write. Copy that counted the services ("Six disciplines") now
 counts what is published.
 
+### 2.22 The home hero is a video, with a still poster as its floor
+
+The four-photo carousel is replaced by `app/hero-video.tsx`: a muted, looping
+video in two cuts. Desktop is 16:9, from the `sm` breakpoint up. Mobile is
+9:16, below it, because a landscape frame cropped to a phone keeps only a
+sliver of its middle. Each cut ships as WebM then MP4 in `public/videos/`,
+with a poster at the same ratio. The component's header comment has the
+export specs.
+
+**The poster is what the server renders.** The video is mounted only in the
+browser, and only when the visitor has neither `prefers-reduced-motion:
+reduce` nor Save-Data on. Neither of those visitors downloads any of it. A
+cut whose sources all fail to load is dropped, so until footage is delivered
+the hero shows the poster rather than a blank frame. The video fades in on
+its first frame. A pause control covers WCAG 2.2.2, and it offers Play when
+the browser refuses autoplay (iOS Low Power Mode).
+
 ## 3. Still open
 
 Carried from §17, with a recommendation where the work surfaced one.
