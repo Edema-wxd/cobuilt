@@ -1,4 +1,4 @@
-import { sanitiseUrl } from '../../components/pageViews';
+import { sanitiseUrl } from '../../components/pageViewRecording';
 
 describe('page view URLs', () => {
   it('drops query strings and fragments, which can carry tokens', () => {

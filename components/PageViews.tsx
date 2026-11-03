@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { CONSENT_CHANGED_EVENT, read } from './cookieConsent';
-import { sanitiseUrl, sendPageView } from './pageViews';
+import { sanitiseUrl, sendPageView } from './pageViewRecording';
 
 // Module state, not refs: each page renders its own SiteLayout, so this
 // component remounts on every navigation and must remember the last page.
