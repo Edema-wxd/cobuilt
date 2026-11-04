@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { media } from '../components/ui';
 import { youtubeEmbedUrl, youtubeWatchUrl } from '@/lib/youtube';
+import { cssUrl } from './projects/[slug]/project-shared';
 
 /**
  * The homepage's featured video — YouTube, loaded only when asked for.
@@ -20,7 +21,19 @@ import { youtubeEmbedUrl, youtubeWatchUrl } from '@/lib/youtube';
 
 const POSTER = '/images/villa-and-pool.webp';
 
-export default function HomeVideo({ id, title }: { id: string; title: string }) {
+export default function HomeVideo({
+  id,
+  title,
+  poster = POSTER,
+}: {
+  id: string;
+  title: string;
+  /**
+   * The still behind the play button. The video library passes the film's own
+   * thumbnail or its project's photograph; never YouTube's, for the reason above.
+   */
+  poster?: string;
+}) {
   const [playing, setPlaying] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
 
@@ -50,7 +63,7 @@ export default function HomeVideo({ id, title }: { id: string; title: string }) 
           >
             <span
               className={`${media} absolute inset-0 transition-transform duration-700 ease-settle group-hover:scale-104`}
-              style={{ backgroundImage: `url('${POSTER}')` }}
+              style={{ backgroundImage: cssUrl(poster) }}
               aria-hidden="true"
             />
             <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">

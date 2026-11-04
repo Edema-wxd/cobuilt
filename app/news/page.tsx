@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import NewsIndex from './news-index';
 
 /**
- * Media centre — `/news`.
+ * News and articles — `/news`, the list beneath the media centre (`/media`).
  *
  * The body is a client component: filters live in the query string and the list
  * is fetched in the browser, so a checkout without a database still renders the
@@ -11,9 +11,9 @@ import NewsIndex from './news-index';
  */
 
 export const metadata: Metadata = {
-  title: 'Media centre',
+  title: 'News and articles',
   description:
-    'Press releases, project updates and announcements from CoBuilt Investment Partners, with project progress recorded in each development’s Project Passport™.',
+    'Press releases, project updates, thought leadership, industry insight and company announcements from CoBuilt Investment Partners, with project progress recorded in each development’s Project Passport™.',
 };
 
 /**

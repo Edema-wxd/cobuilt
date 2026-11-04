@@ -3,10 +3,11 @@
 What still needs designing on the CoBuilt Investment Partners website, the rules
 those designs have to hold to, and the data each page can actually show.
 
-Sixteen pages are live: the landing page, the projects index, a project detail
+Seventeen pages are live: the landing page, the projects index, a project detail
 page, a project's Passport record, About, Leadership, Services and the six
-service pages behind it, Passport™, the media centre and its article page,
-Contact, Careers, and four legal pages. The backend covers more still — 41 API
+service pages behind it, Passport™, the media centre (`/media`), its news list
+and article page, the image gallery and its album pages, Contact, Careers,
+and four legal pages. The backend covers more still — 41 API
 routes, several with no interface yet. This document is the list of what to
 design next, in the order worth building.
 
@@ -32,9 +33,11 @@ information request only… An Investor Portal will be introduced once all
 required regulatory approvals and licences are in place."*
 
 **The header navigation, in this order:** Home, About, Leadership,
-Services, Projects, Passport™. Media, Careers and Contact are deliberately
-left out of the header (Careers stays in the footer). The header also carries
-a "Discuss your project" button and a search entry point.
+Services, Projects, Passport™, Media, Careers — eight links, inside the spec's
+eight-to-nine. Contact is the header's "Discuss your project" button, which
+goes to `/contact`, rather than a ninth link beside it; a ninth item would
+crowd the inline nav at 1081px (`docs/decisions.md` §2.22). The header also
+carries a search entry point.
 
 **Tagline:** "Building Trust Through Every Brick". It is not editable copy.
 
@@ -147,7 +150,8 @@ Header with disclosure menu · utility strip · footer with four link columns ·
 legal bar · cookie banner with per-category panel · buttons (orange, white,
 outline-on-dark, outline) · eyebrow · stat band · service card grid · project
 card with status badge and progress bar · filter pills (scrolling row on
-phones) · milestone list · value/step columns with dividing rules · news card ·
+phones) · milestone list · value/step columns with dividing rules · news card · album card ·
+full-screen photo viewer (`app/gallery/[slug]/album-viewer.tsx`) ·
 form fields with NDPA consent · regulatory notice block · prose page shell with
 section rules, tables and note blocks.
 
@@ -260,7 +264,9 @@ fields. An `investor` block (amount, expected ROI, highlights) exists but is
 **null until legal approves it per project** — design for both states, and
 remember §1: no investment CTA even when it is populated.
 
-Also available: 3D virtual tours (see 3.7).
+Also available: 3D virtual tours (see 3.7), and the project's photo albums
+in the image gallery — a compact "Photo albums" band of cards linking into
+`/gallery/[slug]`, left out when the project has none (§3.8).
 
 #### 3.3 Projects index — `/projects` — **built**
 
@@ -272,17 +278,33 @@ already scroll horizontally.
 
 Needs an empty state ("no projects match these filters") and a loading state.
 
-#### 3.4 News & insights — `/news`, `/news/[slug]` — **built**
+#### 3.4 Media centre — `/media`, `/news`, `/news/[slug]` — **built**
 
-Implemented at `app/news/`. The index reads `/api/news` on the client, with
-category pills from `/api/search/facets?type=news`, free-text search,
-pagination and designed loading, empty and error states; the article page is
-server-rendered for its SEO fields and link previews, with related articles
-from the repository's tag-overlap ranking.
+`/media` (`app/media/`) is the section's front page, as the spec's Media →
+News, Videos, Gallery, Articles: four cards opening news and articles
+(`/news`), the video library (`/videos`), the image gallery (`/gallery`) and
+downloads (`/resources`); then the newest three articles in each category, a
+row per category linking to its filtered list; then the press desk, which goes
+to `/contact`. Server-rendered and regenerated each minute; a category with
+nothing published is left out, and with nothing at all the page shows an
+empty state. The video, gallery and download pages are built separately.
+
+Articles have five categories, the spec's: press release, project update,
+thought leadership, industry insight and company announcement
+(`src/lib/news-categories.ts`). The launch values `update` and `announcement`
+are read as project update and company announcement everywhere, including old
+`/news?category=update` links. See `docs/decisions.md` §2.22.
+
+`/news` (`app/news/`) reads `/api/news` on the client, with the five category
+pills in order (each shown once something is published in it), free-text
+search, pagination and designed loading, empty and error states; the article
+page is server-rendered for its SEO fields and link previews, with related
+articles from the repository's tag-overlap ranking. Breadcrumbs run Home /
+Media / News & articles / the article.
 
 `/news/category/[category]` is deliberately not a route: the category is a
-filter on the index (`/news?category=update`), so there is one list and one
-empty state. The API route of that name is untouched.
+filter on the index (`/news?category=project_update`), so there is one list
+and one empty state. The API route of that name is untouched.
 
 The article prose style is `components/ArticleBody.tsx` — a 760px measure at
 17px, airier than the legal pages. It renders CMS text without
@@ -315,10 +337,23 @@ The form's success state replaces the form rather than sitting under it, so a
 sent enquiry cannot be resubmitted by habit; the failure states distinguish a
 rate limit, a 5xx and a rejected field.
 
+**Enquiry type, CAPTCHA and managed details** (`docs/decisions.md` §2.25).
+"Type of enquiry" (general, new project, partnership, contractors and
+suppliers, media, careers, a project record) replaced the subject list, so
+the form has no more fields than before; each of the six route cards below
+the form links into it with its type chosen. When Turnstile keys are set,
+Cloudflare's check sits above the send button (usually a tick that passes by
+itself), and if its script cannot load the form says so and points to the
+phone and email. The address, phone numbers, emails, WhatsApp number,
+business hours (now their own block under the address) and the map position
+come from `/admin/contact`, and so do the header's phone and email, the
+footer's address and hours, and the landing page's tap-to-call line.
+
 **Map: built, waiting on a location.** A click-to-load OpenStreetMap panel sits
 under the address. Nothing is requested from the map server until the visitor
 asks. It stays hidden until CoBuilt confirms the office's coordinates, because
-the published address does not geocode. See docs/decisions.md §2.17.
+the published address does not geocode; an administrator can now enter them
+at `/admin/contact`. See docs/decisions.md §2.17.
 
 #### 3.7 3D virtual tours — **built**
 
@@ -342,6 +377,33 @@ How each open question was resolved (docs/decisions.md §2.16):
   unreadable file, device out of graphics memory). Each offers the gallery and
   Back, and the download failure also offers Try again.
 
+#### 3.8 Image gallery — `/gallery`, `/gallery/[slug]` — **built**
+
+Albums managed and uploaded at `/admin/gallery`, organised by the client's six
+categories: completed projects, ongoing projects, future concepts, events, team
+activities, corporate branding. See `docs/decisions.md` §2.24.
+
+- **Index**: the album grid (cover, category eyebrow, title, a two-line
+  description, photograph count and project), with category pills — the
+  projects index's pattern, one scrolling row on a phone — and a project
+  select. Only filters with albums behind them are offered, each with its
+  count. Filtering is instant and kept in the query string. Empty and "no
+  match" states are built, and so is the state for a database that is down.
+- **Album**: the hero carries the category, title, description and a mono rule
+  with the count and the project's link, under breadcrumbs (Home / Gallery /
+  album). Photographs sit in fixed 4:3 tiles, two to four across, with the
+  caption beneath where there is one.
+- **Viewer**: full screen on `ink-deep`, so white text needs no scrim. A bar
+  with the album's title, "3 / 12" and a close button; previous and next at
+  the sides; the caption and date taken in a band beneath. Keyboard (arrows,
+  Home, End, Escape), swipe, and focus held inside it; all controls 48px.
+- **Data**: per album, title, description, category, project, cover and
+  count; per image, URL, **alt text (required)**, caption, pixel size and
+  date taken. There is no photographer credit or licence field — say if the
+  client needs one.
+- Not in the header navigation (§1); the footer's media links are the way in,
+  and each project page links its albums.
+
 ### Tier 2 — mandated by the navigation
 
 These are nav or footer items that currently point at a homepage anchor or
@@ -353,8 +415,10 @@ nothing at all.
   founding story on a site about documented delivery is the one thing this page
   cannot do. It is a page section away when the client provides it.
 - **`/leadership`** — **built.** Profile cards with a remit, the philosophy as
-  four management rules, and the video library the footer links to
-  (`/leadership#video-library`). The portrait slot still says what it is waiting
+  four management rules, and a video band (`/leadership#video-library`): the
+  three latest leadership interviews from `/videos`, or a card into the
+  library while there are none; the footer and the utility strip's YouTube
+  link go to `/videos` itself. The portrait slot still says what it is waiting
   for rather than holding a stock face, and the roles whose profiles are
   unapproved are listed honestly in a card of the same shape — see §5.2. The
   treatment is built; the content drops in. Profiles are now published from
@@ -373,12 +437,20 @@ nothing at all.
   Passport is, the eight mandatory entries, the four milestone states with
   "delayed" treated as a fact rather than an alarm, what evidence attaches, and
   how to read the provenance. The record itself is §3.1.
-- **Media — `/news`** — **built**; see §3.4.
+- **Media — `/media`, with `/news` beneath it** — **built**; see §3.4.
 - **Contact — `/contact`** — **built**; see §3.6.
 - **`/governance`** — in the footer with no page behind it. Given the brand
   position, this one matters more than it looks.
-- **`/downloads`** — company profile, brochures, certificates. Needs a file list
-  pattern with type and size.
+- **Resources — `/resources`** — **built** (`/downloads` redirects to it). The
+  download centre grouped by category (company profile, capability statement,
+  brochures, project profiles, other), each file a row with a mono type tile,
+  title, description, "PDF · 2.4 MB" and a Download button; then the way to
+  `/faqs`; then the policies — the four legal pages as cards, plus any policy
+  published as a document. Documents are managed at `/admin/downloads`; every
+  download goes through a counted endpoint. A project's own documents are
+  listed under the hero actions on its page, as compact links with type and
+  size, hidden when there are none. See `docs/decisions.md` §2.25. The
+  footer's "Downloads" entry and the media centre link to it.
 - **`/faqs`** — **built.** Grouped by category, each entry a native disclosure with a stable `#id` anchor that search results link to. Read from the new `GET /api/faqs`.
 - **Investor information** — where the regulatory position lives in full. No
   call to action beyond registering interest.
@@ -398,14 +470,23 @@ admin console is what makes the site maintainable without a developer.
   fresh environment is invited with `npm run user:invite-admin`.
 - **Admin console — `/admin` — built.** Overview with analytics, submissions
   inbox (spam flagging, masked contact details), projects (list, create, edit,
-  delete), Passport™ milestones per project, news (list, create, edit, delete),
+  delete), Passport™ milestones per project, news (list, create, edit, delete;
+  the five media-centre categories),
   leadership profiles (publish, order, homepage spotlight), homepage settings
-  (hero copy, featured video, figures, optional sections), 3D tours (upload,
-  edit, delete), investor-content approval, users and roles,
+  (hero copy, featured video, figures, optional sections), the video library
+  (add by YouTube link, category, project, thumbnail, order, publish,
+  feature), contact details (address, phones, emails, WhatsApp, hours, map
+  position), downloads (PDF upload or link, category, project, order,
+  publish, download counts), 3D tours (upload, edit, delete), the image
+  gallery (albums: create, order, publish, delete; photographs: upload with
+  progress or add by link, alt text — required — caption and date, order,
+  cover, delete),
+  investor-content approval, users and roles,
   and the audit log. Editors send only the fields that changed, and any change
   to an investor figure withdraws its approval after a confirmation. A record
   mirrored from the CMS carries a notice that the CMS will overwrite console
-  edits. Gallery albums are still attached only from the CMS.
+  edits. An album is attached to a project from the album's own form in
+  `/admin/gallery`, not from the project editor.
 
 ### Small gaps worth folding in
 
@@ -413,8 +494,15 @@ admin console is what makes the site maintainable without a developer.
   More routes now call `notFound()` — an unknown service slug, an unknown
   article — so this is more visible than it was.
 - **Social preview images** — **built.** A branded card per page, and an item's own photography wins where it has some. See docs/decisions.md §2.18.
-- **A video library page** — the footer links to one. The home page now embeds
-  one video an administrator chooses; a library of several still needs a page.
+- **A video library page** — **built.** `/videos` leads with the featured film
+  in the homepage's click-to-load player, then a grid of cards (still, play
+  badge, category, date, length, project link) with category pills, a project
+  picker and search; `/videos/[slug]` is the player, the description, the
+  facts (category, project, recorded, length) and up to three related films.
+  Cards show the editor's thumbnail or the project's photograph, never
+  YouTube's, so nothing reaches YouTube before play. Project pages list their
+  films in a "Videos" block. Managed at `/admin/videos`; see
+  `docs/decisions.md` §2.23.
 
 ---
 

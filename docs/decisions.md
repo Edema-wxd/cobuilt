@@ -380,7 +380,7 @@ of them now reach a page:
 | Leadership | `/leadership` | Static at launch; `leadership` table since §2.20 |
 | Services | `/services`, `/services/[slug]` | PostgreSQL, managed in the console (§2.21); `app/services/services.ts` as fallback |
 | Passport™ | `/passport` | Static |
-| Media | `/news`, `/news/[slug]` | `/api/news` |
+| Media | `/news`, `/news/[slug]`; `/media` since §2.22 | `/api/news`; `/media` reads the repository |
 | Contact | `/contact` | Posts to `/api/forms/inquiry` |
 
 **Contact and newsletter are separate, and separately consented.** `/contact`
@@ -617,7 +617,306 @@ most once a minute, like the landing page, and the API's Redis entries are
 cleared on every write. Copy that counted the services ("Six disciplines") now
 counts what is published.
 
-### 2.22 The home hero is a video, with a still poster as its floor
+### 2.22 The media centre has a front page, five categories, and a place in the header
+
+The client's spec has a Media Centre — news, articles, press releases, project
+updates, thought leadership, industry insights and company announcements, with
+search and category filters — arranged as Media → News, Videos, Gallery,
+Articles. The site had `/news` with three categories, and Media was missing
+from the header.
+
+**Five categories, and the old names still work.** `src/lib/news-categories.ts`
+holds the list — `press_release`, `project_update`, `thought_leadership`,
+`industry_insight`, `company_announcement` — with their labels, and has no
+imports so the public pages, the console and the API share it. Two launch
+values were the same things under shorter names, so they are mapped rather
+than refused: `update` is a project update and `announcement` a company
+announcement. The mapping is applied wherever a category arrives — the API
+body and query string (`/news?category=update` links shared before the rename
+still select the right pill), `/api/news/by-category/update`, the CMS sync and
+the repository's writes — and the serializer reads any stray stored value the
+same way. Other spellings of the five ("Press release", `press-release`) are
+folded in too.
+
+**Migration 0018 renames the stored rows; the column stays free text.** The
+category was never enforced in the database, but several readers compare it
+exactly — the category facet, related-article ranking, the search filters
+(Meilisearch and PostgreSQL) — and would have split a category in two. The
+migration rewrites the two old values once, with the `updated_at` trigger held
+off so no article claims an edit it never had. There is no CHECK constraint:
+the CMS may send a category of its own, and the console already keeps such a
+value selectable rather than discarding it, so the API still accepts and
+stores one as sent. Only the five are offered in the editor. After deploying,
+run `npm run search:reindex` if Meilisearch is configured, so its copies carry
+the new names; the facet cache expires on its own.
+
+**`/media` is the section's front page; `/news` stays the list.** `/media` is
+server-rendered (`export const revalidate = 60`) from one query
+(`news.latestPerCategory`, a window function rather than five round trips):
+the newest three published articles in each category, in the order above, each
+row linking to that category's filtered list on `/news`. Articles with no
+category, or a CMS one, share a final "More news" row. A category with nothing
+published is left out, and with nothing at all — or no database, as in the
+build — the page shows its empty state, never a 500 (`app/media/load-media.ts`
+returns an empty list and logs). Above the rows, four cards open the
+collections: news and articles (`/news`), the video library (`/videos`), the
+image gallery (`/gallery`) and downloads (`/resources`); the page closes with
+the press desk, which goes to `/contact`. `/news` keeps its client-side list
+(§2.9); its pills are now the five in order, shown when a category has
+something published or is the one selected, followed by any CMS category.
+
+**Breadcrumbs place everything under Media.** `/media` is Home / Media;
+`/news` is Home / Media / News & articles; an article is Home / Media / News &
+articles / its title (it had a trail before, but its Media crumb went to
+`/news`). The header marks Media as current on all three.
+
+**The header has eight links, and Contact is the button.** The spec allows
+eight or nine top-level items. Media and Careers were added; Contact was not,
+because "Discuss your project" — the header's orange button, non-negotiable in
+the handover — already goes to `/contact`, and a Contact link beside it would
+be the same destination twice. With eight links the inline nav (from 1081px)
+leaves 136px between the logo and the first link at 1081px and 123px from
+1181px, where the type steps up; a ninth link would leave about 40px there,
+which reads as crowded. The phone menu takes the eight and the button without
+scrolling at 390×844.
+
+**Footer and utility links point at the new pages.** Resources is News &
+insights, Video library (`/videos`), Image gallery (`/gallery`), Downloads
+(`/resources`, previously unlinked) and FAQs; the utility strip's YouTube link
+goes to `/videos` instead of `/leadership#video-library`. Those three pages are
+built separately; this change only links to them.
+
+### 2.23 The video library is managed in the console, and loads nothing from YouTube until play
+
+The client's spec asks for a video library tied to the official YouTube
+channel: seven categories (project documentaries, construction updates, drone
+videos, leadership interviews, educational, corporate, event highlights),
+thumbnails, search and filters, related videos, and films that link back to
+their project. Until now there was a still placeholder in the leadership
+page's "Video library" band. `/videos` and `/videos/[slug]` are the library,
+managed at `/admin/videos` behind a new `videos:write` permission (admin and
+editor; deleting is admin-only, like services). Public reads are `/api/videos`
+(category, project and text filters) and `/api/videos/[slug]`; every write is
+audited and clears the `videos` cache keys.
+
+**A row is a pointer, not a copy.** Migration 0019 adds `videos` with the
+11-character YouTube ID, never a link or embed code: the API takes whatever
+form of link an editor pastes, keeps the ID with the homepage's rule
+(`src/lib/youtube.ts`, so a channel, playlist or another site is a 422), and
+the embed is rebuilt from it on `youtube-nocookie.com`. A film can point at
+one project (`ON DELETE SET NULL`), and is linked from the public site only
+while that project is live. The project's Passport timeline links from 0012
+are left alone: those are evidence attached to the record, and a library film
+is editorial content with its own page and order.
+
+**No YouTube thumbnails, anywhere.** `i.ytimg.com` would have been the easy
+way to "automatically display thumbnails", but it is a request to Google for
+every card on the page, before the visitor has chosen to watch anything — the
+thing §2.17 and §2.19 were built to avoid, and on an index of a dozen films
+it is a dozen of them. Each card instead shows the editor's own https
+thumbnail if one is set, else the linked project's photograph, else a house
+still, with a play badge drawn over it. That is still automatic for most
+films, since most are tied to a project. The player is the homepage's
+click-to-load component (`app/home-video.tsx`, which now takes a poster), so
+the first request to YouTube is the visitor's press, with the captions note
+under it. The console does not preview from YouTube either.
+
+**The index is server-rendered whole and filtered in the browser.** Unlike
+`/news` and `/projects` (§2.9), a library is a few dozen films, so the page
+renders every published one and narrows them on the client. The page stays
+prerendered and regenerates once a minute, works with JavaScript off (every
+film listed), and a filter is instant. The filters still mirror the query
+string (`?category=drone&project=…&q=…`), read after mount rather than through
+`useSearchParams`, which would make the page dynamic. The API's filters do the
+same job for other clients, with pagination. Without a database the page says
+the library could not be loaded rather than that it is empty.
+
+**The first featured film leads.** Editors can feature several; the page takes
+the first, published, in the console's order, and the first film otherwise.
+Related videos are the same live project's first, then the same category's,
+up to three. The leadership page's band shows the three latest leadership
+interviews by recording date, or a card into the library while there are
+none; the `#video-library` anchor the footer and header use still lands on it.
+Each project page lists its published films in a compact "Videos" block,
+left out when there are none, and a failure to read them hides the block
+rather than the page.
+
+The channel's own URL is still unconfirmed (the header's "YouTube" link goes
+to the library for that reason), so the library links each film's watch page
+but not the channel.
+
+### 2.24 The image gallery is uploaded and managed in the console
+
+The client's spec asks for an image gallery organised by completed projects,
+ongoing projects, future concepts, events, team activities and corporate
+branding, with albums, a project filter, a lightbox, high-resolution images
+optimised for performance, and descriptive alt text on every image. `/gallery`
+lists the published albums with category and project filters,
+`/gallery/[slug]` shows an album's photographs and opens them in a viewer, and
+`/admin/gallery` manages them behind a new `gallery:write` permission (admin
+and editor; deleting an album is admin-only, as for tours and services). Public
+reads are `/api/gallery` and `/api/gallery/[slug]`, under `CONTENT_CACHE` and a
+one-minute Redis entry that every write clears; every write is audited.
+
+**The existing `gallery_albums` table was extended, not replaced.** 0004 created
+it as a CMS mirror attached to projects, with its images as an array of URLs,
+and projects already point at albums both ways (§2.10). A URL cannot carry alt
+text, a caption or its own order, so migration 0020 moves the images into
+`gallery_images` — `alt_text` is `NOT NULL` and must not be blank — and drops
+the array. The URLs already held move across with an indexed description
+("{album}, photograph 2"), the same one the project page gave them, until an
+editor writes a real one; existing albums take a category from their project's
+stage, or Events without one. An album's project link became `ON DELETE SET
+NULL`: an album outlives a hard-deleted project rather than taking its
+photographs, and their stored files, with it. Each album resolves to one
+project (its own `project_id`, else a project whose `gallery_ids` holds it), so
+the card, the project filter and its counts cannot disagree.
+
+**Images are uploaded, the first upload route for images.** Projects, news and
+leadership still take image URLs. A `galleryImage` route on the UploadThing
+router takes JPEG, PNG and WebP, up to 16 MB each and 20 at a time, gated
+exactly as `tourModel` is: a signed-in admin or editor holding the route's
+permission, checked in the middleware, which is the only place UploadThing
+asks. `tourModel` is unchanged. The browser uploads straight to storage with a
+progress bar, then registers the keys with `POST
+/api/admin/gallery/[id]/images`, which accepts a key only once storage
+confirms the file — the tour flow (§2.2). The console asks for each file's alt
+text before the upload starts, so nothing reaches the site undescribed, and
+reads each image's pixel size in the browser. Deleting an image deletes its
+stored file; deleting an album deletes all of its files. An image can also be
+added by link: an https URL, or a path on this site (`/images/…`), which is
+also how the development seed and the browser checks add photographs without a
+storage token. http is refused, as for portraits (§2.20).
+
+**`next/image` does the optimising.** It was not used anywhere before. Every
+gallery image sits in a fixed 4:3 frame (`object-cover`; the viewer uses
+`object-contain`), so nothing moves when it arrives; it is served as WebP at
+the width the slot needs (`sizes`), lazily below the fold, with the first row
+fetched eagerly. `next.config.mjs` gains an `images` block only:
+`remotePatterns` for UploadThing (`utfs.io`, `*.ufs.sh`), the two qualities
+used, and a month's cache for resized copies, since an UploadThing URL names an
+immutable file. A linked image on any other host is shown unoptimised rather
+than fetched by the server for an arbitrary editor-supplied host. The CSP
+already allows `img-src https:`, and the optimiser serves from this origin.
+
+**The viewer is a modal dialog.** Focus moves to its close button and is held
+inside it; Escape closes it and focus returns to the photograph's tile; the
+arrow keys, Home and End move between photographs, as does a horizontal swipe;
+every control is 48px and visible over the photograph. Each photograph carries
+its alt text, with its caption and date beneath, and each move is announced.
+The tiles are links to the image file, so without JavaScript a photograph still
+opens full size. On cards (the gallery grid, a project's albums) the cover is
+decorative, `alt=""`, because the album's title already names the link; each
+photograph is described where it is shown on its own.
+
+**The gallery page filters in the browser.** It is prerendered with every
+published album (a gallery is tens of albums, not thousands), regenerated at
+most once a minute, and filters instantly with no request. The filters are
+mirrored into the query string so a filtered view can be shared, and read back
+once the page is interactive, so a shared link shows every album for a moment
+before it narrows. Only filters with albums behind them are offered. An album
+appears publicly only when it is published and holds at least one image; the
+console says so ("Published · hidden until it has a photograph"). Without a
+database the pages say the gallery couldn't be loaded rather than failing or
+answering 404, and the build prerenders no albums; each renders on its first
+request.
+
+**A project page links its albums.** "Photo albums" on `/projects/[slug]` lists
+the project's published albums, each linking into the gallery; it is hidden
+when there are none. The page's own gallery band now reads its images from
+`gallery_images`, in the gallery's order, and is otherwise unchanged.
+
+### 2.25 Resources and downloads, and the contact page's gaps
+
+The client's spec asks for a Resources section — company profile, capability
+statement, brochures, FAQs, policies and a download centre — with
+downloadable project profiles on project pages and download activity tracked
+as a business metric; and for the Contact page to carry an enquiry type
+(contact, partnership, general), a CAPTCHA, and details the business can
+change. Before this, the footer's "Downloads" entry had no page and a project
+had one `brochure_url`.
+
+**Documents are their own table** (migration 0021, `documents`): title, slug,
+description, a category (company profile, capability statement, brochure,
+project profile, policy, other), the file's URL, its UploadThing key when it
+was uploaded, its type and size, an optional project, published, sort order
+and a download count. `/admin/downloads` manages them behind a new
+`downloads:write` permission (admin and editor; deleting is admin-only, as for
+tours and services), and every write is audited and clears the `documents`
+cache. A document on a project is listed on that project's page as well as on
+`/resources`; it stays off both while its project is unpublished, so a project
+profile cannot reveal a draft. The project's existing `brochure_url` button is
+untouched: a brochure can move into the download centre at an editor's pace.
+
+**A file is an upload or a link.** Uploads are PDFs only, up to 32 MB, through
+a new UploadThing route (`document`) authorised exactly as `tourModel` is, and
+registered by key only once storage confirms the file — so a document can
+never point at an upload that did not finish (§2.2). A link must be https; its
+type is read from its extension and its size is left unknown rather than
+guessed, so the page shows "PDF" without a size for it. Replacing an uploaded
+file, or deleting its document, deletes the stored file.
+
+**Downloads are counted, and nothing about the person is.** Every download
+link on the site is `/api/documents/[id]/download`, which adds one to the
+document's total and to that day's count (`document_download_days`, a date and
+a number) and redirects to the file. No IP address, cookie, identifier or user
+agent is stored; the client IP is only the rate limiter's short-lived Redis
+key, as on every endpoint, on its own bucket of 30 per 10 minutes. The redirect
+is `no-store`, so neither a browser nor the CDN can serve it without counting.
+Self-declared crawlers are redirected but not counted, and the links are
+`rel="nofollow"`. A download does not move the row's `updated_at` (the trigger
+is skipped when only the count changes), so "last edited" keeps its meaning.
+The console shows each document's total and its last 30 days. The privacy
+policy needed no change for this: nothing personal is processed.
+
+**`/resources` is one page**, regenerated at most once a minute and empty-but-
+honest without a database: the download centre grouped by category, each file
+with its type and size; the way to `/faqs`; and the policies — the site's four
+legal pages, plus any document published in the policy category. `/downloads`
+redirects there. `components/site.ts` was owned by another change this round,
+so **the footer's "Downloads" entry still has no link**: it should become
+`{ label: 'Downloads', href: '/resources' }`.
+
+**The enquiry type replaced the free-text subject list**, so the form gained
+no field: general, a new project, partnership, contractors and suppliers,
+media, careers, or a question about a project record. It is stored with the
+submission (`metadata.enquiryType`; one from before reads as general), leads
+the staff email's subject line, and is shown and filterable in the inbox. The
+contact page's routes each link into the form with their type chosen
+(`/contact?type=partnership#enquiry`), which is how "Partnership enquiry" and
+"General enquiry" are reached without three forms to maintain.
+
+**The CAPTCHA is Cloudflare Turnstile**, because Cloudflare already fronts the
+site and is a listed processor, and because it usually passes without a puzzle.
+It is inert until `TURNSTILE_SECRET_KEY` and a site key
+(`NEXT_PUBLIC_TURNSTILE_SITE_KEY` or `TURNSTILE_SITE_KEY`) are set; set them
+together. Then it fails closed: no token is a 422, a refused token a 400, and
+Cloudflare unreachable a 503, and nothing is stored for any of them — a check
+that waves things through when unsure is not a check. Cloudflare's script is
+requested only on `/contact`, from a plain script tag (no new dependency), and
+the report-only CSP now allows it in `script-src`; `frame-src https:` already
+covered its frame. The honeypot, the heuristic score and Akismet still run
+behind it. The privacy policy's Cloudflare entry now says what Turnstile reads.
+It was checked in a browser with Cloudflare's always-pass test keys (widget,
+token, server verification, enquiry stored); the failure paths are covered by
+tests against a mocked siteverify.
+
+**Contact details are a `contact` document in `site_settings`** (no
+migration), edited at `/admin/contact` under the existing `settings:write`
+permission and audited like the homepage's: the address lines, up to four
+phone numbers and email addresses (each labelled), the WhatsApp Business
+number (blank hides WhatsApp), business hours as day/hours pairs, and the
+map's position. The last makes §2.17's map switchable from the console: once
+CoBuilt confirms the coordinates, an administrator enters them and the
+click-to-load OpenStreetMap appears. A key never saved — or no database —
+shows the constants in `components/site.ts`, which a unit test holds the
+fallback to. **The header, footer and the landing page's tap-to-call read the
+same document**: the root layout loads it on the server and hands it to them
+through `components/ContactDetails.tsx`, so the layout sets a one-minute
+`revalidate` and a change at `/admin/contact` shows site-wide within the
+minute. The legal pages keep quoting the built-in address in their text.
+
+### 2.26 The home hero is a video, with a still poster as its floor
 
 The four-photo carousel is replaced by `app/hero-video.tsx`: a muted, looping
 video in two cuts. Desktop is 16:9, from the `sm` breakpoint up. Mobile is

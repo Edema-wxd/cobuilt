@@ -10,6 +10,7 @@ import {
   titleMd,
 } from '../../../components/sections';
 import { btnOutline, container, eyebrow, media } from '../../../components/ui';
+import { newsCategoryLabel } from '@/lib/news-categories';
 import { loadArticle } from './load-article';
 import type { ArticleSummary } from './load-article';
 
@@ -27,6 +28,9 @@ import type { ArticleSummary } from './load-article';
  *
  * The body is server-rendered too. `ArticleBody` takes CMS text and renders it
  * without `dangerouslySetInnerHTML` — see that file for why.
+ *
+ * The breadcrumb places the article in the media centre: Home / Media / News &
+ * articles / the article.
  */
 
 interface PageProps {
@@ -35,9 +39,12 @@ interface PageProps {
 
 const FALLBACK_IMAGE = '/images/apartment-blocks.webp';
 
-function categoryLabel(value: string): string {
-  return value.replace(/[_-]+/g, ' ').replace(/^./, (character) => character.toUpperCase());
-}
+/** Every article page's trail up to, not including, the article itself. */
+const TRAIL = [
+  { label: 'Home', href: '/' },
+  { label: 'Media', href: '/media' },
+  { label: 'News & articles', href: '/news' },
+];
 
 function formatDate(iso: string | null): string {
   if (!iso) return '';
@@ -92,7 +99,7 @@ function RelatedCard({ article }: { article: ArticleSummary }) {
         />
         <p className="flex flex-wrap gap-x-3 gap-y-1 text-[0.688rem] tracking-[0.16em] text-zinc-500 uppercase">
           {article.category ? (
-            <span className="text-rust">{categoryLabel(article.category)}</span>
+            <span className="text-rust">{newsCategoryLabel(article.category)}</span>
           ) : null}
           <span>{formatDate(article.publishedAt)}</span>
         </p>
@@ -113,17 +120,13 @@ export default async function Page({ params }: PageProps) {
 
   if (result.kind === 'unavailable') {
     return (
-      <SiteLayout current="/news">
+      <SiteLayout current="/media">
         <main>
           <PageHero
             eyebrow="Media centre"
             title="This article couldn’t be loaded"
             standfirst="The article store did not answer. This is on our side, not yours — try again shortly, or browse the media centre."
-            trail={[
-              { label: 'Home', href: '/' },
-              { label: 'Media', href: '/news' },
-              { label: 'Article' },
-            ]}
+            trail={[...TRAIL, { label: 'Article' }]}
           />
           <section className="bg-white py-13 sm:py-18">
             <div className={`${container} flex flex-col items-start gap-5`}>
@@ -151,17 +154,13 @@ export default async function Page({ params }: PageProps) {
   const updated = formatDate(article.updatedAt);
 
   return (
-    <SiteLayout current="/news">
+    <SiteLayout current="/media">
       <main>
         <PageHero
-          eyebrow={article.category ? categoryLabel(article.category) : 'Media centre'}
+          eyebrow={article.category ? newsCategoryLabel(article.category) : 'Media centre'}
           title={article.title}
           {...(article.excerpt ? { standfirst: article.excerpt } : {})}
-          trail={[
-            { label: 'Home', href: '/' },
-            { label: 'Media', href: '/news' },
-            { label: article.title },
-          ]}
+          trail={[...TRAIL, { label: article.title }]}
           meta={
             <>
               {published ? <>Published {published}</> : <>Not yet dated</>}

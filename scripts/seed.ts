@@ -163,17 +163,107 @@ async function seedServiceProjects(): Promise<void> {
   }
 }
 
-async function seedNews(adminId: string): Promise<void> {
-  const articles = [
-    ['CoBuilt breaks ground on Ocean Ridge Residences', 'press_release'],
-    ['Project Passport: transparency as a construction standard', 'update'],
-    ['CoBuilt appoints new Head of Delivery', 'announcement'],
+/**
+ * A handful of library videos across categories, two linked to a project, so
+ * /videos, its filters, a video page, a project's "Videos" block and the
+ * leadership page's interviews all render. The IDs are placeholders in
+ * YouTube's format, not real films: the player shows YouTube's "unavailable"
+ * card if pressed.
+ */
+async function seedVideos(): Promise<void> {
+  const videos: Array<[title: string, youtubeId: string, category: string, project: string | null, recorded: string, featured: boolean]> = [
+    ['Ocean Ridge Residences: one year on site', 'CoBuiltDem1', 'project_documentary', 'ocean-ridge-residences', '2026-06-12', true],
+    ['Ocean Ridge: superstructure update', 'CoBuiltDem2', 'construction_update', 'ocean-ridge-residences', '2026-09-03', false],
+    ['Kingsway Commercial Centre from the air', 'CoBuiltDem3', 'drone', 'kingsway-commercial-centre', '2026-04-20', false],
+    ['Why we publish every milestone', 'CoBuiltDem4', 'leadership_interview', null, '2026-08-14', false],
+    ['What a Project Passport records', 'CoBuiltDem5', 'educational', null, '2026-05-02', false],
   ];
 
-  for (const [title, category] of articles) {
+  for (const [index, [title, youtubeId, category, project, recorded, featured]] of videos.entries()) {
+    await query(
+      `INSERT INTO videos (youtube_id, title, slug, description, category, project_id, recorded_on, featured, published, sort_order, duration_seconds)
+       VALUES ($1, $2, $3, $4, $5, (SELECT id FROM projects WHERE slug = $6), $7, $8, TRUE, $9, $10)
+       ON CONFLICT (youtube_id) DO NOTHING`,
+      [
+        youtubeId,
+        title,
+        slugify(title),
+        `${title}. A development placeholder describing the film, so the page and the library search have text to work with.`,
+        category,
+        project,
+        recorded,
+        featured,
+        (index + 1) * 10,
+        180 + index * 75,
+      ],
+    );
+  }
+}
+
+/**
+ * Two published albums in the image gallery, one documenting a sample project,
+ * made from the photographs already in public/images, so /gallery, an album's
+ * viewer and the project page's "Photo albums" render.
+ */
+async function seedGallery(): Promise<void> {
+  type Photo = [file: string, width: number, height: number, alt: string, caption: string | null];
+  const albums: Array<{ title: string; category: string; project: string | null; photos: Photo[] }> = [
+    {
+      title: 'Ocean Ridge: structure and site',
+      category: 'ongoing_projects',
+      project: 'ocean-ridge-residences',
+      photos: [
+        ['construction-site', 1000, 1500, 'Concrete frame of a multi-storey block under construction, with scaffolding and a tower crane', 'Superstructure, level four'],
+        ['apartment-blocks', 1024, 1024, 'Completed apartment blocks with balconies in a landscaped courtyard', null],
+        ['hero-aerial-estate', 960, 960, 'Aerial view of a residential estate with tree-lined roads and terraced houses', 'Masterplan context, looking north'],
+      ],
+    },
+    {
+      title: 'Show home launch',
+      category: 'events',
+      project: null,
+      photos: [
+        ['villa-and-pool', 735, 490, 'Two-storey villa with floor-to-ceiling windows beside a swimming pool at dusk', 'The show villa on launch evening'],
+      ],
+    },
+  ];
+
+  for (const [index, album] of albums.entries()) {
+    const row = await queryOne<{ id: string }>(
+      `INSERT INTO gallery_albums (title, slug, category, project_id, published, sort_order)
+       VALUES ($1, $2, $3, (SELECT id FROM projects WHERE slug = $4), TRUE, $5)
+       ON CONFLICT (slug) DO NOTHING
+       RETURNING id`,
+      [album.title, slugify(album.title), album.category, album.project, (index + 1) * 10],
+    );
+    if (!row) continue;
+
+    for (const [position, [file, width, height, alt, caption]] of album.photos.entries()) {
+      await query(
+        `INSERT INTO gallery_images (album_id, image_url, alt_text, caption, width, height, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [row.id, `/images/${file}.webp`, alt, caption, width, height, (position + 1) * 10],
+      );
+    }
+  }
+}
+
+async function seedNews(adminId: string): Promise<void> {
+  // One or more in each of the media centre's five categories, so /media and
+  // the /news filters have something to show (src/lib/news-categories.ts).
+  const articles = [
+    ['CoBuilt breaks ground on Ocean Ridge Residences', 'press_release'],
+    ['Project Passport: transparency as a construction standard', 'project_update'],
+    ['CoBuilt appoints new Head of Delivery', 'company_announcement'],
+    ['Why a published programme is a delivery discipline', 'thought_leadership'],
+    ['How building approvals work in Lagos State', 'industry_insight'],
+    ['Superstructure complete at Ocean Ridge Residences', 'project_update'],
+  ];
+
+  for (const [index, [title, category]] of articles.entries()) {
     await query(
       `INSERT INTO news_articles (title, slug, content, excerpt, category, author_id, published_at, tags)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW() - make_interval(days => $8::int), $7)
        ON CONFLICT (slug) DO NOTHING`,
       [
         title,
@@ -183,6 +273,8 @@ async function seedNews(adminId: string): Promise<void> {
         category,
         adminId,
         ['cobuilt', category === 'press_release' ? 'press' : 'company'],
+        // A day apart, so "newest first" has an order to show.
+        index,
       ],
     );
   }
@@ -226,6 +318,8 @@ async function main(): Promise<void> {
   const adminId = await seedAdmin();
   await seedProjects(adminId);
   await seedServiceProjects();
+  await seedVideos();
+  await seedGallery();
   await seedNews(adminId);
   await seedFaqs();
 

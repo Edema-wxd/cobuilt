@@ -30,7 +30,11 @@ const NAV: NavEntry[] = [
   { label: 'News', href: '/admin/news', needs: ['news:write'] },
   { label: 'Services', href: '/admin/services', needs: ['services:write'] },
   { label: 'Leadership', href: '/admin/leadership', needs: ['leadership:write'] },
+  { label: 'Videos', href: '/admin/videos', needs: ['videos:write'] },
+  { label: 'Gallery', href: '/admin/gallery', needs: ['gallery:write'] },
   { label: 'Homepage', href: '/admin/homepage', needs: ['settings:write'] },
+  { label: 'Contact details', href: '/admin/contact', needs: ['settings:write'] },
+  { label: 'Downloads', href: '/admin/downloads', needs: ['downloads:write'] },
   { label: '3D tours', href: '/admin/tours', needs: ['tours:write'] },
   {
     label: 'Investor approval',

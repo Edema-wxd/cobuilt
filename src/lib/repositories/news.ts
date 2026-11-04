@@ -3,6 +3,7 @@ import type { NewsRow, Paginated } from '@/types/models';
 import { paginate } from '@/types/models';
 import type { CreateNewsBody, UpdateNewsBody } from '../schemas/news';
 import { slugify, uniqueSlug } from '../slug';
+import { newsCategoryAliases, normalizeNewsCategory } from '../news-categories';
 
 /** News and press-release persistence. */
 
@@ -33,8 +34,9 @@ export async function list(options: ListNewsOptions): Promise<Paginated<NewsRow>
   }
 
   if (options.category) {
-    params.push(options.category);
-    conditions.push(`n.category = $${params.length}`);
+    // A category matches under its launch-era name too (src/lib/news-categories.ts).
+    params.push(newsCategoryAliases(options.category));
+    conditions.push(`n.category = ANY($${params.length}::text[])`);
   }
 
   if (options.tag) {
@@ -64,6 +66,32 @@ export async function list(options: ListNewsOptions): Promise<Paginated<NewsRow>
   );
 
   return paginate(rows, Number(total?.count ?? 0), options.page, options.pageSize);
+}
+
+/**
+ * The newest published articles in each category, at most `perCategory` of
+ * each, for the media centre's landing page. One query rather than one per
+ * category: the rows are numbered within their category and cut there.
+ * Uncategorised articles come back as their own group, with a null category.
+ */
+export async function latestPerCategory(perCategory: number): Promise<NewsRow[]> {
+  const { rows } = await query<NewsRow>(
+    `SELECT * FROM (
+       SELECT ${COLUMNS},
+              row_number() OVER (
+                PARTITION BY n.category
+                ORDER BY n.published_at DESC, n.created_at DESC
+              ) AS category_rank
+         ${FROM_CLAUSE}
+        WHERE n.deleted_at IS NULL
+          AND n.published_at IS NOT NULL AND n.published_at <= NOW()
+     ) ranked
+      WHERE category_rank <= $1
+      ORDER BY published_at DESC, created_at DESC`,
+    [perCategory],
+  );
+
+  return rows;
 }
 
 export async function findBySlug(
@@ -140,7 +168,7 @@ export async function create(
       input.content,
       input.excerpt ?? null,
       input.authorId ?? authorId,
-      input.category ?? null,
+      normalizeNewsCategory(input.category),
       input.featuredImageUrl ?? null,
       input.publishedAt ?? null,
       input.metaTitle ?? null,
@@ -173,7 +201,7 @@ export async function update(id: string, input: UpdateNewsBody): Promise<NewsRow
   for (const [field, column] of Object.entries(UPDATABLE_COLUMNS)) {
     const value = (input as Record<string, unknown>)[field];
     if (value === undefined) continue;
-    params.push(value);
+    params.push(field === 'category' ? normalizeNewsCategory(value as string | null) : value);
     assignments.push(`${column} = $${params.length}`);
   }
 

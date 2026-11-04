@@ -35,6 +35,9 @@ export const RATE_LIMITS = {
   login: { bucket: 'auth:login', windowSeconds: 15 * 60, max: 10 },
   passwordReset: { bucket: 'auth:reset', windowSeconds: 60 * 60, max: 5 },
   search: { bucket: 'search', windowSeconds: 60, max: 60 },
+  // Tracked document downloads: generous for a person working through the
+  // download centre, low enough that a loop cannot inflate the counts.
+  download: { bucket: 'download', windowSeconds: 10 * 60, max: 30 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export async function consume(rule: RateLimitRule, key: string): Promise<RateLimitResult> {

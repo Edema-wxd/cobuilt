@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { EMAIL, NAV, PHONE, PHONE_HREF, WHATSAPP_HREF } from './site';
+import { telHref, whatsappHref } from '@/lib/contactDetails';
+import { useContactDetails } from './ContactDetails';
+import { NAV } from './site';
 import { container } from './ui';
 
 const utilityLink = 'hover:text-orange-on-dark';
@@ -24,6 +26,10 @@ interface Props {
 }
 
 export default function SiteHeader({ current = '/' }: Props) {
+  // The office's first phone number and email, as set at /admin/contact.
+  const contact = useContactDetails();
+  const phone = contact.phones[0]!;
+  const email = contact.emails[0]!;
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
@@ -61,31 +67,33 @@ export default function SiteHeader({ current = '/' }: Props) {
           <div className="flex flex-wrap gap-3.5 tracking-[0.04em] sm:gap-6">
             <a
               className={`inline-flex min-h-8 items-center sm:inline sm:min-h-0 ${utilityLink}`}
-              href={PHONE_HREF}
+              href={telHref(phone.number)}
             >
-              {PHONE}
+              {phone.number}
             </a>
             <a
               className={`inline-flex min-h-8 items-center sm:inline sm:min-h-0 ${utilityLink}`}
-              href={`mailto:${EMAIL}`}
+              href={`mailto:${email.address}`}
             >
-              {EMAIL}
+              {email.address}
             </a>
           </div>
           <div className="hidden items-center gap-5 text-[0.656rem] uppercase tracking-[0.1em] sm:flex">
-            <a className={utilityLink} href={WHATSAPP_HREF}>
-              WhatsApp Business
-            </a>
+            {contact.whatsapp ? (
+              <a className={utilityLink} href={whatsappHref(contact.whatsapp)}>
+                WhatsApp Business
+              </a>
+            ) : null}
             {/*
               The company's LinkedIn and YouTube accounts are not confirmed, so
               these resolve to the pages that carry the same thing on this site
-              — the contact channels, and the video library — rather than to a
-              guessed external URL.
+              — the contact channels, and the video library at /videos — rather
+              than to a guessed external URL.
             */}
             <a className={utilityLink} href="/contact">
               LinkedIn
             </a>
-            <a className={utilityLink} href="/leadership#video-library">
+            <a className={utilityLink} href="/videos">
               YouTube
             </a>
             <a className="text-orange-on-dark" href="/search">

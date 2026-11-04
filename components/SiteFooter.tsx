@@ -1,6 +1,8 @@
 'use client';
 
-import { ADDRESS_LINES, FOOTER_COLUMNS } from './site';
+import { whatsappHref } from '@/lib/contactDetails';
+import { useContactDetails } from './ContactDetails';
+import { FOOTER_COLUMNS } from './site';
 import { openPreferences } from './cookieConsent';
 import { container } from './ui';
 
@@ -11,6 +13,13 @@ const footerLinkLive = `${footerLink} cursor-pointer hover:text-white hover:unde
 const legalLink = 'text-zinc-400 underline hover:text-white';
 
 export default function SiteFooter() {
+  // The address and hours as set at /admin/contact, one printed line each.
+  const contact = useContactDetails();
+  const addressLines = [
+    ...contact.addressLines,
+    ...contact.hours.map((entry) => `${entry.days}, ${entry.hours}`),
+  ];
+
   return (
     <>
       <footer className="bg-ink pt-13 pb-7 sm:pt-18 sm:pb-10">
@@ -26,16 +35,21 @@ export default function SiteFooter() {
               height={32}
             />
             <p className="text-[0.844rem] leading-[1.8] text-zinc-200">
-              {ADDRESS_LINES.map((line, index) => (
+              {addressLines.map((line, index) => (
                 <span key={line}>
                   {line}
-                  {index < ADDRESS_LINES.length - 1 ? <br /> : null}
+                  {index < addressLines.length - 1 ? <br /> : null}
                 </span>
               ))}
             </p>
-            <p className="text-[0.719rem] font-semibold uppercase tracking-[0.14em] text-orange-on-dark">
-              Chat on WhatsApp Business
-            </p>
+            {contact.whatsapp ? (
+              <a
+                className="self-start text-[0.719rem] font-semibold uppercase tracking-[0.14em] text-orange-on-dark underline-offset-4 hover:underline"
+                href={whatsappHref(contact.whatsapp)}
+              >
+                Chat on WhatsApp Business
+              </a>
+            ) : null}
           </div>
 
           {FOOTER_COLUMNS.map((column) => (

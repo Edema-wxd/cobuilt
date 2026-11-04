@@ -20,6 +20,8 @@ import { btnOutline, container, eyebrow, media } from '../../components/ui';
 import { TIER_LABEL, TIER_ORDER, bioParagraphs } from './leadership-shared';
 import { loadPublishedLeaders, type PublicLeader } from './load-leadership';
 import Portrait from './portrait';
+import { loadLatest } from '../videos/load-videos';
+import VideoCard from '../videos/video-card';
 
 /**
  * Leadership — `/leadership`.
@@ -50,7 +52,6 @@ export const metadata: Metadata = {
 
 const IMAGES = {
   site: '/images/construction-site.webp',
-  apartments: '/images/apartment-blocks.webp',
 } as const;
 
 interface Leader {
@@ -107,7 +108,10 @@ const PHILOSOPHY: Array<[string, string]> = [
 ];
 
 export default async function Leadership() {
-  const leaders = await loadPublishedLeaders();
+  const [leaders, interviews] = await Promise.all([
+    loadPublishedLeaders(),
+    loadLatest('leadership_interview', 3),
+  ]);
 
   return (
     <SiteLayout current="/leadership">
@@ -158,69 +162,76 @@ export default async function Leadership() {
           </div>
         </section>
 
-        <section className={sectionLight} id="video-library">
+        {/*
+          The footer's "Video library" entry lands here. The latest leadership
+          interviews from the library (/videos), or a card into it while there
+          are none. Cards link to each film's page, where the player loads on
+          request; nothing here is requested from YouTube.
+        */}
+        <section className={sectionLight} id="video-library" aria-labelledby="video-library-title">
           <div className={container}>
             <div className="mb-7 flex flex-wrap items-end justify-between gap-5 sm:mb-9 sm:gap-8">
               <div className={`${sectionHead} max-w-150`}>
                 <p className={eyebrow}>Video library</p>
-                <h2 className={titleMd}>Watch the work</h2>
+                <h2 className={titleMd} id="video-library-title">
+                  {interviews.length > 0 ? 'In their own words' : 'Watch the work'}
+                </h2>
+                {interviews.length > 0 ? (
+                  <p className={cardBody}>
+                    The latest interviews with CoBuilt&rsquo;s leadership, from the video library.
+                  </p>
+                ) : null}
               </div>
-              <a className={btnOutline} href="/projects">
-                Browse the projects
+              <a className={btnOutline} href="/videos">
+                Open the video library
               </a>
             </div>
 
-            <div className="grid grid-cols-1 gap-7 lg:grid-cols-[1.4fr_1fr] lg:gap-9">
-              {/* A still preview, not a player: the embed is wired up when the video ID
-                  exists, so nothing here advertises a control that does not work yet. */}
-              <figure className="relative block aspect-[16/10] w-full overflow-hidden bg-ink sm:aspect-auto sm:h-120">
-                <div
-                  className={`${media} absolute inset-0`}
-                  style={{ backgroundImage: `url('${IMAGES.site}')` }}
-                />
-                <span
-                  className="absolute inset-0 flex items-center justify-center"
-                  aria-hidden="true"
-                >
-                  <span className="flex size-16 items-center justify-center rounded-full border-[1.5px] border-white bg-[rgb(20_20_20/86%)] text-[1.125rem] text-white">
-                    ▶
+            {interviews.length > 0 ? (
+              <div className="reveal-stagger grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {interviews.map((video) => (
+                  <VideoCard key={video.id} video={video} />
+                ))}
+              </div>
+            ) : (
+              <a
+                className="group reveal grid grid-cols-1 border border-line bg-white lg:grid-cols-[1.4fr_1fr]"
+                href="/videos"
+              >
+                <span className="relative block aspect-video w-full overflow-hidden bg-ink lg:aspect-auto lg:min-h-80">
+                  <span
+                    className={`${media} absolute inset-0 transition-transform duration-700 ease-settle group-hover:scale-104`}
+                    style={{ backgroundImage: `url('${IMAGES.site}')` }}
+                    aria-hidden="true"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                    <span className="flex size-16 items-center justify-center rounded-full border-[1.5px] border-white bg-[rgb(20_20_20/86%)] text-[1.125rem] text-white transition-colors duration-150 group-hover:bg-orange group-hover:text-ink">
+                      ▶
+                    </span>
                   </span>
                 </span>
-                {/* Solid for the lower half so the kicker never lands on bright sky. */}
-                <figcaption className="absolute inset-x-0 bottom-0 flex flex-col bg-[linear-gradient(0deg,rgb(20_20_20/92%)_55%,rgb(20_20_20/0%))] px-4 pt-12 pb-4 text-white sm:px-5.5 sm:pt-14 sm:pb-5.5">
-                  <span className="text-[0.656rem] tracking-[0.18em] text-orange-on-dark uppercase">
-                    Project documentary · 6:42
+                <span className="flex flex-col gap-3 p-5.5 sm:p-7.5">
+                  <span className={`${cardTitle} tracking-[0.16em]`}>The video library</span>
+                  <span className={cardBody}>
+                    Project documentaries, construction updates, drone footage and interviews from
+                    the official CoBuilt YouTube channel, each tied to the development it documents.
                   </span>
-                  <span className="mt-1.5 text-[1.0625rem] font-normal sm:text-[1.25rem]">
-                    Anthony Gardens: one year on site
+                  <span className="mt-auto pt-2 text-[0.719rem] font-semibold tracking-[0.14em] text-rust uppercase group-hover:text-rust-hover">
+                    Browse the films →
                   </span>
-                </figcaption>
-              </figure>
+                </span>
+              </a>
+            )}
 
-              <div className="flex flex-col gap-5">
-                <div
-                  className={`${media} aspect-[16/10] w-full sm:aspect-auto sm:h-56`}
-                  style={{ backgroundImage: `url('${IMAGES.apartments}')` }}
-                  role="img"
-                  aria-label="Completed CoBuilt apartment blocks"
-                />
-                <div className="flex flex-col gap-3 border border-line bg-white p-5.5 sm:p-6.5">
-                  <h3 className={`${cardTitle} tracking-[0.16em]`}>How the library works</h3>
-                  <p className={cardBody}>
-                    Films are embedded from the official CoBuilt YouTube channel, with captions, and
-                    each one is tied to the development it documents. A project&rsquo;s own films sit
-                    on its project page alongside the milestone record.
-                  </p>
-                  <p className={cardBody}>
-                    Footage requests for press use:{' '}
-                    <a className="text-rust underline hover:text-rust-hover" href={`mailto:${EMAIL}`}>
-                      {EMAIL}
-                    </a>
-                    .
-                  </p>
-                </div>
-              </div>
-            </div>
+            <p className="mt-6 max-w-165 text-[0.844rem] leading-[1.7] text-zinc-700">
+              Films play from YouTube only when you press play, with captions available in the
+              player. A project&rsquo;s own films sit on its project page alongside the milestone
+              record. Footage requests for press use:{' '}
+              <a className="text-rust underline hover:text-rust-hover" href={`mailto:${EMAIL}`}>
+                {EMAIL}
+              </a>
+              .
+            </p>
           </div>
         </section>
 

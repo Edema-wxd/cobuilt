@@ -80,6 +80,13 @@ const schema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   CHAT_WEBHOOK_SECRET: z.string().optional(),
   AKISMET_API_KEY: z.string().optional(),
+  // Cloudflare Turnstile on the contact form. Inert until set; once the secret
+  // is set every enquiry must carry a token Cloudflare accepts. The site key
+  // is public: the contact page reads NEXT_PUBLIC_TURNSTILE_SITE_KEY, or
+  // TURNSTILE_SITE_KEY, on the server and hands it to the widget.
+  TURNSTILE_SITE_KEY: z.string().optional(),
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
+  TURNSTILE_SECRET_KEY: z.string().optional(),
 
   // --- Observability -----------------------------------------------------
   SENTRY_DSN: z.string().optional(),

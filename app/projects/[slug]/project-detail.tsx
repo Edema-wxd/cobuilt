@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import SiteLayout from '../../../components/SiteLayout';
 import ModelViewer from './model-viewer';
+import ProjectDocuments, { type ProjectDocument } from './project-documents';
+import PhotoAlbums, { type ProjectAlbum } from './photo-albums';
 import type { ModelFailure, ModelProgress } from './model-viewer';
 import { assessDevice, browserHints } from './tour-model';
 import { passportHref } from '../../../components/site';
@@ -30,6 +32,7 @@ import {
   eyebrowOnLine,
   media,
 } from '../../../components/ui';
+import { VIDEO_CATEGORY_LABEL, formatDuration, spokenDuration, type VideoCategory } from '@/lib/videos';
 
 /**
  * Project detail — `/projects/[slug]`.
@@ -93,6 +96,15 @@ interface PassportSummary {
   next: { label: string; status: MilestoneStatus; scheduledDate: string | null } | null;
 }
 
+/** A published film from the video library that documents this project. */
+interface ProjectVideo {
+  id: string;
+  slug: string;
+  title: string;
+  category: VideoCategory;
+  durationSeconds: number | null;
+}
+
 interface RelatedProject {
   id: string;
   title: string;
@@ -137,6 +149,12 @@ export interface ProjectDetailProps {
   tours: Tour[];
   passport: PassportSummary | null;
   related: RelatedProject[];
+  /** The project's published films, in the library's order; the block is left out when empty. */
+  videos: ProjectVideo[];
+  /** Published downloads attached to the project at /admin/downloads. */
+  documents?: ProjectDocument[];
+  /** Published image gallery albums for this project; the block is hidden when empty. */
+  albums?: ProjectAlbum[];
 }
 
 /**
@@ -254,6 +272,9 @@ export default function ProjectDetail({
   tours,
   passport,
   related,
+  videos,
+  documents = [],
+  albums = [],
 }: ProjectDetailProps) {
   const [activeTourId, setActiveTourId] = useState<string | null>(
     tours.find((tour) => tour.featured)?.id ?? tours[0]?.id ?? null,
@@ -458,6 +479,8 @@ export default function ProjectDetail({
                   </a>
                 ) : null}
               </div>
+
+              <ProjectDocuments documents={documents} />
             </div>
 
             {specs.length > 0 ? (
@@ -586,7 +609,7 @@ export default function ProjectDetail({
           </section>
         ) : null}
 
-        {body.length > 0 || services.length > 0 || tags.length > 0 ? (
+        {body.length > 0 || services.length > 0 || tags.length > 0 || videos.length > 0 ? (
           <section className="bg-white py-11 sm:py-14 md:py-18">
             <div
               className={`${container} grid grid-cols-1 gap-11 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:gap-18`}
@@ -628,6 +651,52 @@ export default function ProjectDetail({
                           </span>
                         </li>
                       ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {videos.length > 0 ? (
+                  <div className="flex flex-col">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 pb-1.5">
+                      <h3 className={blockHead}>Videos</h3>
+                      <a className={uppercaseLink} href="/videos">
+                        Video library →
+                      </a>
+                    </div>
+                    {/* Links to each film's page; nothing loads from YouTube here. */}
+                    <ul className="flex flex-col border-b border-line">
+                      {videos.map((video) => {
+                        const duration = formatDuration(video.durationSeconds);
+                        const spoken = spokenDuration(video.durationSeconds);
+                        return (
+                          <li
+                            key={video.id}
+                            className="flex min-h-13 items-start gap-3 border-t border-line py-2"
+                          >
+                            <span className="pt-2.5 text-[0.75rem] text-orange" aria-hidden="true">
+                              ▶
+                            </span>
+                            <span className="flex min-w-0 flex-1 flex-col">
+                              <a
+                                className="inline-flex min-h-target items-center text-[0.938rem] text-ink underline decoration-zinc-400 underline-offset-3 hover:text-rust hover:decoration-rust"
+                                href={`/videos/${video.slug}`}
+                              >
+                                {video.title}
+                                {spoken ? <span className="sr-only"> ({spoken})</span> : null}
+                              </a>
+                              <span className="text-[0.719rem] uppercase tracking-[0.14em] text-zinc-600">
+                                {VIDEO_CATEGORY_LABEL[video.category]}
+                                {duration ? (
+                                  <span className="font-mono tracking-[0.06em]" aria-hidden="true">
+                                    {' '}
+                                    · {duration}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 ) : null}
@@ -720,6 +789,8 @@ export default function ProjectDetail({
             </div>
           </section>
         ) : null}
+
+        <PhotoAlbums albums={albums} projectSlug={project.slug} />
 
         {tours.length > 0 ? (
           <section id="tours" className="bg-ink py-11 text-white sm:py-14 md:py-18">

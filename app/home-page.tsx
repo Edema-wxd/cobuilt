@@ -3,8 +3,10 @@
 import { Fragment, useState } from 'react';
 import CountUp from '../components/CountUp';
 import SiteLayout from '../components/SiteLayout';
+import { useContactDetails } from '../components/ContactDetails';
 import HeroVideo from './hero-video';
-import { PHONE, PHONE_HREF, passportHref } from '../components/site';
+import { passportHref } from '../components/site';
+import { telHref } from '@/lib/contactDetails';
 import HomeVideo from './home-video';
 import { cssUrl } from './projects/[slug]/project-shared';
 import type { ServiceCard } from './services/load-services';
@@ -240,6 +242,12 @@ export default function HomePage({
   leaders: HomeLeader[];
   settings: HomeSettings;
 }) {
+  // The tap-to-call line: the office's first number and opening hours, as set
+  // at /admin/contact.
+  const contact = useContactDetails();
+  const phone = contact.phones[0]!;
+  const hours = contact.hours[0];
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [website, setWebsite] = useState('');
@@ -342,11 +350,13 @@ export default function HomePage({
               </span>
               <a
                 className="inline-flex min-h-target items-center text-[1.1875rem] text-white lg:min-h-0"
-                href={PHONE_HREF}
+                href={telHref(phone.number)}
               >
-                {PHONE}
+                {phone.number}
               </a>
-              <span className="text-[0.781rem] text-zinc-200">Mon–Fri, 08:00–17:00 WAT</span>
+              <span className="text-[0.781rem] text-zinc-200">
+                {hours ? `${hours.days}, ${hours.hours}` : null}
+              </span>
             </div>
           </div>
         </section>

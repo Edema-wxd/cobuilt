@@ -47,8 +47,8 @@ import { STATUS_LABELS, linkText, publicationText, type AdminProject } from './p
  * update withdraws legal approval (repositories/projects.ts), so an untouched
  * figure must never be resent, and an edit that does touch one is confirmed.
  *
- * Gallery albums are not attached here: they come from the CMS, and there is
- * no endpoint listing them.
+ * Photo albums are not attached here: an album names its project in its own
+ * form at /admin/gallery (docs/decisions.md §2.24).
  */
 
 interface Option {
@@ -498,7 +498,7 @@ function ProjectForm({
         <FormSection title="Media">
           <UrlField id="p-image" label="Featured image" value={form.featuredImageUrl} onChange={(v) => set('featuredImageUrl', v)} />
           <UrlField id="p-brochure" label="Brochure (PDF)" value={form.brochureUrl} onChange={(v) => set('brochureUrl', v)} />
-          <Field id="p-videos" label="Timeline videos" optional hint="One web address per line, in the order they should play. Gallery albums are attached in the CMS.">
+          <Field id="p-videos" label="Timeline videos" optional hint="One web address per line, in the order they should play. Photo albums are attached in Gallery.">
             <textarea
               id="p-videos"
               className={`${textarea} min-h-20 font-mono text-[0.813rem]`}

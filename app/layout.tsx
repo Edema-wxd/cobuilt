@@ -5,6 +5,8 @@ import type { ReactNode } from 'react';
 import '@fontsource-variable/geist';
 import '@fontsource-variable/geist-mono';
 import '../styles/globals.css';
+import { ContactDetailsProvider } from '../components/ContactDetails';
+import { loadContactSettings } from './contact/load-contact';
 
 /**
  * Root layout — replaces the former `pages/_app.tsx` and `pages/_document.tsx`.
@@ -50,7 +52,17 @@ export const viewport: Viewport = {
  */
 const INTRO_SCRIPT = `try{var s=window.sessionStorage;if(s.getItem('cb-intro')){document.documentElement.classList.add('intro-seen')}else{s.setItem('cb-intro','1')}}catch(e){}`;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+/**
+ * The office's contact details reach every page through the layout (the header
+ * and footer show them), so every route regenerates at most once a minute and
+ * a change at /admin/contact shows site-wide within that minute. Pages with a
+ * shorter window of their own keep it.
+ */
+export const revalidate = 60;
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const contact = await loadContactSettings();
+
   return (
     // The intro script adds a class to <html> before React hydrates it.
     <html lang="en" suppressHydrationWarning>
@@ -60,7 +72,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <style>{'.brand-intro{display:none}html{--intro-offset:0ms}'}</style>
         </noscript>
       </head>
-      <body>{children}</body>
+      <body>
+        <ContactDetailsProvider value={contact}>{children}</ContactDetailsProvider>
+      </body>
     </html>
   );
 }

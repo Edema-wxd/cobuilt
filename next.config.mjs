@@ -22,10 +22,14 @@ function originOf(url) {
  * Inline scripts are allowed because the App Router streams its payload in
  * them. Frames allow any https origin because a 3D tour can be a Matterport or
  * custom viewer page, and images and media allow https for the storage CDN.
+ *
+ * Cloudflare Turnstile, the contact form's CAPTCHA, loads its script from
+ * challenges.cloudflare.com and runs in a frame from there; `frame-src https:`
+ * already covers the frame. Without Turnstile keys it is never requested.
  */
 const pageCsp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
@@ -53,6 +57,22 @@ const nextConfig = {
   poweredByHeader: false,
   // Server-only packages must not be traced into the edge/client bundles.
   serverExternalPackages: ['pg', 'ioredis', 'bullmq', 'winston', '@sentry/node'],
+  /**
+   * `next/image` resizes the gallery's photographs (docs/decisions.md §2.24):
+   * files on this site, and files stored with UploadThing. Any other host an
+   * editor links to is shown unoptimised (`isOptimisableImage` in
+   * src/lib/gallery.ts) rather than fetched by the server. An UploadThing URL
+   * names an immutable file, so a resized copy is kept for a month.
+   */
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'utfs.io', pathname: '/f/**' },
+      { protocol: 'https', hostname: '*.ufs.sh', pathname: '/f/**' },
+    ],
+    // 75 for grid tiles, 85 for the full-screen viewer.
+    qualities: [75, 85],
+    minimumCacheTTL: 2_678_400,
+  },
   async headers() {
     return [
       {
