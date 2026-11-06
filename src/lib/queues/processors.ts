@@ -9,6 +9,7 @@ import * as newsRepo from '../repositories/news';
 import * as formsRepo from '../repositories/forms';
 import * as analyticsRepo from '../repositories/analytics';
 import * as conversationsRepo from '../repositories/conversations';
+import * as jobApplicationsRepo from '../repositories/jobApplications';
 import { indexProject, indexNews, removeDocument, reindexAll } from '../search';
 
 /** Job handlers, shared by the worker process and the integration tests. */
@@ -30,6 +31,14 @@ function buildEmail(type: EmailJobData['type'], payload: Record<string, unknown>
     case 'inquiry-notification':
       return templates.inquiryNotification(
         payload as Parameters<typeof templates.inquiryNotification>[0],
+      );
+    case 'application-confirmation':
+      return templates.applicationConfirmation(
+        payload as Parameters<typeof templates.applicationConfirmation>[0],
+      );
+    case 'application-notification':
+      return templates.applicationNotification(
+        payload as Parameters<typeof templates.applicationNotification>[0],
       );
     case 'investment-notification':
       return templates.investmentNotification(
@@ -101,10 +110,12 @@ export async function runMaintenance(action: MaintenanceJobData['action']): Prom
     return;
   }
 
-  const [submissions, pageViews, messages] = await Promise.all([
+  const [submissions, pageViews, messages, applications] = await Promise.all([
     formsRepo.purgeExpired(),
     analyticsRepo.purgeExpiredPageViews(),
     conversationsRepo.purgeExpired(),
+    // Deleted outright, CVs with them (docs/decisions.md §2.28).
+    jobApplicationsRepo.purgeExpired(),
   ]);
 
   logger.info('Retention purge complete', {
@@ -112,7 +123,9 @@ export async function runMaintenance(action: MaintenanceJobData['action']): Prom
     pageViewsDeleted: pageViews,
     whatsappMessagesDeleted: messages.whatsapp,
     chatEventsDeleted: messages.chat,
+    jobApplicationsDeleted: applications,
     formRetentionDays: env.RETENTION_FORM_SUBMISSION_DAYS,
     messageRetentionDays: env.RETENTION_MESSAGE_DAYS,
+    jobApplicationRetentionDays: env.RETENTION_JOB_APPLICATION_DAYS,
   });
 }

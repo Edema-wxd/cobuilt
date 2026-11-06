@@ -3,6 +3,8 @@ import { query, queryOne, transaction } from '../db';
 /**
  * Subject access and erasure for people who contacted CoBuilt without an
  * account (NDPA). Account holders use /api/users/[userId]/export and DELETE.
+ * Job applications are covered too: the export carries each CV, and erasure
+ * deletes the application and its CV.
  *
  * A person is identified by email, phone, or both. Phone numbers are compared
  * on digits only, and a Nigerian number matches in both its local (0801...)
@@ -24,6 +26,12 @@ export function phoneVariants(phone: string | null | undefined): string[] {
   return [digits];
 }
 
+/**
+ * Job applications (0022) match the same way, but are deleted rather than
+ * anonymised, and have no anonymised state to skip.
+ */
+const APPLICATION_MATCH = `(lower(a.email) = lower($1) OR regexp_replace(coalesce(a.phone, ''), '\\D', '', 'g') = ANY($2::text[]))`;
+
 const FORM_MATCH = `anonymised_at IS NULL
   AND (lower(email) = lower($1) OR regexp_replace(coalesce(phone, ''), '\\D', '', 'g') = ANY($2::text[]))`;
 
@@ -44,7 +52,7 @@ export async function findAccount(
 export async function exportData(ids: SubjectIdentifiers) {
   const [email, phones] = params(ids);
 
-  const [submissions, newsletter, chat, whatsapp] = await Promise.all([
+  const [submissions, newsletter, chat, whatsapp, applications] = await Promise.all([
     query(
       `SELECT id, form_type, name, email, phone, message, metadata,
               host(ip_address) AS ip_address, user_agent, submitted_at, retain_until
@@ -69,6 +77,19 @@ export async function exportData(ids: SubjectIdentifiers) {
         ORDER BY received_at DESC`,
       [phones],
     ),
+    // The CV is part of what is held, so it is part of the copy: base64, with
+    // the name and type it was received under.
+    query<Record<string, unknown> & { cv_content: Buffer | null }>(
+      `SELECT a.id, v.title AS vacancy_title, a.name, a.email, a.phone, a.cover_note,
+              a.cv_file_name, a.cv_content_type, a.cv_size_bytes, c.content AS cv_content,
+              a.status, a.staff_notes, a.created_at, a.retain_until
+         FROM job_applications a
+         LEFT JOIN vacancies v ON v.id = a.vacancy_id
+         LEFT JOIN job_application_cvs c ON c.application_id = a.id
+        WHERE ${APPLICATION_MATCH}
+        ORDER BY a.created_at DESC`,
+      [email, phones],
+    ),
   ]);
 
   return {
@@ -76,6 +97,10 @@ export async function exportData(ids: SubjectIdentifiers) {
     newsletter: newsletter.rows,
     chatEvents: chat.rows,
     whatsappMessages: whatsapp.rows,
+    jobApplications: applications.rows.map(({ cv_content, ...row }) => ({
+      ...row,
+      cv_base64: cv_content ? cv_content.toString('base64') : null,
+    })),
   };
 }
 
@@ -84,6 +109,8 @@ export interface ErasureCounts {
   newsletterRemoved: number;
   chatEventsDeleted: number;
   whatsappMessagesDeleted: number;
+  /** Deleted outright, each with its CV. */
+  jobApplicationsDeleted: number;
 }
 
 /** Erases everything held for the subject in one transaction. */
@@ -112,12 +139,18 @@ export async function erase(ids: SubjectIdentifiers): Promise<ErasureCounts> {
         WHERE regexp_replace(phone, '\\D', '', 'g') = ANY($1::text[])`,
       [phones],
     );
+    // The CV goes with its application (ON DELETE CASCADE).
+    const applications = await client.query(`DELETE FROM job_applications a WHERE ${APPLICATION_MATCH}`, [
+      email,
+      phones,
+    ]);
 
     return {
       submissionsAnonymised: submissions.rowCount ?? 0,
       newsletterRemoved: newsletter.rowCount ?? 0,
       chatEventsDeleted: chat.rowCount ?? 0,
       whatsappMessagesDeleted: whatsapp.rowCount ?? 0,
+      jobApplicationsDeleted: applications.rowCount ?? 0,
     };
   });
 }

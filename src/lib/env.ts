@@ -57,6 +57,9 @@ const schema = z.object({
   MAIL_FROM_NAME: z.string().default('CoBuilt Investment Partners'),
   ADMIN_EMAIL: z.string().default('admin@cobuilt.com'),
   LEGAL_EMAIL: z.string().default('legal@cobuilt.com'),
+  // Who is told about a new job application (a link to the console, never the
+  // CV). Defaults to ADMIN_EMAIL; a comma-separated list reaches several people.
+  CAREERS_EMAIL: z.string().optional(),
   SENDGRID_API_KEY: z.string().optional(),
   MAILGUN_API_KEY: z.string().optional(),
   MAILGUN_DOMAIN: z.string().optional(),
@@ -80,10 +83,11 @@ const schema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   CHAT_WEBHOOK_SECRET: z.string().optional(),
   AKISMET_API_KEY: z.string().optional(),
-  // Cloudflare Turnstile on the contact form. Inert until set; once the secret
-  // is set every enquiry must carry a token Cloudflare accepts. The site key
-  // is public: the contact page reads NEXT_PUBLIC_TURNSTILE_SITE_KEY, or
-  // TURNSTILE_SITE_KEY, on the server and hands it to the widget.
+  // Cloudflare Turnstile on the contact and job application forms. Inert
+  // until set; once the secret is set every enquiry and application must carry
+  // a token Cloudflare accepts. The site key is public: the pages read
+  // NEXT_PUBLIC_TURNSTILE_SITE_KEY, or TURNSTILE_SITE_KEY, on the server and
+  // hand it to the widget.
   TURNSTILE_SITE_KEY: z.string().optional(),
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
   TURNSTILE_SECRET_KEY: z.string().optional(),
@@ -96,6 +100,8 @@ const schema = z.object({
   RETENTION_INVESTOR_INQUIRY_DAYS: z.coerce.number().int().positive().default(730),
   RETENTION_PAGE_VIEW_DAYS: z.coerce.number().int().positive().default(30),
   RETENTION_MESSAGE_DAYS: z.coerce.number().int().positive().default(90),
+  // Job applications and their CVs, deleted (not anonymised) once it passes.
+  RETENTION_JOB_APPLICATION_DAYS: z.coerce.number().int().positive().default(180),
 });
 
 export type Env = z.infer<typeof schema>;
