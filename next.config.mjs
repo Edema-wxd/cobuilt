@@ -51,6 +51,29 @@ const pageCsp = [
   'report-to csp',
 ].join('; ');
 
+/**
+ * Kept out of search results: the admin console, the API's JSON, and the
+ * build's scripts and decoders. Everything private is also behind sign-in;
+ * this only stops a crawler that finds a URL from listing it. The header, not
+ * robots.txt, does this — a crawler blocked by robots.txt never reads it.
+ */
+const NOINDEX = { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' };
+const NOINDEX_PATHS = ['/admin', '/admin/:path*', '/_next/static/:path*', '/vendor/:path*'];
+
+/**
+ * The site is served from other hosts too — the project's *.vercel.app alias,
+ * deployment URLs — and a copy there must not compete with the real one in
+ * search. Any host but the canonical one is marked noindex. Unset (a local
+ * build without the variable), no host is singled out.
+ */
+const canonicalHost = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_WEBSITE_URL).hostname;
+  } catch {
+    return null;
+  }
+})();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -94,8 +117,19 @@ const nextConfig = {
         source: '/api/:path*',
         headers: [
           { key: 'Content-Security-Policy', value: "default-src 'none'; frame-ancestors 'none'" },
+          NOINDEX,
         ],
       },
+      ...NOINDEX_PATHS.map((source) => ({ source, headers: [NOINDEX] })),
+      ...(canonicalHost
+        ? [
+            {
+              source: '/:path*',
+              missing: [{ type: 'host', value: canonicalHost.replace(/\./g, '\\.') }],
+              headers: [NOINDEX],
+            },
+          ]
+        : []),
     ];
   },
 };
