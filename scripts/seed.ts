@@ -280,6 +280,54 @@ async function seedNews(adminId: string): Promise<void> {
   }
 }
 
+/**
+ * Two published vacancies, a standing role and a graduate one, so /careers,
+ * a vacancy page and its form render (docs/decisions.md §2.28). Placeholders:
+ * no real role is advertised by the seed.
+ */
+async function seedVacancies(): Promise<void> {
+  const roles: Array<[title: string, type: string, department: string, closesInDays: number | null, summary: string]> = [
+    [
+      'Quantity Surveyor',
+      'full_time',
+      'Quantity surveying and cost control',
+      30,
+      'Run cost control on a residential scheme in Lekki, from tender through to final account.',
+    ],
+    [
+      'Graduate Site Engineer',
+      'graduate',
+      'Construction management and site supervision',
+      null,
+      'Join a live site as a graduate engineer, working to the published programme and the Project Passport™.',
+    ],
+  ];
+
+  for (const [index, [title, type, department, closesInDays, summary]] of roles.entries()) {
+    await query(
+      `INSERT INTO vacancies (title, slug, employment_type, department, location, work_pattern, summary, description,
+                              responsibilities, requirements, benefits, closing_date, published, first_published_at, sort_order)
+       VALUES ($1, $2, $3, $4, 'Lekki, Lagos', 'on_site', $5, $6, $7, $8, $9,
+               CASE WHEN $10::int IS NULL THEN NULL ELSE (NOW() AT TIME ZONE 'Africa/Lagos')::date + $10::int END,
+               TRUE, NOW(), $11)
+       ON CONFLICT (slug) DO NOTHING`,
+      [
+        title,
+        slugify(title),
+        type,
+        department,
+        summary,
+        `${summary} A development placeholder describing the role, so the page has a description to show.`,
+        ['Keep the cost plan and valuations current', 'Report variances in writing, as they arise'],
+        ['A degree in a relevant discipline', 'Comfort with documenting work as it happens'],
+        ['Pension contributions under the Pension Reform Act'],
+        closesInDays,
+        (index + 1) * 10,
+      ],
+    );
+  }
+}
+
 async function seedFaqs(): Promise<void> {
   const faqs: Array<[string, string, string]> = [
     [
@@ -321,6 +369,7 @@ async function main(): Promise<void> {
   await seedVideos();
   await seedGallery();
   await seedNews(adminId);
+  await seedVacancies();
   await seedFaqs();
 
   console.log('Seed complete.');
