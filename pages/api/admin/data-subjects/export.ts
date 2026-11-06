@@ -8,7 +8,7 @@ import { maskEmail, maskPhone } from '@/lib/privacy';
 
 /**
  * POST /api/admin/data-subjects/export: subject access request for someone
- * without an account (NDPA). POST, not GET, so the email or phone number never
+ * without an account (NDPA), job applications and their CVs included. POST, not GET, so the email or phone number never
  * appears in a URL and therefore never in access logs.
  */
 export default createRoute({
@@ -35,6 +35,7 @@ export default createRoute({
           newsletter: data.newsletter.length,
           chatEvents: data.chatEvents.length,
           whatsappMessages: data.whatsappMessages.length,
+          jobApplications: data.jobApplications.length,
         },
         ipAddress: ip,
       });

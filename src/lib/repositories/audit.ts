@@ -138,6 +138,16 @@ export const AUDIT_ACTIONS = {
   GALLERY_IMAGE_UPDATED: 'gallery.image.updated',
   GALLERY_IMAGE_DELETED: 'gallery.image.deleted',
   GALLERY_IMAGES_REORDERED: 'gallery.images.reordered',
+  VACANCY_CREATED: 'vacancy.created',
+  VACANCY_UPDATED: 'vacancy.updated',
+  VACANCY_DELETED: 'vacancy.deleted',
+  VACANCIES_REORDERED: 'vacancy.reordered',
+  // Opening an application, or downloading its CV, reads personal data, so
+  // each is recorded against the reader, as opening a form submission is.
+  JOB_APPLICATION_VIEWED: 'job_application.viewed',
+  JOB_APPLICATION_CV_DOWNLOADED: 'job_application.cv_downloaded',
+  JOB_APPLICATION_UPDATED: 'job_application.updated',
+  JOB_APPLICATION_DELETED: 'job_application.deleted',
   USER_CREATED: 'user.created',
   USER_ROLE_CHANGED: 'user.role_changed',
   USER_DELETED: 'user.deleted',

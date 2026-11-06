@@ -2,7 +2,8 @@ import { env } from './env';
 import { logger } from './logger';
 
 /**
- * Cloudflare Turnstile, the contact form's CAPTCHA (docs/decisions.md §2.25).
+ * Cloudflare Turnstile, the contact and job application forms' CAPTCHA
+ * (docs/decisions.md §2.25, §2.28).
  *
  * A third layer over the honeypot, the heuristic score and Akismet in
  * ./spam.ts — and unlike them it decides before anything is stored. It is
@@ -16,6 +17,9 @@ const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 /** The `action` the contact form's widget is rendered with; a token for another action is refused. */
 export const CONTACT_ACTION = 'contact';
+
+/** The job application form's `action`, so a contact-form token cannot be spent on an application. */
+export const CAREERS_ACTION = 'careers';
 
 export function isTurnstileEnabled(): boolean {
   return Boolean(env.TURNSTILE_SECRET_KEY);

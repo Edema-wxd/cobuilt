@@ -30,6 +30,13 @@ export const PERMISSIONS = [
   'downloads:write',
   // Image gallery albums and their images, uploads included.
   'gallery:write',
+  // Vacancies on /careers: write, publish, order, closing dates. Admin and
+  // editor; deleting is admin-only, enforced by the route.
+  'careers:write',
+  // Job applications and their CVs: read, download, change status and notes,
+  // delete. Admin only by default, because a CV is sensitive personal data;
+  // grant it per user (users.permissions) to the hiring team.
+  'applications:read',
   'forms:read',
   'forms:moderate',
   'users:read',
@@ -59,6 +66,7 @@ const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
     'videos:write',
     'downloads:write',
     'gallery:write',
+    'careers:write',
     'forms:read',
   ],
   // Read-only dashboard access for CoBuilt stakeholders.
