@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import CtaBand from '../../components/CtaBand';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
@@ -40,6 +41,7 @@ export const metadata: Metadata = {
   title: 'Resources and downloads',
   description:
     'Download the CoBuilt Investment Partners company profile, capability statement, brochures and project profiles, read the FAQs, and find our policies.',
+  alternates: canonical('/resources'),
 };
 
 /** The download centre's groups, in the order the page shows them. Policies have their own section. */

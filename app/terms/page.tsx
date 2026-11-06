@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import ProsePage from '../../components/ProsePage';
 import { EMAIL } from '../../components/site';
 import * as prose from '../../components/prose';
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
   title: 'Terms & Conditions',
   description:
     'Terms of use for the CoBuilt Investment Partners website, including the position on investment, the status of Project Passport information, and limitations of liability.',
+  alternates: canonical('/terms'),
 };
 
 export default function Terms() {

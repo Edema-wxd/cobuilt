@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import ProsePage from '../../components/ProsePage';
 import { EMAIL, PHONE, PHONE_HREF } from '../../components/site';
 import * as prose from '../../components/prose';
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
   title: 'Accessibility Statement',
   description:
     "CoBuilt Investment Partners' accessibility statement: target conformance with WCAG 2.2 AA, what has been verified, and the known exceptions.",
+  alternates: canonical('/accessibility'),
 };
 
 export default function Accessibility() {

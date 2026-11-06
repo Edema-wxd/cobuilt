@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import NewsIndex from './news-index';
 
 /**
@@ -14,6 +15,8 @@ export const metadata: Metadata = {
   title: 'News and articles',
   description:
     'Press releases, project updates, thought leadership, industry insight and company announcements from CoBuilt Investment Partners, with project progress recorded in each development’s Project Passport™.',
+  // Filters live in the query string; every filtered view is this page.
+  alternates: canonical('/news'),
 };
 
 /**
