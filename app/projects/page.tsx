@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import ProjectsIndex from './projects-index';
 
 /**
@@ -14,6 +15,8 @@ export const metadata: Metadata = {
   title: 'Projects',
   description:
     'Completed, under construction and planned developments from CoBuilt Investment Partners, each linked to its Project Passport™ — a dated, public record from commencement to handover.',
+  // Filters live in the query string; every filtered view is this page.
+  alternates: canonical('/projects'),
 };
 
 /**

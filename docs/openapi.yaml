@@ -48,6 +48,8 @@ tags:
   - name: FAQs
   - name: Leadership
   - name: Downloads
+  - name: Redirects
+  - name: Careers
   - name: Search
   - name: Forms
   - name: Authentication
@@ -589,6 +591,49 @@ paths:
         '422': { $ref: '#/components/responses/ValidationFailed' }
         '429': { $ref: '#/components/responses/RateLimited' }
 
+  /api/vacancies:
+    get:
+      tags: [Careers]
+      summary: List the vacancies open for applications
+      description: |
+        Published vacancies whose closing date (West Africa Time) has not
+        passed, in the order set in the console. Unpaginated. A vacancy is
+        taken through the whole of its closing day. Drafts and closed
+        vacancies are never returned. Cached for a minute.
+      security: []
+      responses:
+        '200':
+          description: Open vacancies in display order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/Vacancy' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /api/vacancies/{slug}:
+    get:
+      tags: [Careers]
+      summary: One vacancy open for applications
+      description: |
+        A draft, or a vacancy past its closing date, is a 404. (The page at
+        `/careers/{slug}` still shows a closed vacancy, saying it has closed.)
+        Cached for a minute.
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The vacancy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Vacancy' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
   /api/gallery:
     get:
       tags: [Gallery]
@@ -740,6 +785,53 @@ paths:
                   success:      { type: boolean }
                   submissionId: { type: string, format: uuid }
         '400': { description: The Turnstile check was refused }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { description: The Turnstile check could not be completed }
+
+  /api/careers/apply:
+    post:
+      tags: [Careers]
+      summary: Send a job application, with a CV
+      description: |
+        `multipart/form-data`: the fields below and one file part, `cv` — a
+        PDF or Word (.docx) document of up to 4 MB, checked by its content,
+        not by the name or type the browser gives it. With `vacancyId` it is
+        an application for that vacancy, which must be published (else 404)
+        and not past its closing date (else 409); without it, a speculative
+        application. Every field problem, the CV's included, is reported in
+        one 422.
+
+        Rate limited to 5 per hour per IP, before the body is read. A body
+        over the limit is a 413, and anything but multipart a 415. While
+        Cloudflare Turnstile is configured, `turnstileToken` is required (a
+        token for the `careers` action) and verified before anything is
+        stored: missing is a 422, refused a 400, Cloudflare unreachable a
+        503. A filled honeypot stores nothing and gets the same 201 as a
+        real application; one the spam checks flag is stored for review and
+        nobody is emailed. Otherwise the applicant is sent a confirmation and
+        the hiring team (`CAREERS_EMAIL`, else `ADMIN_EMAIL`) a link to the
+        console; neither email carries the CV.
+      security: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/ApplicationInput' }
+      responses:
+        '201':
+          description: Received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+        '400': { description: The Turnstile check was refused, or the form could not be read }
+        '404': { description: No published vacancy with that id }
+        '409': { description: The vacancy has closed }
+        '413': { description: The body is larger than the CV limit allows }
+        '415': { description: Not multipart/form-data }
         '422': { $ref: '#/components/responses/ValidationFailed' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '503': { description: The Turnstile check could not be completed }
@@ -1167,6 +1259,101 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/redirects:
+    get:
+      tags: [Redirects]
+      summary: List every redirect
+      description: |
+        Requires `admin` with `redirects:write`. Every rule by source path,
+        with how many visitors it has sent on and when it last did.
+      responses:
+        '200':
+          description: Every rule
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/RedirectAdmin' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Redirects]
+      summary: Add a redirect
+      description: |
+        Requires `admin` with `redirects:write`. The source is stored lower
+        case, decoded and without a trailing slash, and applies only where no
+        page answers: an address that has a page is never redirected. No rule
+        may start where another lands, so every redirect is one hop and no
+        loop can form; a rule that would is a 422 naming `sourcePath` or
+        `destination`. The public site follows within a minute. Audited as
+        `redirect.created`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RedirectInput' }
+      responses:
+        '201':
+          description: Added
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RedirectAdmin' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: That source already has a redirect }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/redirects/{redirectId}:
+    parameters:
+      - { name: redirectId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Redirects]
+      summary: A redirect
+      description: Requires `admin` with `redirects:write`.
+      responses:
+        '200':
+          description: The rule
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RedirectAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Redirects]
+      summary: Change a redirect
+      description: |
+        Requires `admin` with `redirects:write`. The fields present are
+        applied, under the same rules as on create; the hit count is kept.
+        Audited as `redirect.updated`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RedirectUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RedirectAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: The new source already has a redirect of its own }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Redirects]
+      summary: Delete a redirect
+      description: |
+        Requires `admin` with `redirects:write`. The old address is a 404
+        again. Audited as `redirect.deleted`, with the final hit count.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /api/uploadthing:
     get:
@@ -1792,6 +1979,249 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /api/admin/careers/vacancies:
+    get:
+      tags: [Careers]
+      summary: List every vacancy, drafts and closed ones included
+      description: |
+        Requires `admin` or `editor` with `careers:write`. Display order, with
+        each vacancy's application counts (counts only; the applications
+        themselves need `applications:read`).
+      responses:
+        '200':
+          description: Every vacancy in display order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/VacancyAdmin' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Careers]
+      summary: Add a vacancy
+      description: |
+        Requires `admin` or `editor` with `careers:write`. Added at the end of
+        the list, as a draft unless `published` is true; the first
+        publication dates the advert. Audited as `vacancy.created`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VacancyInput' }
+      responses:
+        '201':
+          description: Added
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VacancyAdmin' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/careers/vacancies/reorder:
+    post:
+      tags: [Careers]
+      summary: Set the display order
+      description: |
+        Requires `admin` or `editor` with `careers:write`. `ids` is every
+        vacancy, once each, in the new order; `/careers` keeps this order
+        within each type. A list that leaves one out or names one that does
+        not exist is a 422. Audited as `vacancy.reordered`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              additionalProperties: false
+              properties:
+                ids: { type: array, items: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Every vacancy in its new order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/VacancyAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/careers/vacancies/{vacancyId}:
+    parameters:
+      - { name: vacancyId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Careers]
+      summary: One vacancy
+      description: Requires `admin` or `editor` with `careers:write`.
+      responses:
+        '200':
+          description: The vacancy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VacancyAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Careers]
+      summary: Update, publish, unpublish or change the closing date
+      description: |
+        Requires `admin` or `editor` with `careers:write`. Every field is
+        optional; `salary: null` removes a published salary. Audited as
+        `vacancy.updated`, with the publication and closing-date changes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VacancyUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VacancyAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Another vacancy has that slug }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Careers]
+      summary: Delete a vacancy that has no applications
+      description: |
+        Requires `admin` with `careers:write`. A vacancy holding applications
+        is a 409: unpublish it, or delete its applications first. Audited as
+        `vacancy.deleted`.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: The vacancy has applications }
+
+  /api/admin/careers/applications:
+    get:
+      tags: [Careers]
+      summary: The job applications inbox
+      description: |
+        Requires `applications:read` (admins by default; editors do not hold
+        it). Newest first, with contact details masked and no cover note.
+      parameters:
+        - name: vacancy
+          in: query
+          description: A vacancy's id, or `speculative` for applications to no vacancy.
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ApplicationStatus' }
+        - name: flaggedAsSpam
+          in: query
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/Page'
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: A page of applications
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Paginated'
+                  - type: object
+                    properties:
+                      results:
+                        type: array
+                        items: { $ref: '#/components/schemas/ApplicationSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/admin/careers/applications/{applicationId}:
+    parameters:
+      - { name: applicationId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Careers]
+      summary: One application, in full
+      description: |
+        Requires `applications:read`. Contact details, cover note and staff
+        notes in full. Each opening is audited as `job_application.viewed`,
+        by id, with no personal data in the entry.
+      responses:
+        '200':
+          description: The application
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApplicationDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Careers]
+      summary: Change status, staff notes or the spam flag
+      description: |
+        Requires `applications:read`. Audited as `job_application.updated`:
+        the status change and that the notes changed, never their text.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                status:        { $ref: '#/components/schemas/ApplicationStatus' }
+                staffNotes:    { type: [string, 'null'], maxLength: 5000 }
+                flaggedAsSpam: { type: boolean }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApplicationDetail' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Careers]
+      summary: Delete an application and its CV
+      description: |
+        Requires `admin` with `applications:read`. Audited as
+        `job_application.deleted`, with masked identifiers only.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/admin/careers/applications/{applicationId}/cv:
+    parameters:
+      - { name: applicationId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Careers]
+      summary: Download an application's CV
+      description: |
+        Requires a bearer token with `applications:read`. The only way to a
+        CV: it is stored in PostgreSQL and is at no URL of its own. Always an
+        attachment, `Cache-Control: private, no-store`, `nosniff` and a
+        sandboxing CSP. Audited as `job_application.cv_downloaded`.
+      responses:
+        '200':
+          description: The CV
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema: { type: string, format: binary }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /api/admin/gallery:
     get:
       tags: [Gallery]
@@ -2079,8 +2509,9 @@ paths:
       tags: [Data protection]
       summary: Subject access request for someone without an account (NDPA)
       description: |
-        Returns form submissions, the newsletter record, chat events and
-        WhatsApp messages held for an email address and/or phone number, as a
+        Returns form submissions, the newsletter record, chat events,
+        WhatsApp messages and job applications — each with its CV, base64 in
+        `cv_base64` — held for an email address and/or phone number, as a
         JSON attachment. POST so the identifiers stay out of URLs and access
         logs. Phone numbers match on digits, in both local (0801...) and
         international (234801...) form. If a staff account uses the email, its
@@ -2106,7 +2537,8 @@ paths:
       summary: Erasure request for someone without an account (NDPA)
       description: |
         In one transaction, anonymises matching form submissions and deletes
-        the newsletter record, chat events and WhatsApp messages. A staff
+        the newsletter record, chat events, WhatsApp messages and job
+        applications with their CVs. A staff
         account under the same email is not touched; its id is returned so it
         can be closed with `DELETE /api/users/{userId}`. Requires
         `privacy:manage`; audited with masked identifiers and counts.
@@ -2128,6 +2560,7 @@ paths:
                   newsletterRemoved:       { type: integer }
                   chatEventsDeleted:       { type: integer }
                   whatsappMessagesDeleted: { type: integer }
+                  jobApplicationsDeleted:  { type: integer }
                   accountId:               { type: [string, 'null'], format: uuid }
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
@@ -3338,6 +3771,194 @@ components:
     DocumentUpdate:
       allOf:
         - $ref: '#/components/schemas/DocumentFields'
+        - type: object
+          minProperties: 1
+
+    VacancyType:
+      type: string
+      enum: [full_time, part_time, contract, graduate, internship]
+
+    Salary:
+      type: object
+      description: At least one of `min` and `max`.
+      required: [period]
+      additionalProperties: false
+      properties:
+        min:      { type: [integer, 'null'], minimum: 1 }
+        max:      { type: [integer, 'null'], minimum: 1 }
+        currency: { type: string, pattern: '^[A-Z]{3}$', default: NGN }
+        period:   { type: string, enum: [year, month] }
+
+    Vacancy:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        title:            { type: string }
+        slug:             { type: string }
+        type:             { $ref: '#/components/schemas/VacancyType' }
+        department:       { type: [string, 'null'], description: The discipline the role sits in }
+        location:         { type: string }
+        workPattern:      { type: [string, 'null'], enum: [on_site, hybrid, remote, null] }
+        summary:          { type: string }
+        description:      { type: [string, 'null'] }
+        responsibilities: { type: array, items: { type: string } }
+        requirements:     { type: array, items: { type: string } }
+        benefits:         { type: array, items: { type: string } }
+        salary:
+          description: Null unless the vacancy publishes one.
+          oneOf:
+            - $ref: '#/components/schemas/Salary'
+            - type: 'null'
+        closingDate:      { type: [string, 'null'], format: date, description: 'The last day applications are taken (WAT); null is open until filled' }
+        isOpen:           { type: boolean }
+        postedAt:         { type: [string, 'null'], format: date-time, description: When it was first published }
+
+    VacancyAdmin:
+      allOf:
+        - $ref: '#/components/schemas/Vacancy'
+        - type: object
+          properties:
+            published:           { type: boolean }
+            sortOrder:           { type: integer }
+            applicationCount:    { type: integer }
+            newApplicationCount: { type: integer, description: Still "new", spam excluded }
+            createdAt:           { type: string, format: date-time }
+            updatedAt:           { type: string, format: date-time }
+
+    VacancyFields:
+      type: object
+      additionalProperties: false
+      properties:
+        title:            { type: string, minLength: 2, maxLength: 255 }
+        slug:             { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        type:             { $ref: '#/components/schemas/VacancyType' }
+        department:       { type: [string, 'null'], maxLength: 120 }
+        location:         { type: string, minLength: 2, maxLength: 160 }
+        workPattern:      { type: [string, 'null'], enum: [on_site, hybrid, remote, null] }
+        summary:          { type: string, minLength: 10, maxLength: 400 }
+        description:      { type: [string, 'null'], maxLength: 10000 }
+        responsibilities: { type: array, maxItems: 25, items: { type: string, maxLength: 400 } }
+        requirements:     { type: array, maxItems: 25, items: { type: string, maxLength: 400 } }
+        benefits:         { type: array, maxItems: 25, items: { type: string, maxLength: 400 } }
+        salary:
+          oneOf:
+            - $ref: '#/components/schemas/Salary'
+            - type: 'null'
+        closingDate:      { type: [string, 'null'], format: date }
+        published:        { type: boolean }
+
+    VacancyInput:
+      allOf:
+        - $ref: '#/components/schemas/VacancyFields'
+        - type: object
+          required: [title, type, location, summary]
+
+    VacancyUpdate:
+      allOf:
+        - $ref: '#/components/schemas/VacancyFields'
+        - type: object
+          minProperties: 1
+
+    ApplicationStatus:
+      type: string
+      enum: [new, reviewing, shortlisted, rejected, hired]
+
+    ApplicationInput:
+      type: object
+      required: [name, email, consent, cv]
+      properties:
+        vacancyId:      { type: string, format: uuid, description: Absent for a speculative application }
+        name:           { type: string, minLength: 2, maxLength: 255 }
+        email:          { type: string, format: email }
+        phone:          { type: string, example: '0801 234 5678' }
+        coverNote:      { type: string, maxLength: 4000 }
+        consent:        { type: string, enum: ['true', 'on'] }
+        cv:             { type: string, format: binary, description: 'PDF or .docx, up to 4 MB' }
+        website:        { $ref: '#/components/schemas/Honeypot' }
+        turnstileToken: { type: string, description: Required while Turnstile is configured }
+
+    ApplicationSummary:
+      type: object
+      properties:
+        id:            { type: string, format: uuid }
+        vacancy:
+          type: [object, 'null']
+          description: Null for a speculative application.
+          properties:
+            id:    { type: string, format: uuid }
+            title: { type: string }
+            slug:  { type: string }
+        name:          { type: string }
+        email:         { type: string, description: Masked in the list }
+        phone:         { type: [string, 'null'], description: Masked in the list }
+        status:        { $ref: '#/components/schemas/ApplicationStatus' }
+        flaggedAsSpam: { type: boolean }
+        cv:
+          type: object
+          properties:
+            fileName:    { type: string }
+            contentType: { type: string }
+            sizeBytes:   { type: integer }
+        createdAt:     { type: string, format: date-time }
+        retainUntil:   { type: string, format: date-time, description: When the nightly purge deletes it }
+
+    ApplicationDetail:
+      allOf:
+        - $ref: '#/components/schemas/ApplicationSummary'
+        - type: object
+          properties:
+            email:      { type: string, format: email }
+            phone:      { type: [string, 'null'] }
+            coverNote:  { type: [string, 'null'] }
+            staffNotes: { type: [string, 'null'] }
+            spamScore:  { type: [number, 'null'] }
+            updatedAt:  { type: string, format: date-time }
+
+    RedirectAdmin:
+      type: object
+      properties:
+        id:          { type: string, format: uuid }
+        sourcePath:  { type: string, example: /projects/old-name, description: 'Lower case, decoded, no trailing slash' }
+        destination: { type: string, example: /projects/new-name, description: As given }
+        permanent:   { type: boolean, description: '308 when true, 307 when false' }
+        hitCount:
+          type: integer
+          description: |
+            Visitors sent on. Under /services and /gallery, whose pages are
+            cached, a redirect is counted each time it is regenerated (at most
+            once a minute) rather than per visit.
+        lastHitAt:   { type: string, format: date-time, nullable: true }
+        createdAt:   { type: string, format: date-time }
+        updatedAt:   { type: string, format: date-time, description: Last edited; a hit does not move it }
+
+    RedirectFields:
+      type: object
+      description: Unknown fields are refused with a 422.
+      properties:
+        sourcePath:
+          type: string
+          maxLength: 512
+          description: |
+            A path on this site, starting with a single `/`, with no query
+            string or fragment. Not `/`, and nothing under `/admin`, `/api`
+            or `/_next`.
+        destination:
+          type: string
+          maxLength: 1024
+          description: |
+            A path on this site (a query string or fragment is kept) or an
+            absolute http(s) URL. Not the source itself, nor any rule's source.
+        permanent: { type: boolean, default: true }
+
+    RedirectInput:
+      allOf:
+        - $ref: '#/components/schemas/RedirectFields'
+        - type: object
+          required: [sourcePath, destination]
+
+    RedirectUpdate:
+      allOf:
+        - $ref: '#/components/schemas/RedirectFields'
         - type: object
           minProperties: 1
 

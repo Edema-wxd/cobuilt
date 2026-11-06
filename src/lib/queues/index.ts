@@ -25,6 +25,8 @@ export interface EmailJobData {
   type:
     | 'inquiry-confirmation'
     | 'inquiry-notification'
+    | 'application-confirmation'
+    | 'application-notification'
     | 'investment-notification'
     | 'newsletter-confirmation'
     | 'newsletter-welcome'

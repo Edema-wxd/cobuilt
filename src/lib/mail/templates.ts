@@ -108,6 +108,90 @@ Review: ${adminUrl}`;
   };
 }
 
+/** The retention period in words, for emails that promise it. */
+function retentionText(days: number): string {
+  return days === 180 ? 'six months' : `${days} days`;
+}
+
+/**
+ * Sent to the applicant. It confirms what arrived and what happens to it, and
+ * repeats nothing they sent beyond their name and the role: the email may be
+ * read on a shared device, and the CV is not in it.
+ */
+export function applicationConfirmation(input: { name: string; vacancyTitle: string | null }): EmailMessage {
+  const role = input.vacancyTitle ? `for ${input.vacancyTitle}` : 'to work with us';
+  const title = input.vacancyTitle
+    ? `We have received your application: ${input.vacancyTitle}`
+    : 'We have received your application';
+  const kept = retentionText(env.RETENTION_JOB_APPLICATION_DAYS);
+
+  const text = `Hello ${input.name},
+
+Thank you for applying ${role} at CoBuilt Investment Partners. Your application and CV have reached our hiring team. We read every application and will reply either way.
+
+We keep your application and CV for ${kept} and then delete them. To see what we hold, correct it or have it deleted sooner, reply to this email or see ${env.NEXT_PUBLIC_WEBSITE_URL}/privacy.
+
+CoBuilt Investment Partners
+${env.NEXT_PUBLIC_WEBSITE_URL}`;
+
+  return {
+    to: '',
+    subject: title,
+    text,
+    html: layout(
+      title,
+      `<p>Hello ${escape(input.name)},</p>
+       <p>Thank you for applying ${escape(role)} at CoBuilt Investment Partners. Your
+          application and CV have reached our hiring team. We read every application and
+          will reply either way.</p>
+       <p style="font-size:13px;color:#78716c;">We keep your application and CV for ${escape(kept)}
+          and then delete them. To see what we hold, correct it or have it deleted sooner,
+          reply to this email or read our
+          <a href="${env.NEXT_PUBLIC_WEBSITE_URL}/privacy" style="color:#78716c;">privacy policy</a>.</p>`,
+    ),
+  };
+}
+
+/**
+ * Sent to the hiring team. Deliberately thin: the role, the applicant's name
+ * and a link into the console. The CV, contact details and cover note stay in
+ * the console, behind `applications:read` and its audit trail, rather than
+ * being copied into mailboxes that keep them indefinitely.
+ */
+export function applicationNotification(input: {
+  applicationId: string;
+  name: string;
+  vacancyTitle: string | null;
+}): EmailMessage {
+  const role = input.vacancyTitle ?? 'Speculative application';
+  const title = `${role}: new application from ${input.name}`;
+  const adminUrl = `${env.NEXT_PUBLIC_WEBSITE_URL}/admin/applications?open=${encodeURIComponent(input.applicationId)}`;
+
+  const text = `A job application has arrived through the website.
+
+Role: ${role}
+From: ${input.name}
+
+The CV, contact details and cover note are in the console (sign-in required):
+${adminUrl}`;
+
+  return {
+    to: '',
+    subject: title,
+    text,
+    html: layout(
+      title,
+      `<table style="width:100%;font-size:14px;border-collapse:collapse;">
+         <tr><td style="padding:4px 0;color:#78716c;">Role</td><td>${escape(role)}</td></tr>
+         <tr><td style="padding:4px 0;color:#78716c;">From</td><td>${escape(input.name)}</td></tr>
+       </table>
+       <p style="margin-top:16px;">The CV, contact details and cover note are in the console;
+          signing in is required, and opening them is recorded.</p>
+       <p style="margin-top:24px;"><a href="${adminUrl}">Open the application</a></p>`,
+    ),
+  };
+}
+
 export function investmentNotification(input: {
   submissionId: string;
   name: string;

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import ProsePage from '../../components/ProsePage';
 import { EMAIL, PHONE, PHONE_HREF } from '../../components/site';
 import * as prose from '../../components/prose';
@@ -10,6 +11,9 @@ import * as prose from '../../components/prose';
  * actually does — the windows come from RETENTION_* in src/lib/env.ts, the
  * export and erasure routes exist under /api/users/[userId] and are offered
  * at /admin/account. If either side changes, both have to change together.
+ * Job applications are RETENTION_JOB_APPLICATION_DAYS (180), deleted by the
+ * nightly job with their CVs, and are covered by the data-subject export and
+ * erasure (docs/decisions.md §2.28).
  */
 
 const RETENTION: Array<[string, string, string]> = [
@@ -18,6 +22,11 @@ const RETENTION: Array<[string, string, string]> = [
   ['Investor enquiries', 'Name, email, phone, company, your message, IP address and browser details', '2 years (730 days), then anonymised'],
   ['Page analytics', 'Page path, referrer, truncated IP, browser type', '30 days, then deleted'],
   ['WhatsApp and live chat', 'Phone number or chat name, email, your messages', '90 days after each message, then deleted'],
+  [
+    'Job applications',
+    'Name, email, phone if given, cover note, CV, and the status and notes our hiring team adds',
+    '6 months (180 days) from the day you apply, then deleted, CV included',
+  ],
   ['Account records', 'Email, name, role, sign-in history', 'While the account is open'],
 ];
 
@@ -25,6 +34,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
     'How CoBuilt Investment Partners handles personal data under the Nigeria Data Protection Act — what we collect, why, how long we keep it, and your rights.',
+  alternates: canonical('/privacy'),
 };
 
 export default function Privacy() {
@@ -33,7 +43,7 @@ export default function Privacy() {
       eyebrow="Legal"
       title="Privacy Policy"
       standfirst="How CoBuilt Investment Partners collects, uses and retains personal data, and the rights you hold over it under the Nigeria Data Protection Act."
-      updated="2 November 2026"
+      updated="6 November 2026"
     >
       <section className={prose.section}>
         <h2 className={prose.sectionTitle}>Who we are</h2>
@@ -68,6 +78,16 @@ export default function Privacy() {
             is our legitimate interest in responding to enquiries, and for investor enquiries, in
             taking steps at your request before any contract. The form also records your full IP
             address and browser details, which we use only to detect spam and abuse.
+          </li>
+          <li>
+            <strong>When you apply for a job</strong> — your name, email address, phone number if
+            you give one, your cover note and your CV, and which vacancy you applied for. We use
+            them only to consider you for that role, or for roles at CoBuilt if you send a
+            speculative application, and to reply. The lawful basis is your consent, given on the
+            form, and the steps you ask us to take before any contract of employment. Unlike the
+            contact form, the application form does not keep your IP address or browser details.
+            Our hiring team may add a status and notes while they consider it; those are part of
+            what we hold about you, and you can ask to see them.
           </li>
           <li>
             <strong>When you message us on WhatsApp or live chat</strong> — your phone number or
@@ -133,23 +153,28 @@ export default function Privacy() {
         <ul className={prose.list}>
           <li>
             <strong>Our hosting, database and file storage providers</strong>, which store the
-            records described above.
+            records described above. A CV is stored in our database, not at a web address of its
+            own, and only the CoBuilt staff given access to job applications can open it; every
+            opening and download is logged. We do not pass applications to recruiters or anyone
+            else outside CoBuilt.
           </li>
           <li>
             <strong>Cloudflare</strong>, which delivers and protects the website and handles the IP
-            address of every visit. On the contact page it also runs Turnstile, a check that tells a
-            person from an automated submission: it reads technical signals from your browser and
-            device, and your IP address, when the form loads and when you send it. It is used only
+            address of every visit. On the contact page and the job application forms it also runs
+            Turnstile, a check that tells a person from an automated submission: it reads technical
+            signals from your browser and device, and your IP address, when the form loads and when
+            you send it. It is used only
             to stop spam, not for advertising or to follow you across sites.
           </li>
           <li>
             <strong>Our email delivery provider</strong>, which sends confirmation emails, replies
-            and updates, and handles your email address and the content of those emails.
+            and updates, and handles your email address and the content of those emails. The
+            emails about a job application carry your name and the role, never your CV.
           </li>
           <li>
             <strong>A spam-filtering service</strong> (Akismet, operated by Automattic Inc.), which
-            may receive the name, email, message, IP address and browser details from a form
-            submission to judge whether it is spam. A submission marked as spam is kept for a person
+            may receive the name, email, message or cover note, IP address and browser details
+            from a form submission or job application to judge whether it is spam (never the CV). A submission marked as spam is kept for a person
             on our team to review, not discarded.
           </li>
           <li>

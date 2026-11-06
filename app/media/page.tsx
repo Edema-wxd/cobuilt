@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
 import {
@@ -52,6 +53,7 @@ export const metadata: Metadata = {
   title: 'Media centre',
   description:
     'News, articles, video, photography and downloads from CoBuilt Investment Partners: press releases, project updates, thought leadership, industry insight and company announcements.',
+  alternates: canonical('/media'),
 };
 
 const FALLBACK_IMAGE = '/images/apartment-blocks.webp';

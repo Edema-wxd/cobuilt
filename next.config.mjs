@@ -15,6 +15,19 @@ function originOf(url) {
 }
 
 /**
+ * Whether search engines may index this deployment: only production on
+ * Vercel, and only on the production origin. The same test as `isIndexable`
+ * in src/lib/seo.ts (a config file cannot import TypeScript); keep the two
+ * together. Anywhere else every response carries `X-Robots-Tag: noindex`, and
+ * app/robots.ts disallows everything, so a preview is never indexed even from
+ * a link a crawler follows past robots.txt. See docs/decisions.md §2.27.
+ */
+const PRODUCTION_ORIGIN = 'https://www.cobuiltpartners.com';
+const indexable =
+  (process.env.VERCEL_ENV === undefined || process.env.VERCEL_ENV === 'production') &&
+  originOf(process.env.NEXT_PUBLIC_WEBSITE_URL) === PRODUCTION_ORIGIN;
+
+/**
  * Sent as Content-Security-Policy-Report-Only for now: violations are posted
  * to /api/csp-report and logged, and nothing is blocked. Once the logs show
  * none from real traffic, rename the header to Content-Security-Policy.
@@ -26,6 +39,9 @@ function originOf(url) {
  * Cloudflare Turnstile, the contact form's CAPTCHA, loads its script from
  * challenges.cloudflare.com and runs in a frame from there; `frame-src https:`
  * already covers the frame. Without Turnstile keys it is never requested.
+ *
+ * Structured data (`<script type="application/ld+json">`) needs nothing here:
+ * a browser never executes a data block, so `script-src` does not apply.
  */
 const pageCsp = [
   "default-src 'self'",
@@ -79,6 +95,7 @@ const nextConfig = {
         source: '/:path*',
         headers: [
           ...securityHeaders,
+          ...(indexable ? [] : [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }]),
           // The dev server's hot reload relies on eval, which would flood the
           // report endpoint, so the policy is production-only.
           ...(process.env.NODE_ENV === 'production'

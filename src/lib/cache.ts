@@ -22,6 +22,9 @@ export const TTL = {
   videos: 60,
   documents: 60,
   gallery: 60,
+  vacancies: 60,
+  // The whole redirect map, also held in memory for as long (src/lib/redirects.ts).
+  redirects: 60,
   search: 300,
   facets: 60,
 } as const;

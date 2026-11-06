@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Cloudflare Turnstile — the contact form's CAPTCHA (docs/decisions.md §2.25).
+ * Cloudflare Turnstile — the contact and job application forms' CAPTCHA
+ * (docs/decisions.md §2.25, §2.28).
  *
- * Rendered only when the page has a site key, and only by the contact form,
- * so Cloudflare's script is requested on this page and nowhere else. It is
+ * Rendered only when the page has a site key, and only by those two forms,
+ * so Cloudflare's script is requested on /contact and the careers pages and
+ * nowhere else. It is
  * loaded as a plain script tag rather than an npm wrapper. The widget is
  * usually a single tick that passes by itself; when Cloudflare is unsure it
  * asks for one click. Its token goes with the enquiry and is checked by the

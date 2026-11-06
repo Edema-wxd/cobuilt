@@ -9,7 +9,7 @@ import { maskEmail, maskPhone } from '@/lib/privacy';
 /**
  * POST /api/admin/data-subjects/erase: erasure request for someone without an
  * account (NDPA). Form submissions are anonymised; newsletter, chat and
- * WhatsApp records are deleted. A staff account under the same email is left
+ * WhatsApp records, and job applications with their CVs, are deleted. A staff account under the same email is left
  * alone and reported, because closing it is DELETE /api/users/{userId}.
  */
 export default createRoute({

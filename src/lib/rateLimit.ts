@@ -30,6 +30,9 @@ export interface RateLimitResult {
 export const RATE_LIMITS = {
   api: { bucket: 'api', windowSeconds: 15 * 60, max: 100 },
   inquiry: { bucket: 'form:inquiry', windowSeconds: 60 * 60, max: 5 },
+  // Job applications carry a CV of up to 4 MB, so the limit is the inquiry
+  // form's: enough for a person applying to a few roles, not for a flood.
+  application: { bucket: 'form:application', windowSeconds: 60 * 60, max: 5 },
   newsletter: { bucket: 'form:newsletter', windowSeconds: 60, max: 1 },
   investment: { bucket: 'form:investment', windowSeconds: 60 * 60, max: 10 },
   login: { bucket: 'auth:login', windowSeconds: 15 * 60, max: 10 },

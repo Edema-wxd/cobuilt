@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import JsonLd from '../../../components/JsonLd';
 import SiteLayout from '../../../components/SiteLayout';
+import { breadcrumbList } from '@/lib/structuredData';
 import ModelViewer from './model-viewer';
 import ProjectDocuments, { type ProjectDocument } from './project-documents';
 import PhotoAlbums, { type ProjectAlbum } from './photo-albums';
@@ -408,6 +410,13 @@ export default function ProjectDetail({
       {...(project.featuredImageUrl ? { preloadImage: project.featuredImageUrl } : {})}
     >
       <main>
+        <JsonLd
+          data={breadcrumbList([
+            { label: 'Home', href: '/' },
+            { label: 'Projects', href: '/projects' },
+            { label: project.title },
+          ])}
+        />
         <nav className="border-b border-line bg-white" aria-label="Breadcrumb">
           <div className={`${container} flex min-h-12 items-center gap-3 text-[0.781rem]`}>
             <a className="inline-flex min-h-target items-center text-zinc-600 hover:text-rust" href="/">

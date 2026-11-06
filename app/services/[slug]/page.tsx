@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import CtaBand from '../../../components/CtaBand';
+import JsonLd from '../../../components/JsonLd';
 import PageHero from '../../../components/PageHero';
 import SiteLayout from '../../../components/SiteLayout';
 import {
@@ -18,7 +18,10 @@ import {
   uppercaseLink,
 } from '../../../components/sections';
 import { btnOutlineOnDark, btnWhite, container, eyebrow, media } from '../../../components/ui';
+import { canonical } from '@/lib/seo';
+import { service as serviceData } from '@/lib/structuredData';
 import { STATUS_CLASS, STATUS_LABEL, cssUrl } from '../../projects/[slug]/project-shared';
+import { redirectOrNotFound } from '../../redirect-or-not-found';
 import { loadServicePage, serviceSlugs, type ServiceProject } from '../load-services';
 import { serviceHref } from '../services';
 
@@ -68,6 +71,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     // must not append the house name a second time.
     title: service.metaTitle ? { absolute: service.metaTitle } : service.title,
     description,
+    alternates: canonical(`/services/${service.slug}`),
     openGraph: {
       type: 'website',
       title: `${service.title} — CoBuilt Investment Partners`,
@@ -85,7 +89,7 @@ interface Band {
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
   const page = await loadServicePage(slug);
-  if (!page) notFound();
+  if (!page) return redirectOrNotFound(`/services/${slug}`);
 
   const { service, caseStudies, relatedProjects, others } = page;
 
@@ -359,6 +363,13 @@ export default async function Page({ params }: PageProps) {
   return (
     <SiteLayout current="/services">
       <main>
+        <JsonLd
+          data={serviceData({
+            path: `/services/${service.slug}`,
+            name: service.title,
+            description: service.standfirst || service.summary,
+          })}
+        />
         <PageHero
           eyebrow={service.informational ? 'Information only' : 'Our services'}
           title={service.title}

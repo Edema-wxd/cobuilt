@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { breadcrumbList } from '@/lib/structuredData';
+import JsonLd from './JsonLd';
 import { container, eyebrowOnDark, media } from './ui';
 
 export interface Crumb {
@@ -16,6 +18,7 @@ interface Props {
    * Wayfinding for the pages that sit below the top level — a service, an
    * article. `docs/design-handover.md` §4 lists this as the missing pattern;
    * this is it. The current page is the last crumb and is not a link.
+   * The same trail is published as a Schema.org `BreadcrumbList`.
    */
   trail?: Crumb[];
   /** Buttons under the standfirst. */
@@ -47,6 +50,8 @@ export default function PageHero({
 }: Props) {
   return (
     <section className="relative isolate overflow-hidden bg-ink">
+      {/* Outside the `intro` container, whose entrance steps count its children. */}
+      {trail ? <JsonLd data={breadcrumbList(trail)} /> : null}
       {image ? (
         <>
           <div

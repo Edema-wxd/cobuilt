@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import JsonLd from '../../components/JsonLd';
 import SiteLayout from '../../components/SiteLayout';
+import { breadcrumbList } from '@/lib/structuredData';
 import { passportHref } from '../../components/site';
 import {
   btnOrange,
@@ -358,6 +360,7 @@ export default function ProjectsIndex() {
   return (
     <SiteLayout current="/projects">
       <main>
+        <JsonLd data={breadcrumbList([{ label: 'Home', href: '/' }, { label: 'Projects' }])} />
         <nav
           className="border-b border-line bg-white"
           aria-label="Breadcrumb"

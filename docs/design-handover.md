@@ -152,7 +152,7 @@ outline-on-dark, outline) · eyebrow · stat band · service card grid · projec
 card with status badge and progress bar · filter pills (scrolling row on
 phones) · milestone list · value/step columns with dividing rules · news card · album card ·
 full-screen photo viewer (`app/gallery/[slug]/album-viewer.tsx`) ·
-form fields with NDPA consent · regulatory notice block · prose page shell with
+form fields with NDPA consent · application form with error summary and CV field (`app/careers/application-form.tsx`) · vacancy card · regulatory notice block · prose page shell with
 section rules, tables and note blocks.
 
 ---
@@ -452,6 +452,25 @@ nothing at all.
   size, hidden when there are none. See `docs/decisions.md` §2.25. The
   footer's "Downloads" entry and the media centre link to it.
 - **`/faqs`** — **built.** Grouped by category, each entry a native disclosure with a stable `#id` anchor that search results link to. Read from the new `GET /api/faqs`.
+- **Careers — `/careers`, `/careers/[slug]`** — **built.** `/careers` opens
+  with Home / Careers and two actions (current vacancies, a speculative
+  application), then the open vacancies grouped full-time, part-time and
+  contract as hairline cards (discipline, title, "Full-time · Lekki, Lagos ·
+  Hybrid", salary when published, summary, "Closes 6 December 2026" or "Open
+  until filled", View and apply); then graduate opportunities and the
+  internship programme side by side on grey, each with its vacancies or a
+  plain "none open" note; then how we work beside the disciplines; then the
+  speculative application form on the `line` ground, with equal opportunity
+  and what happens to an application beside it. A vacancy page is the hero
+  (type eyebrow, title, summary, location and closing date on the mono rule),
+  the advert with a facts column, and its form. A closed vacancy keeps its
+  page with an orange-ruled "This vacancy has closed" note and no form.
+  **The form** follows the contact form and adds an error summary that takes
+  focus and links to each field, errors under each field, a CV field (PDF or
+  .docx, up to 4 MB, with the chosen file's name and size), upload progress,
+  and a success state that replaces it. Vacancies are managed at
+  `/admin/careers`; see `docs/decisions.md` §2.28. There is no company-wide
+  benefits list — each vacancy lists its own — until CoBuilt supplies one.
 - **Investor information** — where the regulatory position lives in full. No
   call to action beyond registering interest.
 
@@ -481,6 +500,12 @@ admin console is what makes the site maintainable without a developer.
   gallery (albums: create, order, publish, delete; photographs: upload with
   progress or add by link, alt text — required — caption and date, order,
   cover, delete),
+  careers vacancies (type, discipline, location, lists, salary, closing date,
+  order, publish, application counts), the job applications inbox (admins by
+  default: masked list filtered by vacancy, status and spam; open, status,
+  staff notes, CV download through the console, delete),
+  redirects from old addresses (admin only: old address, new address,
+  permanent or temporary, hit counts; see below),
   investor-content approval, users and roles,
   and the audit log. Editors send only the fields that changed, and any change
   to an investor figure withdraws its approval after a confirmation. A record
@@ -493,6 +518,19 @@ admin console is what makes the site maintainable without a developer.
 - **404 and 500 pages** — visitors currently get the unstyled Next.js default.
   More routes now call `notFound()` — an unknown service slug, an unknown
   article — so this is more visible than it was.
+- **Search engine basics** — **built** (`docs/decisions.md` §2.27).
+  `/sitemap.xml` lists every published page with its last change;
+  `/robots.txt` keeps crawlers off the console, the API and search results,
+  and off every preview deployment entirely; every public page has an
+  absolute canonical, with list filters dropped; and pages carry Schema.org
+  structured data (organisation and site search on the homepage,
+  breadcrumbs, articles, films, FAQs, leaders, services, albums). None of it
+  is visible. **Redirects** are the one screen: `/admin/redirects` is a form
+  above a table of rules (old address, new address, 308 or 307, hits, last
+  hit, edit, delete). Both addresses are checked as they are typed, and a
+  rule that would chain or loop is refused with the rule it collides with
+  named. A rule applies only where no page answers, so it never takes a live
+  page down.
 - **Social preview images** — **built.** A branded card per page, and an item's own photography wins where it has some. See docs/decisions.md §2.18.
 - **A video library page** — **built.** `/videos` leads with the featured film
   in the homepage's click-to-load player, then a grid of cards (still, play
@@ -518,6 +556,8 @@ admin console is what makes the site maintainable without a developer.
   inline status message. Reuse it for enquiry, auth and admin forms.
 - **Breadcrumbs.** Passport sits three levels deep. `components/PageHero.tsx`
   takes a `trail`, and the record uses it: Home / Projects / {project} / Passport™.
+  The trail is also published as a Schema.org `BreadcrumbList`, so a new page
+  that uses `PageHero` gets that for free. Every crumb but the last needs a link.
 
 ---
 
@@ -548,5 +588,7 @@ admin console is what makes the site maintainable without a developer.
 - Shared class strings: `components/ui.ts`, `components/prose.ts`.
 - Navigation and footer content: `components/site.ts`.
 - API contract, with every field and response shape: `docs/openapi.yaml`.
+- Canonicals, the site origin and indexing: `src/lib/seo.ts`; structured data:
+  `src/lib/structuredData.ts`; sitemap and robots: `app/sitemap.ts`, `app/robots.ts`.
 - Decisions, deviations and deferrals: `docs/decisions.md`.
 - Contrast rules as an executable test: `__tests__/unit/contrast.test.ts`.

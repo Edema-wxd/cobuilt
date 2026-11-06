@@ -933,6 +933,344 @@ the hero shows the poster rather than a blank frame. The video fades in on
 its first frame. A pause control covers WCAG 2.2.2, and it offers Play when
 the browser refuses autoplay (iOS Low Power Mode).
 
+### 2.27 Search engines: sitemap, robots, canonicals, structured data and redirects
+
+The client's spec lists the SEO basics: editable titles and descriptions,
+canonical URLs, an XML sitemap, robots.txt, Open Graph, structured data, alt
+text, SEO-friendly URLs and redirect management. Titles, descriptions, Open
+Graph (§2.18), alt text (§2.24) and the URLs were there. Only project pages
+had a canonical, and only when an editor set one. Nothing else existed.
+
+**One origin.** `src/lib/seo.ts` holds the site's absolute origin, read from
+`NEXT_PUBLIC_WEBSITE_URL` like the root layout's `metadataBase`, which now
+imports it. Canonicals, the sitemap, robots.txt and structured data all build
+their URLs from it. Its fallback is now the production origin
+(`https://www.cobuiltpartners.com`, docs/deployment.md), not
+`https://cobuilt.com`, which is not the company's domain. `src/lib/env.ts`
+still defaults the same variable to `https://cobuilt.com` for the email
+templates. That default only applies where the variable is unset, which
+production never is, so it was left alone.
+
+**The sitemap** (`app/sitemap.ts`) lists the fixed pages and everything
+published in the database: projects, their Passport™ records, articles,
+services, leadership profiles, films and gallery albums. One query
+(`src/lib/repositories/sitemap.ts`) applies each page's own visibility rule:
+a live project or article, a published service, leader or film, and a
+published album with at least one photograph. So the sitemap never lists an
+address that answers 404. A record is listed only while its Passport is open;
+an unopened one is a `noindex` page. Each entry's `lastModified` is its
+`updated_at`. A record's date is that of its newest public entry, and an
+album's that of its newest photograph, when either is later. A section's index
+takes the newest date in its section. A project whose editor set a canonical
+address on another site is left for that address to list. Left out: `/search`
+(results are `noindex`), `/downloads` (a redirect) and the console.
+`/resources`, `/media` and `/faqs` are real pages and are listed. There is no
+`priority` or `changefreq`, because Google ignores both. The sitemap is
+regenerated at most once an hour. Without a database, including at build
+time, it lists the fixed pages and the six built-in service pages (which
+render without one) and logs a warning. One sitemap holds 50,000 URLs and the
+site has hundreds; if it ever got near that, `generateSitemaps` would split it
+into an index. **Vacancies (`/careers/<slug>`) are not listed yet.** They are
+being built separately and are added at merge, beside the `/careers` entry.
+
+**robots.txt and previews.** In production, `app/robots.ts` allows the site,
+disallows `/admin`, `/api/` and `/search?`, and names the sitemap. A results
+page is one of endlessly many, so crawlers are kept off them. `/search` itself
+stays `noindex`. Filtered lists (`/news?category=…`) stay crawlable, because
+their canonical is the bare list. Every other deployment disallows everything
+and also sends `X-Robots-Tag: noindex, nofollow` on every response
+(`next.config.mjs`, beside the unchanged security headers and CSP), which also
+covers a preview link a crawler follows without reading robots.txt. "Every
+other deployment" means `VERCEL_ENV` set to anything but `production`, or a
+`NEXT_PUBLIC_WEBSITE_URL` that is not exactly the production origin, including
+one never set (`isIndexable`). Both are read at build time, once per
+deployment. The test is duplicated in `next.config.mjs`, which cannot import
+TypeScript, and the two sit side by side with a comment.
+
+**Canonicals.** Every public page sets `alternates.canonical` through
+`canonical(path)`, which returns an absolute URL with any query string,
+fragment and trailing slash removed. So `/news?category=…`,
+`/videos?category=…`, `/gallery?…` and `/projects?status=…` all canonicalise
+to the bare list. A project's editor-set canonical still wins. A page in its
+"couldn't be loaded" or 404 state has none. `/search` has none either: it is
+`noindex`, and the two should not be mixed. `/careers` is not set here,
+because that page is being rebuilt separately. It needs
+`alternates: canonical('/careers')` at merge.
+
+**Structured data** comes from builders in `src/lib/structuredData.ts`,
+rendered by `components/JsonLd.tsx`. That component escapes `<`, `>`, `&`,
+U+2028 and U+2029 (`jsonLdText`), so text from the database cannot close the
+script element. A builder takes only what its page shows, and drops a field
+that is empty rather than guessing at it:
+
+| Page | Type | From |
+|---|---|---|
+| `/` | `Organization`, `WebSite` | Name, logo (the header's), tagline, address and every phone and email from `/admin/contact` as contact points (the constants without it); a `SearchAction` on `/search?q=` |
+| Any page with a breadcrumb | `BreadcrumbList` | `PageHero`'s `trail`, plus the project page's and projects index's own breadcrumb bars |
+| `/news/[slug]` | `NewsArticle` | Headline, standfirst, image, published and updated dates, category; the byline as a `Person`, or CoBuilt without one |
+| `/videos/[slug]` | `VideoObject` | Title, description, length, the still the card and player show (never `i.ytimg.com`), `embedUrl` on youtube-nocookie.com |
+| `/faqs` | `FAQPage` | The published questions, read on the server through the same Redis entry as `/api/faqs` |
+| `/leadership/[slug]` | `Person` | Name, role, summary, portrait, expertise, qualifications, the profile links under "Elsewhere" |
+| `/services/[slug]` | `Service` | Name, standfirst, CoBuilt as provider |
+| `/gallery/[slug]` | `ImageGallery` | Each photograph with its alt text, caption, size and date |
+
+A film's `uploadDate` is its recording date. That is the only date the page
+gives, and Google requires one for a video result. With no recording date the
+field is left out. Since 2023 Google shows FAQ rich results only for
+government and health sites. The `FAQPage` block is still a correct
+description of the page, and costs one cached read.
+
+**Projects carry no type of their own.** `Residence` is wrong for commercial
+and mixed-use schemes. `Product` is worse: it reads as something for sale,
+and §1 forbids any suggestion of an offer. `Place` invites a map listing for
+a location the site gives only as a district (§2.17). `CreativeWork` would be
+true of almost anything and tells a search engine nothing. No schema.org type
+describes a development with a public delivery record. So a project page and
+its record carry their breadcrumb only. If CoBuilt wants more later, a
+`Place` with confirmed coordinates is the candidate.
+
+**The CSP needed no change.** A browser never executes a
+`<script type="application/ld+json">` data block, so `script-src` does not
+govern it (and the policy allows inline scripts in any case, for the App
+Router's payload). Chromium, loading every page type that carries a block
+under `next start`, raised no violation.
+
+**Redirects are managed at `/admin/redirects`** (migration 0023, `redirects`).
+A rule has a source path, a destination (a path on this site or an http(s)
+URL), whether it is permanent (308) or temporary (307), a hit count and the
+time of the last hit. Only admins manage them, under a new `redirects:write`
+permission, because a rule decides where visitors and crawlers land. Writes
+go through `/api/admin/redirects` and are audited as `redirect.created`,
+`redirect.updated` and `redirect.deleted`. The validation (shared with the
+console's form through `src/lib/redirectPaths.ts`, and held again by CHECK
+constraints) works like this:
+
+- A source is a site-relative path with no query string or fragment. It is
+  stored lower case, decoded and without a trailing slash, the form a request
+  is looked up in. So `/About-Us/` and `/about-us` are one rule.
+- The homepage, `/admin`, `/api` and `/_next` cannot be sources.
+- A destination is a path (its query string is kept) or an absolute http(s)
+  URL. `javascript:`, `data:` and a protocol-relative `//host` are refused.
+- No rule may start where another lands, nor land where another starts. So
+  every redirect is one hop and no loop can form, through a link to this
+  site's own origin either. The check runs in the write's transaction under
+  an advisory lock, so two admins cannot each add half of a loop. A loop is a
+  422 naming the field, with the other rule in the message. A second rule
+  for the same source is a 409.
+
+**A rule applies only where no page answers.** The lookup happens on the way
+to a 404, not on every request:
+
+- `app/[...path]/page.tsx` catches every address no route matches. It is
+  rendered per request, so no cache fills with one entry per mistyped URL.
+- The section pages call `redirectOrNotFound` instead of `notFound()` for an
+  unknown slug.
+- A live page is never looked up and can never be redirected, so a rule can
+  never take one off the site.
+
+The alternative was a Node-runtime `middleware.ts`. On Vercel that is a
+function invocation in front of every page view, cached ones included,
+before the CDN can answer. It would also redirect a path whether or not it
+still has a page. The 404-only approach costs a lookup on 404s only. That
+lookup reads one map of every rule, held in the process for a minute, in
+Redis for a minute (shared, and cleared by every console write), then read
+from PostgreSQL. A crawler's burst of 404s costs a map lookup each, not a
+query each. The process copy lives on `globalThis`, because the console API
+(pages router) and the pages (App Router) are separate bundles in one process
+and a write has to clear the copy the pages read. Other instances see a write
+within the minute. With Redis down the map comes from PostgreSQL. With
+PostgreSQL down too, the last rules known stand, or the answer is the plain
+404. The failure is remembered for ten seconds so an outage is not hammered.
+Nothing on this path can turn a 404 into a 500.
+
+The hit is counted with `after()`, once the response has gone. Query strings
+are not carried to the destination.
+
+Three exceptions follow from how the pages render:
+
+- **Projects, Passport™ records and articles stream.** They have a
+  `loading.tsx`, so their loading state goes out with a 200 before the page
+  knows its slug is unknown. A redirect thrown from the page could then reach
+  the browser only as an in-page meta refresh. Each of the three now has a
+  small layout, which renders before the loading state. It checks the
+  in-memory map for the address and, only when a rule exists, loads the
+  content (through the cached loader the page then reuses) to confirm it is
+  gone. That makes it a real 308 or 307, at the cost of a map lookup per
+  request on those routes.
+- **The project layout also wraps the record.** It cannot tell the two
+  requests apart, so a rule on `/projects/old-name` also catches
+  `/projects/old-name/passport` and sends it to the same place. A rule on the
+  record's own address applies when the project's has none.
+- **Service and album pages are prerendered and cached**, and so is their
+  redirect. Hits there are counted each time the redirect is regenerated (at
+  most once a minute while in use), not per visit, and the console says so.
+  A console write regenerates such an address at once, so a new rule replaces
+  a cached 404 without waiting a minute; that regeneration counts as a hit.
+  Making those renders dynamic was tried: Next.js answers 500 when a
+  prerendered route turns dynamic at runtime.
+
+**Found, not fixed:** the 404 for an unknown project, record or article is a
+soft 404: a 200 status with `noindex`. This predates this change and has the
+same cause, the `loading.tsx` streaming. The layouts above could fix it by
+loading the content on every request, but that would block the loading state
+the `loading.tsx` files exist to show. That is a design trade-off to make
+deliberately, not in passing.
+
+### 2.28 Careers: vacancies, online applications, and CVs kept out of public storage
+
+The client's spec asks Careers for current vacancies, graduate opportunities,
+an internship programme, company culture, employee benefits and an
+application portal with CV upload, and asks the application form to validate,
+stop spam, confirm to the applicant, notify staff, store securely and comply
+with the NDPA. `/careers` said there were no vacancies and asked for CVs by
+email. Now vacancies are managed at `/admin/careers` behind a new
+`careers:write` permission (admin and editor; deleting is admin-only), and
+applications are read at `/admin/applications` behind a new
+`applications:read`, which **only admins hold by default**: a CV is the most
+sensitive thing the site collects, and editors who write adverts have no need
+to read them. The hiring team is given it person by person through
+`users.permissions` (`{"grant": ["applications:read"]}`). Public reads are
+`/api/vacancies` and `/api/vacancies/[slug]` under `CONTENT_CACHE`, and the
+form posts to `/api/careers/apply`.
+
+**Migration 0022** adds `vacancies` (title, slug, type — full-time,
+part-time, contract, graduate, internship — discipline, location, work
+pattern, summary, description, responsibilities, requirements and benefits as
+lists, an optional salary range with its currency and period, closing date,
+published, `first_published_at`, sort order) and `job_applications` (vacancy,
+or null for a speculative application; name, email, optional phone, cover
+note, the CV's name, detected type and size; staff status and notes; spam
+score and flag; `retain_until`). No IP address or user agent is kept for an
+application, unlike an enquiry: nothing in hiring needs them, and the spam
+checks use them in passing. A vacancy with applications cannot be deleted
+(the foreign key is `RESTRICT`, and the route answers 409): `SET NULL` would
+silently turn them into speculative applications. It is unpublished instead,
+or deleted once its applications have gone.
+
+**Where the CV lives: PostgreSQL, not UploadThing.** Every file the site
+stores today is a public UploadThing URL, which is right for a brochure and
+wrong for a CV: anyone holding the link can open it, for as long as the file
+exists. Two ways to keep a CV private were weighed.
+
+- *UploadThing with a private ACL and short-lived signed URLs.* The installed
+  `uploadthing` 7.7.4 supports it — a route's `acl: 'private'`,
+  `UTApi.generateSignedURL` and `updateACL` — but its own types say the ACL
+  "must be enabled for your app" in the UploadThing dashboard, and whether
+  that needs a paid plan could not be checked here (there is no token or
+  dashboard access in this environment). It also fits a public, anonymous
+  form badly: the browser would upload first and submit second, so
+  UploadThing's middleware would need its own Turnstile and rate limit
+  (Turnstile tokens are single-use, so the form would need two), every
+  abandoned form would leave a stranger's CV in storage until a sweeper found
+  it, and erasure and the retention purge would each depend on a second
+  service answering. Nor could any of it be tested without a token.
+- *PostgreSQL `bytea`, size-capped, served only through an authenticated
+  admin endpoint* — chosen. The CV arrives in the same request as the form,
+  so one Turnstile check, one rate limit and one spam check cover it, and the
+  application and its file are stored in one transaction or not at all. It is
+  in its own table (`job_application_cvs`, `ON DELETE CASCADE`), so no list
+  or detail query reads the bytes; it is at no URL; the only way out is `GET
+  /api/admin/careers/applications/[id]/cv` with a bearer token holding
+  `applications:read`, and every download is audited. Erasure and the purge
+  are a `DELETE`, with nothing to reconcile. The costs: database size (bounded
+  by the cap and the 180-day purge), and that a deleted CV stays in the
+  database host's backups and point-in-time history until they roll off — the
+  same as every other deleted row.
+
+**The cap is 4 MB, not 5.** On Vercel a function's request body is limited to
+4.5 MB, and the CV travels inside the form's request, so 4 MB plus the fields
+fits and 5 MB would fail before the route ran. A CV is rarely over 1 MB. The
+cap is checked three times: from the declared length and again while the body
+streams in (413, so an oversized upload is cut off, not buffered whole), on
+the file itself (422 naming `cv`), and by a `CHECK` on the column. The
+self-hosted Nginx config in `docs/deployment.md` raises `client_max_body_size`
+for this one route.
+
+**A CV is checked by its content.** The browser's file name and `type` are
+claims. A file is accepted only if it is named `.pdf` or `.docx` *and* its
+bytes are that format: a PDF starts `%PDF-`; a DOCX is a ZIP whose directory
+lists `[Content_Types].xml` and `word/document.xml`, read with `fflate`
+(already a dependency) without decompressing anything. The stored type is the
+detected one, the name is reduced to a safe last segment, and the download is
+always an attachment, `no-store`, `nosniff` and under a sandboxing CSP, so a
+file cannot run as a page on this origin. Old `.doc` files are refused, as
+the spec names PDF and DOCX.
+
+**The form is multipart, parsed by the runtime.** `/api/careers/apply` turns
+off Next.js's body parser and reads the stream itself
+(`src/lib/http/multipart.ts`), then parses it with the Fetch API's
+`formData()`, so no multipart library was added. The order is the contact
+form's (§2.25): rate limit (5 an hour per IP, on its own bucket, before the
+body is read), validation of every field and the CV together so the form can
+show all problems at once, Turnstile (inert until its keys are set; then it
+fails closed, with its own `careers` action so a contact-form token cannot be
+spent here), the closed-or-draft check, the spam score, then storage and the
+two emails. A filled honeypot stores nothing at all — a bot's "CV" is not
+something to keep — and gets the same 201. An application the heuristic or
+Akismet flags is kept, unannounced, in the inbox's Spam view, so a false
+positive can be recovered; Akismet sees the name, email and cover note, never
+the CV.
+
+**The emails carry no CV, and the staff one almost nothing.** The applicant
+is told it arrived, that every application gets a reply, and that it is
+deleted after six months. The hiring team (`CAREERS_EMAIL`, comma-separated,
+else `ADMIN_EMAIL`) gets the role, the applicant's name and a link to
+`/admin/applications?open=…`: contact details, the cover note and the CV stay
+behind the permission and its audit trail rather than being copied into
+mailboxes that keep them indefinitely. Both are queued as the enquiry emails
+are.
+
+**The audit trail names applications, not people.** Opening an application,
+downloading its CV, changing its status or notes, and deleting it are each
+audited by id; a status change records from and to, a notes change only that
+the notes changed, and a deletion the masked email and phone, as the
+data-subject routes do (§2.8). Vacancy writes are audited like documents'.
+
+**Privacy.** Applications are kept `RETENTION_JOB_APPLICATION_DAYS` (default
+180, the "six months" the careers page already promised), fixed per row when
+they arrive (§2.4). The nightly purge **deletes** them, CVs with them, rather
+than anonymising them as it does enquiries (§2.5): with the person and the CV
+gone there is nothing left worth counting. The data-subject export includes
+each application with its CV (base64, with its name and type), and erasure
+deletes them; both match on email or phone as before. The privacy policy now
+says what an application collects, why, who sees it, that the CV is at no
+web address, and how long it is kept; the careers pages and the form's
+consent say the same.
+
+**The pages.** `/careers` keeps its copy — how we work, the disciplines, the
+speculative route, equal opportunity — and moves to the landing-style
+`PageHero` (Home / Careers) because it now lists things. Open vacancies are
+grouped full-time, part-time and contract, then graduate opportunities and
+the internship programme are called out side by side, each listing its
+vacancies or saying none is open; the speculative form is always at the
+foot, with the equal opportunity statement and what happens to an
+application beside it. `/careers/[slug]` is the advert (summary, description,
+responsibilities, requirements, benefits, salary only if published, the facts
+beside it) and its form, with `JobPosting` JSON-LD from a small local helper
+(`app/careers/[slug]/job-posting.tsx`, `<` escaped), to be folded into the
+shared JSON-LD component at merge. A vacancy takes applications to the end of
+its closing day in West Africa Time; after it the vacancy leaves `/careers`,
+the API answers 404, the form route 409, and its page stays up saying it has
+closed, without the form or the JSON-LD and `noindex`, so a shared link does
+not end in a 404. Both pages regenerate within a minute (and at once after a
+console write), and without a database say the vacancies could not be loaded.
+
+**Nothing is invented.** No company-wide benefits list was written: benefits
+are a field on each vacancy, filled in only with what is confirmed for that
+role, and the graduate and internship sections describe what each is, not a
+programme nobody has specified. A benefits statement for the whole company
+should come from CoBuilt.
+
+**The form, for WCAG 2.2 AA.** Labels above fields, "(optional)" where a field
+is, 16px text on phones. On a failed submit every problem is listed in a
+summary that takes focus and links to each field, and repeated beside the
+field, tied to it with `aria-describedby` and `aria-invalid`; the server's
+422 lands in the same places, and nothing typed or chosen is cleared. The
+upload shows its progress (sent with `XMLHttpRequest`, since `fetch` cannot
+report upload progress) and is announced once rather than at every percent;
+on success focus moves to the confirmation, which replaces the form. Checked
+in Chromium at 1280px and 390px.
+
 ## 3. Still open
 
 Carried from §17, with a recommendation where the work surfaced one.
@@ -957,6 +1295,9 @@ Carried from §17, with a recommendation where the work surfaced one.
    the code works with all of them disabled.
 3. **Newsletter double opt-in** is implemented (NDPA consent). If marketing
    wants single opt-in, that is a policy decision, not a technical one.
+4. **Who reads job applications?** `applications:read` is admin-only; name the
+   hiring team and it is granted to each of them (§2.28). A company-wide
+   benefits statement for `/careers` is also needed, as no list was invented.
 
 ### Deferred to Phase 2
 
