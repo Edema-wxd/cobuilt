@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import PageHero from '../../../components/PageHero';
 import SiteLayout from '../../../components/SiteLayout';
 import { bodyCopy, titleSm } from '../../../components/sections';
 import { btnOrange, btnOutline, btnOutlineOnDark, container, eyebrowOnLine } from '../../../components/ui';
+import { canonical } from '@/lib/seo';
 import { turnstileSiteKey } from '@/lib/turnstile';
 import { VACANCY_TYPE_LABELS, WORK_PATTERN_LABELS, formatClosingDate, salaryText } from '@/lib/careers';
 import ApplicationForm from '../application-form';
 import { closingText } from '../careers-shared';
 import { loadVacancy, vacancySlugs, type PublicVacancy } from '../load-careers';
+import { redirectOrNotFound } from '../../redirect-or-not-found';
 import JobPostingJsonLd from './job-posting';
 
 /**
@@ -49,6 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${vacancy.title} — Careers`,
     description,
+    alternates: canonical(`/careers/${vacancy.slug}`),
     openGraph: { type: 'website', title: `${vacancy.title} — CoBuilt Investment Partners`, description },
     twitter: { card: 'summary_large_image' },
     // A closed advert should drop out of search results, not linger in them.
@@ -64,7 +66,8 @@ const TRAIL_HEAD = [
 export default async function VacancyPage({ params }: PageProps) {
   const { slug } = await params;
   const result = await loadVacancy(slug);
-  if (result.kind === 'not-found') notFound();
+  // An unknown address may be an old one with a rule at /admin/redirects.
+  if (result.kind === 'not-found') return redirectOrNotFound(`/careers/${slug}`);
 
   if (result.kind === 'unavailable') {
     return (

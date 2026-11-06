@@ -504,6 +504,8 @@ admin console is what makes the site maintainable without a developer.
   order, publish, application counts), the job applications inbox (admins by
   default: masked list filtered by vacancy, status and spam; open, status,
   staff notes, CV download through the console, delete),
+  redirects from old addresses (admin only: old address, new address,
+  permanent or temporary, hit counts; see below),
   investor-content approval, users and roles,
   and the audit log. Editors send only the fields that changed, and any change
   to an investor figure withdraws its approval after a confirmation. A record
@@ -516,6 +518,19 @@ admin console is what makes the site maintainable without a developer.
 - **404 and 500 pages** — visitors currently get the unstyled Next.js default.
   More routes now call `notFound()` — an unknown service slug, an unknown
   article — so this is more visible than it was.
+- **Search engine basics** — **built** (`docs/decisions.md` §2.27).
+  `/sitemap.xml` lists every published page with its last change;
+  `/robots.txt` keeps crawlers off the console, the API and search results,
+  and off every preview deployment entirely; every public page has an
+  absolute canonical, with list filters dropped; and pages carry Schema.org
+  structured data (organisation and site search on the homepage,
+  breadcrumbs, articles, films, FAQs, leaders, services, albums). None of it
+  is visible. **Redirects** are the one screen: `/admin/redirects` is a form
+  above a table of rules (old address, new address, 308 or 307, hits, last
+  hit, edit, delete). Both addresses are checked as they are typed, and a
+  rule that would chain or loop is refused with the rule it collides with
+  named. A rule applies only where no page answers, so it never takes a live
+  page down.
 - **Social preview images** — **built.** A branded card per page, and an item's own photography wins where it has some. See docs/decisions.md §2.18.
 - **A video library page** — **built.** `/videos` leads with the featured film
   in the homepage's click-to-load player, then a grid of cards (still, play
@@ -541,6 +556,8 @@ admin console is what makes the site maintainable without a developer.
   inline status message. Reuse it for enquiry, auth and admin forms.
 - **Breadcrumbs.** Passport sits three levels deep. `components/PageHero.tsx`
   takes a `trail`, and the record uses it: Home / Projects / {project} / Passport™.
+  The trail is also published as a Schema.org `BreadcrumbList`, so a new page
+  that uses `PageHero` gets that for free. Every crumb but the last needs a link.
 
 ---
 
@@ -571,5 +588,7 @@ admin console is what makes the site maintainable without a developer.
 - Shared class strings: `components/ui.ts`, `components/prose.ts`.
 - Navigation and footer content: `components/site.ts`.
 - API contract, with every field and response shape: `docs/openapi.yaml`.
+- Canonicals, the site origin and indexing: `src/lib/seo.ts`; structured data:
+  `src/lib/structuredData.ts`; sitemap and robots: `app/sitemap.ts`, `app/robots.ts`.
 - Decisions, deviations and deferrals: `docs/decisions.md`.
 - Contrast rules as an executable test: `__tests__/unit/contrast.test.ts`.

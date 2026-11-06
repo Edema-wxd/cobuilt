@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import JsonLd from '../../../components/JsonLd';
 import PageHero from '../../../components/PageHero';
 import SiteLayout from '../../../components/SiteLayout';
 import { btnOutline, container } from '../../../components/ui';
 import { GALLERY_CATEGORY_LABEL } from '@/lib/gallery';
+import { canonical } from '@/lib/seo';
+import { imageGallery } from '@/lib/structuredData';
+import { redirectOrNotFound } from '../../redirect-or-not-found';
 import { photographCount } from '../gallery-shared';
 import { albumSlugs, loadAlbum } from '../load-gallery';
 import AlbumViewer from './album-viewer';
@@ -44,6 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${album.title} — Gallery`,
     description,
+    alternates: canonical(`/gallery/${album.slug}`),
     openGraph: {
       type: 'website',
       title: `${album.title} — CoBuilt Investment Partners`,
@@ -58,7 +62,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function Page({ params }: PageProps) {
   const { slug } = await params;
   const result = await loadAlbum(slug);
-  if (result.kind === 'not-found') notFound();
+  if (result.kind === 'not-found') return redirectOrNotFound(`/gallery/${slug}`);
 
   if (result.kind === 'unavailable') {
     return (
@@ -95,6 +99,14 @@ export default async function Page({ params }: PageProps) {
   return (
     <SiteLayout current="/media">
       <main>
+        <JsonLd
+          data={imageGallery({
+            path: `/gallery/${album.slug}`,
+            name: album.title,
+            description: album.description,
+            images: album.images,
+          })}
+        />
         <PageHero
           eyebrow={category}
           title={album.title}

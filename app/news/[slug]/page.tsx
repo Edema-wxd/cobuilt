@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import ArticleBody from '../../../components/ArticleBody';
+import JsonLd from '../../../components/JsonLd';
 import PageHero from '../../../components/PageHero';
 import SiteLayout from '../../../components/SiteLayout';
 import {
@@ -11,6 +11,9 @@ import {
 } from '../../../components/sections';
 import { btnOutline, container, eyebrow, media } from '../../../components/ui';
 import { newsCategoryLabel } from '@/lib/news-categories';
+import { canonical } from '@/lib/seo';
+import { newsArticle } from '@/lib/structuredData';
+import { redirectOrNotFound } from '../../redirect-or-not-found';
 import { loadArticle } from './load-article';
 import type { ArticleSummary } from './load-article';
 
@@ -72,6 +75,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: { absolute: article.seo.metaTitle ?? `${article.title} — CoBuilt Investment Partners` },
     description,
+    alternates: canonical(`/news/${article.slug}`),
     openGraph: {
       type: 'article',
       title: article.title,
@@ -116,7 +120,7 @@ export default async function Page({ params }: PageProps) {
   const { slug } = await params;
   const result = await loadArticle(slug);
 
-  if (result.kind === 'not-found') notFound();
+  if (result.kind === 'not-found') return redirectOrNotFound(`/news/${slug}`);
 
   if (result.kind === 'unavailable') {
     return (
@@ -156,6 +160,18 @@ export default async function Page({ params }: PageProps) {
   return (
     <SiteLayout current="/media">
       <main>
+        <JsonLd
+          data={newsArticle({
+            path: `/news/${article.slug}`,
+            headline: article.title,
+            description: article.excerpt,
+            image: article.featuredImageUrl,
+            datePublished: article.publishedAt,
+            dateModified: article.updatedAt,
+            author: article.author,
+            section: article.category ? newsCategoryLabel(article.category) : null,
+          })}
+        />
         <PageHero
           eyebrow={article.category ? newsCategoryLabel(article.category) : 'Media centre'}
           title={article.title}

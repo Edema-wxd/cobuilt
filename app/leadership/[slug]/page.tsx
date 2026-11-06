@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import ArticleBody from '../../../components/ArticleBody';
+import JsonLd from '../../../components/JsonLd';
 import CtaBand from '../../../components/CtaBand';
 import PageHero from '../../../components/PageHero';
 import SiteLayout from '../../../components/SiteLayout';
 import { bodyCopy, sectionLight, titleSm } from '../../../components/sections';
 import { btnOutline, container, eyebrow } from '../../../components/ui';
+import { canonical } from '@/lib/seo';
+import { person } from '@/lib/structuredData';
+import { redirectOrNotFound } from '../../redirect-or-not-found';
 import { SOCIAL_LABEL, TIER_LABEL } from '../leadership-shared';
 import { loadLeader } from '../load-leadership';
 import Portrait from '../portrait';
@@ -46,6 +49,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: leader.fullName,
     description,
+    alternates: canonical(`/leadership/${leader.slug}`),
     openGraph: {
       type: 'profile',
       title: leader.fullName,
@@ -62,7 +66,7 @@ export default async function Page({ params }: PageProps) {
   const { slug } = await params;
   const result = await loadLeader(slug);
 
-  if (result.kind === 'not-found') notFound();
+  if (result.kind === 'not-found') return redirectOrNotFound(`/leadership/${slug}`);
 
   if (result.kind === 'unavailable') {
     return (
@@ -98,6 +102,18 @@ export default async function Page({ params }: PageProps) {
   return (
     <SiteLayout current="/leadership">
       <main>
+        <JsonLd
+          data={person({
+            path: `/leadership/${leader.slug}`,
+            name: leader.fullName,
+            jobTitle: leader.roleTitle,
+            description: leader.summary,
+            image: leader.photoUrl,
+            expertise: leader.expertise,
+            qualifications: leader.qualifications,
+            sameAs: social.map((link) => link.url),
+          })}
+        />
         <PageHero
           eyebrow={TIER_LABEL[leader.tier]}
           title={leader.fullName}

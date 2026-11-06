@@ -47,6 +47,9 @@ export const PERMISSIONS = [
   // Site-wide content set in the console: the homepage's copy, video,
   // figures and sections. Admin only.
   'settings:write',
+  // Redirects from old addresses (/admin/redirects). Admin only: a rule
+  // decides where visitors and crawlers land for any address that has no page.
+  'redirects:write',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

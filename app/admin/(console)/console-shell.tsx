@@ -37,6 +37,7 @@ const NAV: NavEntry[] = [
   { label: 'Downloads', href: '/admin/downloads', needs: ['downloads:write'] },
   { label: 'Careers', href: '/admin/careers', needs: ['careers:write'] },
   { label: 'Applications', href: '/admin/applications', needs: ['applications:read'] },
+  { label: 'Redirects', href: '/admin/redirects', needs: ['redirects:write'] },
   { label: '3D tours', href: '/admin/tours', needs: ['tours:write'] },
   {
     label: 'Investor approval',

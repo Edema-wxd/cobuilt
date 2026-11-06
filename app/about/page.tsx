@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import CtaBand from '../../components/CtaBand';
 import CountUp from '../../components/CountUp';
 import PageHero from '../../components/PageHero';
@@ -44,6 +45,7 @@ export const metadata: Metadata = {
   title: 'About CoBuilt',
   description:
     'CoBuilt Investment Partners plans, manages and delivers residential, commercial, mixed-use and strategic developments in Nigeria — under one integrated model, with every project documented in a Project Passport™.',
+  alternates: canonical('/about'),
 };
 
 const IMAGES = {

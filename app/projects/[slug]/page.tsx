@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { canonical } from '@/lib/seo';
+import { redirectOrNotFound } from '../../redirect-or-not-found';
 import ProjectDetail from './project-detail';
 import { EMPTY, loadProject } from './load-project';
 
@@ -45,7 +46,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: { absolute: title },
     description,
-    ...(project.seo.canonicalUrl ? { alternates: { canonical: project.seo.canonicalUrl } } : {}),
+    // An editor's canonical address wins; otherwise the page is its own.
+    alternates: project.seo.canonicalUrl
+      ? { canonical: project.seo.canonicalUrl }
+      : canonical(`/projects/${project.slug}`),
     openGraph: {
       type: 'article',
       title: project.title,
@@ -62,7 +66,8 @@ export default async function Page({ params }: PageProps) {
   const { slug } = await params;
   const result = await loadProject(slug);
 
-  if (result.kind === 'not-found') notFound();
+  // An old address with a rule at /admin/redirects is sent on; anything else is a 404.
+  if (result.kind === 'not-found') return redirectOrNotFound(`/projects/${slug}`);
 
   // `unavailable` falls through with empty props: the component's own
   // "couldn't be loaded" state is the designed response to a missing database.

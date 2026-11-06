@@ -27,7 +27,8 @@ import adminCv from '../../pages/api/admin/careers/applications/[applicationId]/
 import exportRoute from '../../pages/api/admin/data-subjects/export';
 import eraseRoute from '../../pages/api/admin/data-subjects/erase';
 import { loadOpenVacancies, loadVacancy } from '../../app/careers/load-careers';
-import { jobPosting, serialiseJsonLd } from '../../app/careers/[slug]/job-posting';
+import { jobPosting } from '../../app/careers/[slug]/job-posting';
+import { jsonLdText } from '@/lib/seo';
 
 /**
  * Careers (docs/decisions.md §2.28): vacancies, the application form with its
@@ -339,7 +340,7 @@ describeWithDatabase('careers', () => {
       expect(posting).toMatchObject({ '@type': 'JobPosting', employmentType: 'FULL_TIME', directApply: true });
       expect(posting).not.toHaveProperty('baseSalary');
       expect(posting).not.toHaveProperty('validThrough');
-      const json = serialiseJsonLd(posting);
+      const json = jsonLdText(posting);
       expect(json).not.toContain('</script>');
       expect(JSON.parse(json).title).toBe(open.title);
 

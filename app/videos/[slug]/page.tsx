@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import CtaBand from '../../../components/CtaBand';
+import JsonLd from '../../../components/JsonLd';
 import PageHero from '../../../components/PageHero';
 import SiteLayout from '../../../components/SiteLayout';
 import { bodyCopy, sectionHead, sectionLight, sectionMuted, titleMd } from '../../../components/sections';
 import { btnOutline, container, eyebrow } from '../../../components/ui';
+import { canonical } from '@/lib/seo';
+import { videoObject } from '@/lib/structuredData';
 import { VIDEO_CATEGORY_LABEL, formatDuration } from '@/lib/videos';
+import { redirectOrNotFound } from '../../redirect-or-not-found';
 import HomeVideo from '../../home-video';
 import { loadVideoPage } from '../load-videos';
 import VideoCard from '../video-card';
@@ -59,6 +62,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: video.title,
     description,
+    alternates: canonical(`/videos/${video.slug}`),
     openGraph: {
       type: 'video.other',
       title: video.title,
@@ -77,7 +81,7 @@ export default async function Page({ params }: PageProps) {
   const { slug } = await params;
   const result = await loadVideoPage(slug);
 
-  if (result.kind === 'not-found') notFound();
+  if (result.kind === 'not-found') return redirectOrNotFound(`/videos/${slug}`);
 
   if (result.kind === 'unavailable') {
     return (
@@ -116,6 +120,18 @@ export default async function Page({ params }: PageProps) {
   return (
     <SiteLayout current="/media">
       <main>
+        <JsonLd
+          data={videoObject({
+            path: `/videos/${video.slug}`,
+            name: video.title,
+            description: body[0] ?? `${category}${video.project ? ` from ${video.project.title}` : ''}.`,
+            // The player's own still, as on the card: never YouTube's thumbnail.
+            thumbnailUrl: posterFor(video),
+            uploadDate: video.recordedOn,
+            durationSeconds: video.durationSeconds,
+            youtubeId: video.youtubeId,
+          })}
+        />
         <PageHero
           eyebrow="Video library"
           title={video.title}

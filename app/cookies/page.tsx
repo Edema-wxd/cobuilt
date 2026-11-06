@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import ProsePage from '../../components/ProsePage';
 import { EMAIL } from '../../components/site';
 import CookiePreferencesButton from '../../components/CookiePreferencesButton';
@@ -38,6 +39,7 @@ export const metadata: Metadata = {
   title: 'Cookie Policy',
   description:
     'The cookies CoBuilt Investment Partners sets, what each category does, how long it lasts, and how to change your preferences.',
+  alternates: canonical('/cookies'),
 };
 
 export default function Cookies() {

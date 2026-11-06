@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import CtaBand from '../../components/CtaBand';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
@@ -41,6 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Services',
     description: `${disciplineCount(services.length)} delivered under one governance framework by CoBuilt Investment Partners — ${listText(services.map((service) => service.title))}.`,
+    alternates: canonical('/services'),
   };
 }
 

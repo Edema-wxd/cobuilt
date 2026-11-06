@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import CtaBand from '../../components/CtaBand';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
@@ -36,6 +37,8 @@ export const metadata: Metadata = {
   title: 'Video library',
   description:
     'Project documentaries, construction updates, drone footage and leadership interviews from CoBuilt Investment Partners, each linked to the development it documents.',
+  // Filters live in the query string; every filtered view is this page.
+  alternates: canonical('/videos'),
 };
 
 export default async function Page() {

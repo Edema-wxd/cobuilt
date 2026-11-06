@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import CtaBand from '../../components/CtaBand';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
@@ -48,6 +49,7 @@ export const metadata: Metadata = {
   title: 'Leadership',
   description:
     'The leadership of CoBuilt Investment Partners, the philosophy behind documented delivery, and the video library of work on site.',
+  alternates: canonical('/leadership'),
 };
 
 const IMAGES = {

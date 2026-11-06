@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
 import ContactForm from './contact-form';
@@ -49,6 +50,7 @@ export const metadata: Metadata = {
   title: 'Contact',
   description:
     'Contact CoBuilt Investment Partners — the Lagos office, phone, email and WhatsApp Business, and an enquiry form that reaches a person within one working day.',
+  alternates: canonical('/contact'),
 };
 
 interface Channel {

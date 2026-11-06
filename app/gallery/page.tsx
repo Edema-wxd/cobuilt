@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import CtaBand from '../../components/CtaBand';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
@@ -31,6 +32,8 @@ const CATEGORY_LIST = GALLERY_CATEGORIES.map((category) =>
 export const metadata: Metadata = {
   title: 'Gallery',
   description: `Photography from CoBuilt Investment Partners, in albums: ${CATEGORY_LIST.slice(0, -1).join(', ')} and ${CATEGORY_LIST.at(-1)}.`,
+  // Filters live in the query string; every filtered view is this page.
+  alternates: canonical('/gallery'),
 };
 
 export default async function Gallery() {

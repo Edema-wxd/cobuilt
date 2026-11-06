@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import ProsePage from '../../components/ProsePage';
 import { EMAIL, PHONE, PHONE_HREF } from '../../components/site';
 import * as prose from '../../components/prose';
@@ -33,6 +34,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
     'How CoBuilt Investment Partners handles personal data under the Nigeria Data Protection Act — what we collect, why, how long we keep it, and your rights.',
+  alternates: canonical('/privacy'),
 };
 
 export default function Privacy() {

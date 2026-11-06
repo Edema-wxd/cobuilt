@@ -13,6 +13,7 @@ import {
   titleSm,
 } from '../../components/sections';
 import { btnOrange, btnOutlineOnDark, container, eyebrow, eyebrowOnLine } from '../../components/ui';
+import { canonical } from '@/lib/seo';
 import { turnstileSiteKey } from '@/lib/turnstile';
 import type { VacancyType } from '@/lib/careers';
 import ApplicationForm from './application-form';
@@ -43,6 +44,7 @@ export const metadata: Metadata = {
   title: 'Working at CoBuilt',
   description:
     'Careers at CoBuilt Investment Partners — current vacancies, graduate opportunities and internships, how we work, the disciplines we hire into, and how to apply online.',
+  alternates: canonical('/careers'),
 };
 
 /** The standing roles, listed first in this order. */

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { canonical } from '@/lib/seo';
 import CtaBand from '../../components/CtaBand';
 import PageHero from '../../components/PageHero';
 import SiteLayout from '../../components/SiteLayout';
@@ -41,6 +42,7 @@ export const metadata: Metadata = {
   title: 'Project Passport™',
   description:
     'Project Passport™ is a permanent, public record of every CoBuilt development — each mandatory milestone dated, evidenced and published from commencement through to handover.',
+  alternates: canonical('/passport'),
 };
 
 const IMAGES = {

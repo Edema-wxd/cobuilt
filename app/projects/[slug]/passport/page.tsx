@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { canonical } from '@/lib/seo';
+import { redirectOrNotFound } from '../../../redirect-or-not-found';
 import PassportRecord from './passport-record';
 import { EMPTY, loadRecord } from './load-record';
 
@@ -53,6 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: { absolute: title },
     description,
+    alternates: canonical(`/projects/${project.slug}/passport`),
     openGraph: {
       type: 'article',
       title: `${project.title} — Project Passport™`,
@@ -69,7 +71,7 @@ export default async function Page({ params }: PageProps) {
   const { slug } = await params;
   const result = await loadRecord(slug);
 
-  if (result.kind === 'not-found') notFound();
+  if (result.kind === 'not-found') return redirectOrNotFound(`/projects/${slug}/passport`);
 
   // `unavailable` falls through with empty props: the component's own
   // "couldn't be loaded" state is the designed response to a missing database.

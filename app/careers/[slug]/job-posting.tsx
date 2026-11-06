@@ -1,14 +1,15 @@
+import JsonLd from '../../../components/JsonLd';
+import { absoluteUrl } from '@/lib/seo';
+import { ORGANIZATION_NAME, organizationId } from '@/lib/structuredData';
 import type { PublicVacancy } from '../load-careers';
 
 /**
  * schema.org `JobPosting` for a vacancy page, so search engines can list the
- * role in their job results.
- *
- * A small local helper for now: a shared JSON-LD component is being added
- * separately, and the two are to be unified. Only open vacancies carry it — a
- * closed advert's markup is meant to be removed — and `baseSalary` is given
- * only when the vacancy publishes a salary. `<` is escaped so no value can
- * close the script element.
+ * role in their job results. Rendered through the shared `JsonLd` component
+ * (docs/decisions.md §2.27), with the hiring organisation pointing at the
+ * site-wide `Organization` node. Only open vacancies carry it — a closed
+ * advert's markup is meant to be removed — and `baseSalary` is given only when
+ * the vacancy publishes a salary.
  */
 
 const EMPLOYMENT_TYPE: Record<PublicVacancy['type'], string> = {
@@ -20,13 +21,8 @@ const EMPLOYMENT_TYPE: Record<PublicVacancy['type'], string> = {
   internship: 'INTERN',
 };
 
-function siteOrigin(): string {
-  return (process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://cobuilt.com').replace(/\/$/, '');
-}
-
 /** The posting as an object; exported for its test. */
 export function jobPosting(vacancy: PublicVacancy): Record<string, unknown> {
-  const origin = siteOrigin();
   const description = [
     vacancy.summary,
     vacancy.description,
@@ -44,16 +40,17 @@ export function jobPosting(vacancy: PublicVacancy): Record<string, unknown> {
     '@type': 'JobPosting',
     title: vacancy.title,
     description,
-    identifier: { '@type': 'PropertyValue', name: 'CoBuilt Investment Partners', value: vacancy.id },
+    identifier: { '@type': 'PropertyValue', name: ORGANIZATION_NAME, value: vacancy.id },
     datePosted: (vacancy.postedAt ?? new Date().toISOString()).slice(0, 10),
     // The end of the closing day in West Africa Time.
     ...(vacancy.closingDate ? { validThrough: `${vacancy.closingDate}T23:59:59+01:00` } : {}),
     employmentType: EMPLOYMENT_TYPE[vacancy.type],
     hiringOrganization: {
       '@type': 'Organization',
-      name: 'CoBuilt Investment Partners',
-      sameAs: origin,
-      logo: `${origin}/images/cobuilt-logo-light.webp`,
+      '@id': organizationId(),
+      name: ORGANIZATION_NAME,
+      sameAs: absoluteUrl('/'),
+      logo: absoluteUrl('/images/cobuilt-logo-light.webp'),
     },
     ...(remote
       ? {
@@ -83,21 +80,10 @@ export function jobPosting(vacancy: PublicVacancy): Record<string, unknown> {
         }
       : {}),
     directApply: true,
-    url: `${origin}/careers/${vacancy.slug}`,
+    url: absoluteUrl(`/careers/${vacancy.slug}`),
   };
 }
 
-/** JSON with `<` escaped, safe inside a script element. */
-export function serialiseJsonLd(value: unknown): string {
-  return JSON.stringify(value).replace(/</g, '\\u003c');
-}
-
 export default function JobPostingJsonLd({ vacancy }: { vacancy: PublicVacancy }) {
-  return (
-    <script
-      type="application/ld+json"
-      // Escaped above: the only way to emit JSON-LD without React encoding the quotes.
-      dangerouslySetInnerHTML={{ __html: serialiseJsonLd(jobPosting(vacancy)) }}
-    />
-  );
+  return <JsonLd data={jobPosting(vacancy)} />;
 }
