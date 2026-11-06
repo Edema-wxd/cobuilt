@@ -7,25 +7,16 @@ import '@fontsource-variable/geist-mono';
 import '../styles/globals.css';
 import { ContactDetailsProvider } from '../components/ContactDetails';
 import { loadContactSettings } from './contact/load-contact';
+import { siteOrigin } from '@/lib/seo';
 
 /**
  * Root layout — replaces the former `pages/_app.tsx` and `pages/_document.tsx`.
  */
 
-/**
- * The absolute origin for Open Graph and canonical URLs. A share preview needs
- * an absolute image URL, and without this Next.js would build it against
- * localhost.
- */
-function siteOrigin(): URL {
-  try {
-    return new URL(process.env.NEXT_PUBLIC_WEBSITE_URL ?? 'https://cobuilt.com');
-  } catch {
-    return new URL('https://cobuilt.com');
-  }
-}
-
 export const metadata: Metadata = {
+  // The absolute origin for Open Graph and canonical URLs. A share preview
+  // needs an absolute image URL, and without this Next.js would build it
+  // against localhost. The sitemap and structured data use the same origin.
   metadataBase: siteOrigin(),
   // Every page sets a bare title ("Cookie Policy") and this appends the house
   // suffix, so the pattern lives in one place. The home and project pages
