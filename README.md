@@ -162,6 +162,9 @@ Only PostgreSQL is a hard dependency. Everything else fails soft, and
 - Visitor IPs are truncated (`/24`, or `/48` for IPv6) before a page view is stored.
 - Form submissions carry a `retain_until` deadline — 90 days, or two years for
   investor enquiries — and the nightly job anonymises rows past it.
+- Job applications and their CVs are kept 180 days (`RETENTION_JOB_APPLICATION_DAYS`)
+  and then deleted outright. A CV is stored in PostgreSQL, at no URL, and is read
+  only through an authenticated, audited admin endpoint (`docs/decisions.md` §2.28).
 - `GET /api/users/[userId]/export` is a subject access request; `DELETE
   /api/users/[userId]` is erasure. Both are self-service or admin-performed,
   and both are audited.

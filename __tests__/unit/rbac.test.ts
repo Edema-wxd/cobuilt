@@ -50,6 +50,18 @@ describe('RBAC', () => {
     expect(hasPermission('investor', {}, 'gallery:write')).toBe(false);
   });
 
+  it('lets admins and editors manage vacancies, but only admins read applications and CVs', () => {
+    expect(hasPermission('admin', {}, 'careers:write')).toBe(true);
+    expect(hasPermission('editor', {}, 'careers:write')).toBe(true);
+    expect(hasPermission('viewer', {}, 'careers:write')).toBe(false);
+    expect(hasPermission('admin', {}, 'applications:read')).toBe(true);
+    expect(hasPermission('editor', {}, 'applications:read')).toBe(false);
+    expect(hasPermission('viewer', {}, 'applications:read')).toBe(false);
+    expect(hasPermission('investor', {}, 'applications:read')).toBe(false);
+    // The hiring team is given it person by person.
+    expect(hasPermission('editor', { grant: ['applications:read'] }, 'applications:read')).toBe(true);
+  });
+
   it('gives a viewer read-only access', () => {
     const viewer = effectivePermissions('viewer');
     expect(viewer.has('projects:read')).toBe(true);

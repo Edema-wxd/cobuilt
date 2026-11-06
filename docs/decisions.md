@@ -933,6 +933,161 @@ the hero shows the poster rather than a blank frame. The video fades in on
 its first frame. A pause control covers WCAG 2.2.2, and it offers Play when
 the browser refuses autoplay (iOS Low Power Mode).
 
+### 2.28 Careers: vacancies, online applications, and CVs kept out of public storage
+
+The client's spec asks Careers for current vacancies, graduate opportunities,
+an internship programme, company culture, employee benefits and an
+application portal with CV upload, and asks the application form to validate,
+stop spam, confirm to the applicant, notify staff, store securely and comply
+with the NDPA. `/careers` said there were no vacancies and asked for CVs by
+email. Now vacancies are managed at `/admin/careers` behind a new
+`careers:write` permission (admin and editor; deleting is admin-only), and
+applications are read at `/admin/applications` behind a new
+`applications:read`, which **only admins hold by default**: a CV is the most
+sensitive thing the site collects, and editors who write adverts have no need
+to read them. The hiring team is given it person by person through
+`users.permissions` (`{"grant": ["applications:read"]}`). Public reads are
+`/api/vacancies` and `/api/vacancies/[slug]` under `CONTENT_CACHE`, and the
+form posts to `/api/careers/apply`.
+
+**Migration 0022** adds `vacancies` (title, slug, type — full-time,
+part-time, contract, graduate, internship — discipline, location, work
+pattern, summary, description, responsibilities, requirements and benefits as
+lists, an optional salary range with its currency and period, closing date,
+published, `first_published_at`, sort order) and `job_applications` (vacancy,
+or null for a speculative application; name, email, optional phone, cover
+note, the CV's name, detected type and size; staff status and notes; spam
+score and flag; `retain_until`). No IP address or user agent is kept for an
+application, unlike an enquiry: nothing in hiring needs them, and the spam
+checks use them in passing. A vacancy with applications cannot be deleted
+(the foreign key is `RESTRICT`, and the route answers 409): `SET NULL` would
+silently turn them into speculative applications. It is unpublished instead,
+or deleted once its applications have gone.
+
+**Where the CV lives: PostgreSQL, not UploadThing.** Every file the site
+stores today is a public UploadThing URL, which is right for a brochure and
+wrong for a CV: anyone holding the link can open it, for as long as the file
+exists. Two ways to keep a CV private were weighed.
+
+- *UploadThing with a private ACL and short-lived signed URLs.* The installed
+  `uploadthing` 7.7.4 supports it — a route's `acl: 'private'`,
+  `UTApi.generateSignedURL` and `updateACL` — but its own types say the ACL
+  "must be enabled for your app" in the UploadThing dashboard, and whether
+  that needs a paid plan could not be checked here (there is no token or
+  dashboard access in this environment). It also fits a public, anonymous
+  form badly: the browser would upload first and submit second, so
+  UploadThing's middleware would need its own Turnstile and rate limit
+  (Turnstile tokens are single-use, so the form would need two), every
+  abandoned form would leave a stranger's CV in storage until a sweeper found
+  it, and erasure and the retention purge would each depend on a second
+  service answering. Nor could any of it be tested without a token.
+- *PostgreSQL `bytea`, size-capped, served only through an authenticated
+  admin endpoint* — chosen. The CV arrives in the same request as the form,
+  so one Turnstile check, one rate limit and one spam check cover it, and the
+  application and its file are stored in one transaction or not at all. It is
+  in its own table (`job_application_cvs`, `ON DELETE CASCADE`), so no list
+  or detail query reads the bytes; it is at no URL; the only way out is `GET
+  /api/admin/careers/applications/[id]/cv` with a bearer token holding
+  `applications:read`, and every download is audited. Erasure and the purge
+  are a `DELETE`, with nothing to reconcile. The costs: database size (bounded
+  by the cap and the 180-day purge), and that a deleted CV stays in the
+  database host's backups and point-in-time history until they roll off — the
+  same as every other deleted row.
+
+**The cap is 4 MB, not 5.** On Vercel a function's request body is limited to
+4.5 MB, and the CV travels inside the form's request, so 4 MB plus the fields
+fits and 5 MB would fail before the route ran. A CV is rarely over 1 MB. The
+cap is checked three times: from the declared length and again while the body
+streams in (413, so an oversized upload is cut off, not buffered whole), on
+the file itself (422 naming `cv`), and by a `CHECK` on the column. The
+self-hosted Nginx config in `docs/deployment.md` raises `client_max_body_size`
+for this one route.
+
+**A CV is checked by its content.** The browser's file name and `type` are
+claims. A file is accepted only if it is named `.pdf` or `.docx` *and* its
+bytes are that format: a PDF starts `%PDF-`; a DOCX is a ZIP whose directory
+lists `[Content_Types].xml` and `word/document.xml`, read with `fflate`
+(already a dependency) without decompressing anything. The stored type is the
+detected one, the name is reduced to a safe last segment, and the download is
+always an attachment, `no-store`, `nosniff` and under a sandboxing CSP, so a
+file cannot run as a page on this origin. Old `.doc` files are refused, as
+the spec names PDF and DOCX.
+
+**The form is multipart, parsed by the runtime.** `/api/careers/apply` turns
+off Next.js's body parser and reads the stream itself
+(`src/lib/http/multipart.ts`), then parses it with the Fetch API's
+`formData()`, so no multipart library was added. The order is the contact
+form's (§2.25): rate limit (5 an hour per IP, on its own bucket, before the
+body is read), validation of every field and the CV together so the form can
+show all problems at once, Turnstile (inert until its keys are set; then it
+fails closed, with its own `careers` action so a contact-form token cannot be
+spent here), the closed-or-draft check, the spam score, then storage and the
+two emails. A filled honeypot stores nothing at all — a bot's "CV" is not
+something to keep — and gets the same 201. An application the heuristic or
+Akismet flags is kept, unannounced, in the inbox's Spam view, so a false
+positive can be recovered; Akismet sees the name, email and cover note, never
+the CV.
+
+**The emails carry no CV, and the staff one almost nothing.** The applicant
+is told it arrived, that every application gets a reply, and that it is
+deleted after six months. The hiring team (`CAREERS_EMAIL`, comma-separated,
+else `ADMIN_EMAIL`) gets the role, the applicant's name and a link to
+`/admin/applications?open=…`: contact details, the cover note and the CV stay
+behind the permission and its audit trail rather than being copied into
+mailboxes that keep them indefinitely. Both are queued as the enquiry emails
+are.
+
+**The audit trail names applications, not people.** Opening an application,
+downloading its CV, changing its status or notes, and deleting it are each
+audited by id; a status change records from and to, a notes change only that
+the notes changed, and a deletion the masked email and phone, as the
+data-subject routes do (§2.8). Vacancy writes are audited like documents'.
+
+**Privacy.** Applications are kept `RETENTION_JOB_APPLICATION_DAYS` (default
+180, the "six months" the careers page already promised), fixed per row when
+they arrive (§2.4). The nightly purge **deletes** them, CVs with them, rather
+than anonymising them as it does enquiries (§2.5): with the person and the CV
+gone there is nothing left worth counting. The data-subject export includes
+each application with its CV (base64, with its name and type), and erasure
+deletes them; both match on email or phone as before. The privacy policy now
+says what an application collects, why, who sees it, that the CV is at no
+web address, and how long it is kept; the careers pages and the form's
+consent say the same.
+
+**The pages.** `/careers` keeps its copy — how we work, the disciplines, the
+speculative route, equal opportunity — and moves to the landing-style
+`PageHero` (Home / Careers) because it now lists things. Open vacancies are
+grouped full-time, part-time and contract, then graduate opportunities and
+the internship programme are called out side by side, each listing its
+vacancies or saying none is open; the speculative form is always at the
+foot, with the equal opportunity statement and what happens to an
+application beside it. `/careers/[slug]` is the advert (summary, description,
+responsibilities, requirements, benefits, salary only if published, the facts
+beside it) and its form, with `JobPosting` JSON-LD from a small local helper
+(`app/careers/[slug]/job-posting.tsx`, `<` escaped), to be folded into the
+shared JSON-LD component at merge. A vacancy takes applications to the end of
+its closing day in West Africa Time; after it the vacancy leaves `/careers`,
+the API answers 404, the form route 409, and its page stays up saying it has
+closed, without the form or the JSON-LD and `noindex`, so a shared link does
+not end in a 404. Both pages regenerate within a minute (and at once after a
+console write), and without a database say the vacancies could not be loaded.
+
+**Nothing is invented.** No company-wide benefits list was written: benefits
+are a field on each vacancy, filled in only with what is confirmed for that
+role, and the graduate and internship sections describe what each is, not a
+programme nobody has specified. A benefits statement for the whole company
+should come from CoBuilt.
+
+**The form, for WCAG 2.2 AA.** Labels above fields, "(optional)" where a field
+is, 16px text on phones. On a failed submit every problem is listed in a
+summary that takes focus and links to each field, and repeated beside the
+field, tied to it with `aria-describedby` and `aria-invalid`; the server's
+422 lands in the same places, and nothing typed or chosen is cleared. The
+upload shows its progress (sent with `XMLHttpRequest`, since `fetch` cannot
+report upload progress) and is announced once rather than at every percent;
+on success focus moves to the confirmation, which replaces the form. Checked
+in Chromium at 1280px and 390px.
+
 ## 3. Still open
 
 Carried from §17, with a recommendation where the work surfaced one.
@@ -957,6 +1112,9 @@ Carried from §17, with a recommendation where the work surfaced one.
    the code works with all of them disabled.
 3. **Newsletter double opt-in** is implemented (NDPA consent). If marketing
    wants single opt-in, that is a policy decision, not a technical one.
+4. **Who reads job applications?** `applications:read` is admin-only; name the
+   hiring team and it is granted to each of them (§2.28). A company-wide
+   benefits statement for `/careers` is also needed, as no list was invented.
 
 ### Deferred to Phase 2
 
