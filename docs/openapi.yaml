@@ -48,6 +48,7 @@ tags:
   - name: FAQs
   - name: Leadership
   - name: Downloads
+  - name: Redirects
   - name: Search
   - name: Forms
   - name: Authentication
@@ -1167,6 +1168,101 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/redirects:
+    get:
+      tags: [Redirects]
+      summary: List every redirect
+      description: |
+        Requires `admin` with `redirects:write`. Every rule by source path,
+        with how many visitors it has sent on and when it last did.
+      responses:
+        '200':
+          description: Every rule
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/RedirectAdmin' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Redirects]
+      summary: Add a redirect
+      description: |
+        Requires `admin` with `redirects:write`. The source is stored lower
+        case, decoded and without a trailing slash, and applies only where no
+        page answers: an address that has a page is never redirected. No rule
+        may start where another lands, so every redirect is one hop and no
+        loop can form; a rule that would is a 422 naming `sourcePath` or
+        `destination`. The public site follows within a minute. Audited as
+        `redirect.created`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RedirectInput' }
+      responses:
+        '201':
+          description: Added
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RedirectAdmin' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: That source already has a redirect }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/admin/redirects/{redirectId}:
+    parameters:
+      - { name: redirectId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Redirects]
+      summary: A redirect
+      description: Requires `admin` with `redirects:write`.
+      responses:
+        '200':
+          description: The rule
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RedirectAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Redirects]
+      summary: Change a redirect
+      description: |
+        Requires `admin` with `redirects:write`. The fields present are
+        applied, under the same rules as on create; the hit count is kept.
+        Audited as `redirect.updated`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RedirectUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RedirectAdmin' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: The new source already has a redirect of its own }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Redirects]
+      summary: Delete a redirect
+      description: |
+        Requires `admin` with `redirects:write`. The old address is a 404
+        again. Audited as `redirect.deleted`, with the final hit count.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /api/uploadthing:
     get:
@@ -3338,6 +3434,54 @@ components:
     DocumentUpdate:
       allOf:
         - $ref: '#/components/schemas/DocumentFields'
+        - type: object
+          minProperties: 1
+
+    RedirectAdmin:
+      type: object
+      properties:
+        id:          { type: string, format: uuid }
+        sourcePath:  { type: string, example: /projects/old-name, description: 'Lower case, decoded, no trailing slash' }
+        destination: { type: string, example: /projects/new-name, description: As given }
+        permanent:   { type: boolean, description: '308 when true, 307 when false' }
+        hitCount:
+          type: integer
+          description: |
+            Visitors sent on. Under /services and /gallery, whose pages are
+            cached, a redirect is counted each time it is regenerated (at most
+            once a minute) rather than per visit.
+        lastHitAt:   { type: string, format: date-time, nullable: true }
+        createdAt:   { type: string, format: date-time }
+        updatedAt:   { type: string, format: date-time, description: Last edited; a hit does not move it }
+
+    RedirectFields:
+      type: object
+      description: Unknown fields are refused with a 422.
+      properties:
+        sourcePath:
+          type: string
+          maxLength: 512
+          description: |
+            A path on this site, starting with a single `/`, with no query
+            string or fragment. Not `/`, and nothing under `/admin`, `/api`
+            or `/_next`.
+        destination:
+          type: string
+          maxLength: 1024
+          description: |
+            A path on this site (a query string or fragment is kept) or an
+            absolute http(s) URL. Not the source itself, nor any rule's source.
+        permanent: { type: boolean, default: true }
+
+    RedirectInput:
+      allOf:
+        - $ref: '#/components/schemas/RedirectFields'
+        - type: object
+          required: [sourcePath, destination]
+
+    RedirectUpdate:
+      allOf:
+        - $ref: '#/components/schemas/RedirectFields'
         - type: object
           minProperties: 1
 

@@ -50,6 +50,13 @@ describe('RBAC', () => {
     expect(hasPermission('investor', {}, 'gallery:write')).toBe(false);
   });
 
+  it('lets only admins manage redirects', () => {
+    expect(hasPermission('admin', {}, 'redirects:write')).toBe(true);
+    expect(hasPermission('editor', {}, 'redirects:write')).toBe(false);
+    expect(hasPermission('viewer', {}, 'redirects:write')).toBe(false);
+    expect(hasPermission('investor', {}, 'redirects:write')).toBe(false);
+  });
+
   it('gives a viewer read-only access', () => {
     const viewer = effectivePermissions('viewer');
     expect(viewer.has('projects:read')).toBe(true);
